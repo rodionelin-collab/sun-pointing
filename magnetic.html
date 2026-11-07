@@ -54,6 +54,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-meter span{font:12px var(--f-mono);letter-spacing:.12em;color:var(--muted)}
 .sp-bars{display:flex;gap:4px;flex:1 1 240px}
 .sp-bars i{flex:1;height:18px;border-radius:2px;background:var(--grid)}
+.sp-meter.in{border:0;border-radius:0;background:none;padding:2px 14px 12px;gap:10px}
+.sp-meter.in span{font-size:10px}
+.sp-meter.in .sp-bars{flex:1 1 140px;gap:3px}
+.sp-meter.in .sp-bars i{height:14px}
 .sp-phone h2{margin:0;font-size:16px;font-weight:600}
 .sp-phone ol{margin:0;padding-left:22px;display:grid;gap:8px;font-size:14.5px;line-height:1.5;max-width:80ch}
 .sp-phone p{min-height:0}
@@ -68,7 +72,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .mx-legend{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13px;color:var(--muted)}
 .mx-legend i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:8px;vertical-align:middle}
 @media (max-width:700px){.sp-merge{grid-template-columns:1fr;padding:4px 12px 14px}.mx-text{min-height:0}}
-#sigTxt{font:600 13px var(--f-mono);min-width:7ch;text-align:right}
+#sigTxt{font:600 13px var(--f-mono);min-width:13ch;text-align:right}
 @media (max-width:640px){.sp-stage{aspect-ratio:4/3}.sp-hint{font-size:12px}}
 .sp-nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
 .sp-back{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none}
@@ -133,7 +137,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
         </div>
       </div>
     </div>
-    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Когда сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум, скорее всего, пройден. Для уверенности сделайте ещё два прохода выше: если сигнал продолжает падать, опустите зеркало до прохода с самым сильным сигналом и по нему вернитесь в точку максимума.</p></div>
+    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><div class="sp-meter in"><span>СИГНАЛ МОДЕМА</span><div class="sp-bars" id="bars"></div><b id="sigTxt">нет</b></div><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Когда сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум, скорее всего, пройден. Для уверенности сделайте ещё два прохода выше: если сигнал продолжает падать, опустите зеркало до прохода с самым сильным сигналом и по нему вернитесь в точку максимума.</p></div>
     <div class="sp-view"><h2>ВИД ИЗ-ЗА АНТЕННЫ</h2><svg id="vBack" viewBox="0 0 320 260" role="img" aria-label="Вид из-за антенны глазами установщика"></svg><p>Так видит установщик: верх вешки должен оказаться точно над центром зеркала. Низ вешки, штанга и приёмопередатчик за зеркалом показаны пунктиром.</p></div>
   </div>
 
@@ -152,7 +156,6 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
     <p class="sp-note">Рядом с большими металлическими конструкциями — вышками, ёмкостями, вагончиками — компас может ошибаться на 5–10°. В солнечный день надёжнее <a href="sun.html">наведение по солнцу</a>.</p>
   </div>
 
-  <div class="sp-meter"><span>СИГНАЛ МОДЕМА</span><div class="sp-bars" id="bars"></div><b id="sigTxt">нет</b></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -411,8 +414,8 @@ var SNK=(function(){
   var done=mk("polyline",{fill:"none",stroke:"var(--amber)","stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"},svg);
   var best=mk("g",{opacity:0},svg);mk("circle",{r:9,fill:"none",stroke:"var(--green)","stroke-width":2},best);
   var cur=mk("g",{},svg);mk("circle",{r:6,fill:"var(--card)",stroke:"var(--ink)","stroke-width":2},cur);mk("path",{d:"M-11 0H-6M6 0H11M0 -11V-6M0 6V11",stroke:"var(--ink)","stroke-width":1.5},cur);
-  var txt=mk("text",{x:14,y:250,"font-size":12,"font-weight":600,fill:"var(--muted)"},svg);
-  var note=mk("text",{x:306,y:250,"font-size":10,"text-anchor":"end",fill:"var(--muted)"},svg);
+  var txt=mk("text",{x:14,y:250,"font-size":12,"font-weight":600,fill:"var(--muted)"},svg);txt.setAttribute("display","none");
+  var note=mk("text",{x:160,y:246,"font-size":10,"text-anchor":"middle",fill:"var(--muted)"},svg);
   return {draw:function(S){
     var sn=S.sn,c=P(Math.max(-SN_AMP*1.08,Math.min(SN_AMP*1.08,S.dishAz-SAT_AZ)),S.dEl);
     setA(cur,{transform:tr(c[0],c[1]),opacity:S.t>=15.5?1:0.35});
@@ -653,7 +656,7 @@ function frame(t){
     chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
   $("prog").style.width=(t/T_END*100).toFixed(2)+"%";
   barEls.forEach(function(b,k){b.style.background=(k/16<S.lvl||(k===0&&S.lvl>0.01))?(S.lvl>0.93?"var(--green)":"var(--cyan)"):"var(--grid)"});
-  var st=$("sigTxt");st.textContent=S.lvl>0.93?"максимум":S.lvl>0.3?"есть":S.lvl>0.01?"слабый":"нет";st.style.color=S.lvl>0.93?"var(--green)":S.lvl>0.01?"var(--cyan)":"var(--muted)";
+  var st=$("sigTxt");st.textContent=Math.round(S.lvl*100)+"% · "+(S.lvl>0.93?"максимум":S.lvl>0.3?"есть":S.lvl>0.01?"слабый":"нет");st.style.color=S.lvl>0.93?"var(--green)":S.lvl>0.01?"var(--cyan)":"var(--muted)";
   var g=dishGeom(S.dishAz,S.dEl);
   MERGE.draw(S,g);SNK.draw(S);BACKV.draw(S,g);
   if(G)G.render(S);
