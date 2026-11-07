@@ -45,7 +45,7 @@ button:disabled{opacity:.5;cursor:default}
 video,#preview{width:100%;max-width:300px;border-radius:12px;border:1px solid var(--line);background:#000;display:block}
 #preview{background:var(--bg)}
 /* the animation page is rendered off-screen at a fixed width so its canvases have a real size */
-#stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border:0;visibility:visible}
+iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border:0;visibility:visible}
 </style>
 </head>
 <body>
@@ -103,7 +103,6 @@ video,#preview{width:100%;max-width:300px;border-radius:12px;border:1px solid va
   </div>
 </div>
 
-<iframe id="stage" title="Анимация для записи" aria-hidden="true" tabindex="-1"></iframe>
 
 <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
 <script>
@@ -140,14 +139,19 @@ function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp
 function fmtDate(d){var p=d.split("-"),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return (+p[2])+" "+m[+p[1]-1]+" "+p[0]}
 
 /* ---------- iframe driver ---------- */
-var frameEl=$("stage");
-function loadPage(page){return new Promise(function(res,rej){
-  var to=setTimeout(function(){rej(new Error("Страница анимации не загрузилась"))},30000);
-  frameEl.onload=function(){var w=frameEl.contentWindow,n=0;(function wait(){if(w.__spRec){clearTimeout(to);
+/* every page gets a fresh iframe; the previous one releases its WebGL contexts and is removed, so long builds don't run out of GPU contexts */
+var frameEl=null;
+function dropFrame(){if(!frameEl)return;try{(frameEl.contentWindow.__spGLs||[]).forEach(function(r){try{r.dispose();r.forceContextLoss()}catch(e){}})}catch(e){}
+  frameEl.remove();frameEl=null}
+function loadOnce(page){return new Promise(function(res,rej){
+  dropFrame();var fr=document.createElement("iframe");fr.className="stage";fr.setAttribute("aria-hidden","true");fr.tabIndex=-1;fr.title="Анимация для записи";frameEl=fr;
+  var to=setTimeout(function(){rej(new Error("Страница анимации не загрузилась"))},60000);
+  fr.onload=function(){var w=fr.contentWindow,n=0;(function wait(){if(fr!==frameEl)return;if(w.__spRec){clearTimeout(to);
       var d=w.document,st=d.getElementById("stage");if(st){st.style.aspectRatio="auto";st.style.height=Math.round(st.clientWidth*GH/(W-32))+"px";w.dispatchEvent(new w.Event("resize"))}
-      (d.fonts&&d.fonts.ready?d.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){res(w)},150)})}
-    else if(++n>200){clearTimeout(to);rej(new Error("Анимация не запустилась (нужен WebGL)"))}else setTimeout(wait,50)})()};
-  frameEl.src=page+pageQuery()})}
+      (d.fonts&&d.fonts.ready?d.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){res(w)},200)})}
+    else if(++n>600){clearTimeout(to);rej(new Error("Анимация не запустилась (нужен WebGL)"))}else setTimeout(wait,50)})()};
+  fr.src=page+pageQuery();document.body.appendChild(fr)})}
+function loadPage(page){return loadOnce(page).catch(function(){return new Promise(function(r){setTimeout(r,1500)}).then(function(){return loadOnce(page)})})}
 TOKload();
 function TOKload(){loadPage("sun.html").then(function(w){TOK=w.__spRec.tok;showCtx()}).catch(function(){})}
 
@@ -273,19 +277,19 @@ function build(){
     return (function next(){if(k>=n)return Promise.resolve();k++;if(k%10===0)setProg(label);return emit().then(next)})()}
   return (document.fonts?document.fonts.ready:Promise.resolve()).then(function(){return makeSink(cv)}).then(function(s){
     if(!s)throw new Error("этот браузер не умеет записывать видео. Откройте страницу в Chrome, Edge или Safari.");sink=s;
-    /* durations: load each page once to read its length */
-    return list.reduce(function(p,k){return p.then(function(){setProg("Готовим: "+METHODS[k].name);return loadPage(METHODS[k].page).then(function(w){TOK=TOK||w.__spRec.tok;durs[k]=TEST?3:w.__spRec.dur})})},Promise.resolve())})
+    list.forEach(function(k){durs[k]=TEST?3:(k==="sun"?46:49)});   /* estimate; the real length is taken when each page loads */
+    if(TOK)return;return loadPage(METHODS[list[0]].page).then(function(w){TOK=w.__spRec.tok})})
   .then(function(){showCtx();total=INTRO+OUT+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:MI)+durs[k]},0);
     return still(function(c){introCard(c,list)},INTRO,"Заставка")})
   .then(function(){return list.reduce(function(p,k,i){return p.then(function(){
       return still(function(c){methodCard(c,k,i,list.length)},k==="sun"?6:MI,METHODS[k].name)
       .then(function(){return loadPage(METHODS[k].page)})
-      .then(function(w){var n=Math.round(durs[k]*FPS),f=0,R=w.__spRec,st=TEST?(TT>=0?TT:R.dur-3):0;
+      .then(function(w){if(!TEST){total+=w.__spRec.dur-durs[k];durs[k]=w.__spRec.dur}var n=Math.round(durs[k]*FPS),f=0,R=w.__spRec,st=TEST?(TT>=0?TT:R.dur-3):0;
         return (function next(){if(f>=n)return Promise.resolve();var t=st+f/FPS*(TEST?1:1);var S=R.set(t);
           return methodFrame(ctx,w,k,i,list.length,S,f/n).then(function(){f++;if(f%5===0)setProg(METHODS[k].name+" — кадр "+f+" из "+n);return emit()}).then(next)})()})})},Promise.resolve())})
   .then(function(){return still(function(c){outroCard(c,list)},OUT+(list.indexOf("sun")>=0?3:0),"Финальная заставка")})
   .then(function(){setProg("Сохраняем файл");return sink.done()})
-  .then(function(blob){busy=false;$("go").disabled=false;$("stop").hidden=true;$("prog").style.width="100%";
+  .then(function(blob){dropFrame();busy=false;$("go").disabled=false;$("stop").hidden=true;$("prog").style.width="100%";
     var ext=sink.kind==="mp4"?"mp4":"webm",name=("Наведение_"+TOK.SAT+"_"+TOK.PLACE+"_"+date).replace(/[\\/:*?"<>|\s]+/g,"_")+"."+ext,url=URL.createObjectURL(blob);
     $("vid").src=url;$("dl").href=url;$("dl").setAttribute("download",name);$("outName").textContent=name;
     $("outInfo").textContent=(blob.size/1048576).toFixed(1).replace(".",",")+" МБ · "+Math.round(total)+" с · вертикальное видео 720×1280"+(ext==="webm"?" · формат WebM (iPhone может не открыть — лучше собирать в Chrome на компьютере)":"");
@@ -294,7 +298,7 @@ function build(){
     $("share").hidden=!(file&&navigator.canShare&&navigator.canShare({files:[file]}));
     $("share").onclick=function(){navigator.share({files:[file],title:"Наведение антенны"}).catch(function(){})};
     $("out").scrollIntoView({behavior:"smooth",block:"start"})})
-  .catch(function(e){if(sink)sink.cancel();throw e});
+  .catch(function(e){if(sink)sink.cancel();dropFrame();throw e});
 }
 })();
 </script>

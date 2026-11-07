@@ -486,7 +486,7 @@ var G=null;
   var canvas=$("gl"),stage=$("stage");
   function fail(){canvas.hidden=true;$("glHint").hidden=true;var d=document.createElement("div");d.className="sp-nogl";d.textContent="3D-вид недоступен в этом браузере. Ниже работают плоские виды.";stage.appendChild(d)}
   if(!window.THREE){fail();return}
-  var renderer;try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,preserveDrawingBuffer:REC})}catch(e){fail();return}
+  var renderer;try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,preserveDrawingBuffer:REC});(window.__spGLs=window.__spGLs||[]).push(renderer)}catch(e){fail();return}
   renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   if(THREE.sRGBEncoding)renderer.outputEncoding=THREE.sRGBEncoding;
@@ -578,7 +578,7 @@ var G=null;
   if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);resize();
   /* ===== the same 3D antenna, rendered into the flat views with matching projections ===== */
   var PR=null,PANELS=[],PRS=760;
-  try{PR=new THREE.WebGLRenderer({antialias:true,alpha:true});PR.setPixelRatio(1);PR.setSize(PRS,PRS,false);PR.shadowMap.enabled=true;PR.shadowMap.type=THREE.PCFSoftShadowMap;if(THREE.sRGBEncoding)PR.outputEncoding=THREE.sRGBEncoding;PR.setClearColor(0x000000,0);PR.toneMapping=THREE.LinearToneMapping;PR.toneMappingExposure=0.72}catch(e){PR=null}
+  try{PR=new THREE.WebGLRenderer({antialias:true,alpha:true});(window.__spGLs=window.__spGLs||[]).push(PR);PR.setPixelRatio(1);PR.setSize(PRS,PRS,false);PR.shadowMap.enabled=true;PR.shadowMap.type=THREE.PCFSoftShadowMap;if(THREE.sRGBEncoding)PR.outputEncoding=THREE.sRGBEncoding;PR.setClearColor(0x000000,0);PR.toneMapping=THREE.LinearToneMapping;PR.toneMappingExposure=0.72}catch(e){PR=null}
   function camTop(sx0,sy0,ks,w,h){w=w||320;h=h||260;var c=new THREE.OrthographicCamera(-sx0/ks,(w-sx0)/ks,sy0/ks,-(h-sy0)/ks,1,200);c.position.set(0,80,0);c.up.set(0,0,-1);c.lookAt(0,0,0);return c}
   function camSide(bhv,cx,cy,k,w,h){w=w||320;h=h||260;var R=new THREE.Vector3(bhv[0],0,-bhv[1]),back=new THREE.Vector3().crossVectors(R,new THREE.Vector3(0,1,0)).normalize();
     var c=new THREE.OrthographicCamera(-cx/k,(w-cx)/k,cy/k,-(h-cy)/k,1,200);c.position.copy(back.multiplyScalar(80));c.up.set(0,1,0);c.lookAt(0,0,0);return c}
