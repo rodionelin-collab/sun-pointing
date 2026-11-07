@@ -369,7 +369,7 @@ function drawView(v,S,g){
   if(v.update)v.update(S,g);
 }
 /* top view: orthographic, north up */
-var TOP={k:27,cx:160,cy:126,pt:function(p){return [this.cx+p[0]*this.k,this.cy-p[1]*this.k]},dir:function(d,from){var h=Math.hypot(d[0],d[1])||1;return [this.cx+d[0]/h*86,this.cy-d[1]/h*86]}};
+var TOP={k:27,cx:160,cy:126,pt:function(p){return [this.cx+p[0]*this.k,this.cy-p[1]*this.k]},dir:function(d,from){var h=Math.hypot(d[0],d[1])||1,L=Math.hypot(d[0],d[1],d[2])||1,r=86+Math.max(-22,Math.min(22,(Math.sin(SAT_EL*D)-d[2]/L)*140));return [this.cx+d[0]/h*r,this.cy-d[1]/h*r]}};  /* satellite on r=86; the sun a bit farther out when it is lower than the satellite (closer when higher), so the two never overlap */
 /* side view: orthographic, looking from the left of the satellite line, satellite to the right */
 var bh=[Math.sin(SAT_AZ*D),Math.cos(SAT_AZ*D)];
 var SIDE={k:58,cx:70,cy:215,pt:function(p){return [this.cx+(p[0]*bh[0]+p[1]*bh[1])*this.k,this.cy-p[2]*this.k]},dir:function(d,from){var f=this.pt(from),x=d[0]*bh[0]+d[1]*bh[1],L=Math.hypot(x,d[2])||1;return [f[0]+x/L*190,f[1]-d[2]/L*190]}};
@@ -390,11 +390,13 @@ var vTop=buildView($("vTop"),{proj:TOP,clip:function(cp){mk("circle",{cx:TOP.cx,
   for(var a=0;a<360;a+=10){var r1=a%30?90:86;mk("line",{x1:TOP.cx+94*Math.sin(a*D),y1:TOP.cy-94*Math.cos(a*D),x2:TOP.cx+r1*Math.sin(a*D),y2:TOP.cy-r1*Math.cos(a*D),stroke:"var(--line)"},svg)}
   [["С",0],["В",90],["Ю",180],["З",270]].forEach(function(q){mk("text",{x:TOP.cx+106*Math.sin(q[1]*D),y:TOP.cy-106*Math.cos(q[1]*D)+4,"font-size":12,"font-weight":300,"font-family":"var(--f-body)","text-anchor":"middle",fill:"#111111"},svg).textContent=q[0]});
   /* satellite azimuth value outside the ring, next to the sun/satellite direction, clear of the cardinal letters */
-  (function(){var a=((SAT_AZ%360)+360)%360,r=112,x=TOP.cx+r*Math.sin(a*D),y=TOP.cy-r*Math.cos(a*D),s=Math.sin(a*D),c=Math.cos(a*D),anc,near=null;
-    [0,90,180,270,360].forEach(function(q){if(Math.abs(a-q)<14)near=q%360});
-    if(near===0||near===180){anc=s<0||(s===0&&near===180)?"end":"start";x+=anc==="end"?-12:12}
-    else if(near===90||near===270){anc="middle";y+=c>=0?-16:16}
-    else anc=Math.abs(s)<0.3?"middle":(s>0?"start":"end");
+  (function(){var a=((SAT_AZ%360)+360)%360,u=[Math.sin(a*D),-Math.cos(a*D)],tg=[Math.cos(a*D),Math.sin(a*D)],r=98,off=34;
+    /* beside the satellite/sun pair, shifted along the ring (clockwise side) so it covers neither */
+    var L=[[0,1],[90,1],[180,1],[270,1]].map(function(q){return [TOP.cx+106*Math.sin(q[0]*D),TOP.cy-106*Math.cos(q[0]*D)]});
+    function cand(sg){var x=TOP.cx+u[0]*r+sg*tg[0]*off,y=TOP.cy+u[1]*r+sg*tg[1]*off,anc=Math.abs(tg[0])<0.3?"middle":(sg*tg[0]<0?"end":"start"),cx=anc==="end"?x-30:anc==="start"?x+30:x;
+      return {x:x,y:y,anc:anc,d:Math.min.apply(null,L.map(function(p){return Math.hypot(p[0]-cx,p[1]-(y+4))}))}}
+    var A=cand(1),B=cand(-1),C=A.d>=B.d?A:B,x=C.x,y=C.y,anc=C.anc;   /* side of the pair that stays clear of С/В/Ю/З */
+    x=Math.max(anc==="end"?62:4,Math.min(anc==="start"?258:316,x));
     var o={x:x,"font-size":10,"font-weight":600,"text-anchor":anc,fill:"var(--cyan)","paint-order":"stroke",stroke:"var(--card)","stroke-width":3};
     var t1=mk("text",Object.assign({y:y-2},o),svg);t1.textContent="азимут";var t2=mk("text",Object.assign({y:y+10},o),svg);t2.textContent=F1(SAT_AZ)+"°"})();
 },extra:function(v){
