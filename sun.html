@@ -184,7 +184,7 @@ fmtDom(document.getElementById("sp"));
 setTimeout(function(){var m=document.getElementById("matchMsg");if(m&&typeof WIN!=="undefined")m.textContent="В промежуток с "+hhmm(WIN[0],true)+" до "+hhmm(WIN[1],true)+" направление на солнце и на нужный вам спутник совпадут"},0);
 (function(){var msg=DEMO||(typeof DEMO_SUN!=="undefined"?DEMO_SUN:"");if(msg){var e=document.getElementById("demo");e.textContent=msg;e.hidden=false}
   if(location.search)document.querySelectorAll(".sp-tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
-var SAT_AZ=AZ, SAT_EL=ELV, SUN_EL_REAL=SUNM?SUNM.el:22, SUN_EL=Math.max(9,SUN_EL_REAL), TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=23;
+var SAT_AZ=AZ, SAT_EL=ELV, SUN_EL_REAL=SUNM?SUNM.el:22, SUN_EL=Math.max(9,SUN_EL_REAL), TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=28.5;
 var DEMO_SUN=(!DEMO&&!SUNM)?"В этот день для этой точки солнце не проходит направление на спутник достаточно высоко над горизонтом — время на анимации условное.":"";
 var SUN_AZ0=SUNM?SUNM.az0:SAT_AZ-32;
 var CLK0=SUNM?SUNM.t-29*60000:(function(){return DAY0+9*3600000})();
@@ -211,10 +211,14 @@ function ease(x){x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2}
 function pad(n){return String(n).padStart(2,"0")}
 function dirv(az,el){return [Math.sin(az*D)*Math.cos(el*D),Math.cos(az*D)*Math.cos(el*D),Math.sin(el*D)]}
 /* fine pointing "snake": sweep azimuth left-right at each elevation step */
-var SN_T0=14.8,SN_T1=21.4;
-var SN_PTS=[[0,-3],[-1.6,-3],[1.6,-3],[1.6,-2],[-1.6,-2],[-1.6,-1],[1.6,-1],[1.6,0],[-1.6,0],[-1.6,1],[1.6,1],[1.6,0],[0,0]];
-var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],SN_PTS[q][1]-SN_PTS[q-1][1]));
-function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*0.95*0.95)-(dEl*dEl)/(2*1.15*1.15))}
+var SN_T0=14.8,SN_T1=26.8;
+/* fine pointing: 15 passes of ±20° in azimuth, 0.5° elevation step, then back to the best point in two straight moves */
+var SN_AMP=20;
+var SN_PTS=(function(){var p=[[0,-3.5],[-SN_AMP,-3.5],[SN_AMP,-3.5]],el=-3.5,side=1;
+  for(var r=1;r<15;r++){el+=0.5;p.push([side*SN_AMP,el]);side=-side;p.push([side*SN_AMP,el])}
+  p.push([side*SN_AMP,0]);p.push([0,0]);return p})();
+var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],(SN_PTS[q][1]-SN_PTS[q-1][1])*12));
+function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*1.6*1.6)-(dEl*dEl)/(2*0.6*0.6))}
 function snakeAt(t){
   var p=clamp((t-SN_T0)/(SN_T1-SN_T0)),L=p*SN_LEN[SN_LEN.length-1],i=1;
   while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;
@@ -231,7 +235,7 @@ function state(t){
   var dAz=Math.abs(dishAz-sunAz);
   var lvl=t<11.4?0:sig(dishAz-SAT_AZ,dEl);
   var gv=t>=8?clamp((t-8)/0.6)*(1-clamp((t-14.6)/0.6)):0;
-  return {sn:sn,dEl:dEl,gv:gv,t:t,sunAz:sunAz,dishAz:dishAz,step:step,secs:secs,dAz:dAz,par:t>=11.4&&dAz<0.8?clamp((t-11.4)/0.5):0,lvl:Math.max(0,Math.min(1,lvl)),pulse:t>=6&&t<7.8?clamp((t-6)/1.6):-1};
+  return {sn:sn,dEl:dEl,gv:gv,t:t,sunAz:sunAz,dishAz:dishAz,step:step,secs:secs,dAz:dAz,par:t>=11.4&&t<14.6&&dAz<0.8?clamp((t-11.4)/0.5):0,lvl:Math.max(0,Math.min(1,lvl)),pulse:t>=6&&t<7.8?clamp((t-6)/1.6):-1};
 }
 /* world: x east, y north, z up (metres) */
 var MAST_H=0.95, STICK=[1.7*Math.sin(SAT_AZ*D)+1.5*Math.cos(SAT_AZ*D),1.7*Math.cos(SAT_AZ*D)-1.5*Math.sin(SAT_AZ*D)], STICK_H=0.95, FRAME=0.62;
@@ -397,14 +401,16 @@ var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
 var views=[vTop,vSide,vBack];
 /* snake panel: x = azimuth offset, y = elevation offset, degrees */
 var SNK=(function(){
-  var svg=$("vSnake"),cx=160,cy=120,kx=40,ky=34;
+  var svg=$("vSnake"),cx=160,cy=112,kx=118/SN_AMP,ky=22;
   function P(a,e){return [cx+a*kx,cy-e*ky]}
-  [0.1,0.3,0.5,0.7,0.9].forEach(function(lv){var m=Math.sqrt(-2*Math.log(lv));mk("ellipse",{cx:cx,cy:cy,rx:0.95*kx*m,ry:1.15*ky*m,fill:"var(--cyan)","fill-opacity":0.08,stroke:"var(--cyan)","stroke-opacity":.3},svg)});
-  mk("line",{x1:20,y1:cy,x2:300,y2:cy,stroke:"var(--line)"},svg);mk("line",{x1:cx,y1:12,x2:cx,y2:232,stroke:"var(--line)"},svg);
-  for(var a=-3;a<=3;a++){var pp=P(a,0);mk("line",{x1:pp[0],y1:cy-3,x2:pp[0],y2:cy+3,stroke:"var(--muted)"},svg)}
-  for(var e=-3;e<=3;e++){var pq=P(0,e);mk("line",{x1:cx-3,y1:pq[1],x2:cx+3,y2:pq[1],stroke:"var(--muted)"},svg)}
-  mk("text",{x:300,y:cy-6,"font-size":10,"text-anchor":"end",fill:"var(--muted)"},svg).textContent="азимут →";
+  [0.1,0.3,0.5,0.7,0.9].forEach(function(lv){var m=Math.sqrt(-2*Math.log(lv));mk("ellipse",{cx:cx,cy:cy,rx:1.6*kx*m,ry:0.6*ky*m,fill:"var(--cyan)","fill-opacity":0.1,stroke:"var(--cyan)","stroke-opacity":.35},svg)});
+  mk("line",{x1:16,y1:cy,x2:304,y2:cy,stroke:"var(--line)"},svg);mk("line",{x1:cx,y1:22,x2:cx,y2:206,stroke:"var(--line)"},svg);
+  for(var a=-SN_AMP;a<=SN_AMP;a+=SN_AMP/3){var pp=P(a,0);mk("line",{x1:pp[0],y1:cy-3,x2:pp[0],y2:cy+3,stroke:"var(--muted)"},svg)}
+  for(var e=-3.5;e<=3.51;e+=0.5){var pq=P(0,e);mk("line",{x1:cx-(e%1===0?4:2),y1:pq[1],x2:cx+(e%1===0?4:2),y2:pq[1],stroke:"var(--muted)"},svg)}
+  [[-SN_AMP,"−"+SN_AMP+"°"],[SN_AMP,"+"+SN_AMP+"°"]].forEach(function(q){var pp=P(q[0],0);mk("text",{x:pp[0],y:cy+4,"font-size":10,"font-weight":600,"text-anchor":q[0]<0?"end":"start",dx:q[0]<0?-6:6,fill:"var(--ink)","paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg).textContent=q[1]});
+  mk("text",{x:304,y:20,"font-size":10,"text-anchor":"end",fill:"var(--muted)"},svg).textContent="азимут →";
   mk("text",{x:cx+6,y:20,"font-size":10,fill:"var(--muted)"},svg).textContent="↑ угол места";
+  mk("text",{x:160,y:226,"font-size":10,"text-anchor":"middle",fill:"var(--ink)"},svg).textContent="15 проходов: ±"+SN_AMP+"° по азимуту, шаг 0,5–1° вверх";
   var bp=P(0,0);mk("circle",{cx:bp[0],cy:bp[1],r:3,fill:"var(--cyan)"},svg);
   var plan=mk("polyline",{points:ptsStr(SN_PTS.map(function(q){return P(q[0],q[1])})),fill:"none",stroke:"var(--muted)","stroke-width":1.2,"stroke-dasharray":"3 4",opacity:.6},svg);
   var done=mk("polyline",{fill:"none",stroke:"var(--amber)","stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"},svg);
@@ -413,7 +419,7 @@ var SNK=(function(){
   var txt=mk("text",{x:14,y:250,"font-size":12,"font-weight":600,fill:"var(--muted)"},svg);
   var note=mk("text",{x:306,y:250,"font-size":10,"text-anchor":"end",fill:"var(--muted)"},svg);
   return {draw:function(S){
-    var sn=S.sn,azOff=S.dishAz-SAT_AZ,c=P(Math.max(-3.6,Math.min(3.6,azOff)),S.dEl);
+    var sn=S.sn,azOff=S.dishAz-SAT_AZ,c=P(Math.max(-SN_AMP*1.08,Math.min(SN_AMP*1.08,azOff)),S.dEl);
     setA(cur,{transform:"translate("+c[0].toFixed(1)+" "+c[1].toFixed(1)+")",opacity:S.t>=11.4?1:0.35});
     var pts=[];if(S.t>=SN_T0){for(var i=0;i<sn.idx;i++)pts.push(P(SN_PTS[i][0],SN_PTS[i][1]));pts.push(P(sn.az,sn.el))}
     done.setAttribute("points",ptsStr(pts));
