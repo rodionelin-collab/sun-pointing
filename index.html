@@ -653,7 +653,7 @@ function renderAll(){
 }
 $("allBody").addEventListener("click",function(e){var tr=e.target.closest("tr");if(!tr)return;var s=SATS[+tr.dataset.i];S.satName=s[0];S.satLon=s[1];syncInputs();render()});
 
-function fmtFull(t){var p=siteParts(t);return pad(p.d)+"."+pad(p.m)+"."+p.y+" "+pad(p.h)+":"+pad(p.mi)+":"+pad(p.s)}
+function fmtFull(t){var p=siteParts(t);return pad(p.d)+"."+pad(p.m)+"."+p.y+", "+pad(p.h)+":"+pad(p.mi)+":"+pad(p.s)}
 function renderClock(){
   var n=new Date();
   $("clkDev").textContent=n.toLocaleString("ru-RU");
