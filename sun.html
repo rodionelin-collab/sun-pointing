@@ -234,7 +234,7 @@ function state(t){
   return {sn:sn,dEl:dEl,gv:gv,t:t,sunAz:sunAz,dishAz:dishAz,step:step,secs:secs,dAz:dAz,par:t>=11.4&&dAz<0.8?clamp((t-11.4)/0.5):0,lvl:Math.max(0,Math.min(1,lvl)),pulse:t>=6&&t<7.8?clamp((t-6)/1.6):-1};
 }
 /* world: x east, y north, z up (metres) */
-var MAST_H=0.95, STICK=[-1.25,-0.85], STICK_H=0.95, FRAME=0.62;
+var MAST_H=0.95, STICK=[1.7*Math.sin(SAT_AZ*D)+1.5*Math.cos(SAT_AZ*D),1.7*Math.cos(SAT_AZ*D)-1.5*Math.sin(SAT_AZ*D)], STICK_H=0.95, FRAME=0.62;
 function dishGeom(az,dEl){
   var s=Math.sin(az*D),c=Math.cos(az*D),T=(TILT+(dEl||0))*D;
   var n=[s*Math.cos(T),c*Math.cos(T),Math.sin(T)],u1=[c,-s,0];
@@ -552,7 +552,7 @@ var G=null;
     [[s0,ss],[rs3,ls3]].forEach(function(pr,i){var a=pr[0],b=pr[1],d=new THREE.Vector3().subVectors(b,a).setY(0).normalize(),n=new THREE.Vector3(-d.z,0,d.x),m=a.clone().lerp(b,0.5);
       [-0.07,0.07].forEach(function(o,j){var c=m.clone().addScaledVector(d,o);placeRibbon(ticks[i*2+j],c.clone().addScaledVector(n,-0.22),c.clone().addScaledVector(n,0.22),0.018)})});
     tMat.opacity=S.par;
-    var lp=eA[1].clone().lerp(eB[1],0.5);parLbl.position.set(lp.x,0.7,lp.z);
+    parLbl.position.set(s0.x,STICK_H+0.75,s0.z);
     setLbl(ok?"✓ ТЕНИ ПАРАЛЛЕЛЬНЫ":"угол между тенями "+Math.max(1,Math.round(S.dAz))+"°",ok?"#1f9d63":"#e0650b");parLbl.material.opacity=S.gv;
     if(!userCam){var up=ease((S.t-8.4)/1.8)-ease((S.t-14.8)/2),ca=(SAT_AZ+130+10*Math.sin(S.t/T_END*2*Math.PI))*D,R=7.6-1.6*up;
       camera.position.copy(W(R*Math.sin(ca),R*Math.cos(ca),2.4+3.6*up));var tg=target.clone().lerp(W(-0.9,0.3,0),up);camera.lookAt(tg);if(controls)controls.target.copy(target)}
