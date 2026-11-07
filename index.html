@@ -111,7 +111,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
       </div>
       <div class="row">
         <div><label for="tz">Часовой пояс точки, UTC+</label><input id="tz" type="number" step="0.5" min="-12" max="14"><p class="hint" id="tzHint" style="margin:4px 0 0"></p></div>
-        <div><label for="decl">Магн. склонение, °</label><input id="decl" type="number" step="0.1"></div>
+        <div><label for="decl">Магн. склонение, °</label><input id="decl" type="text" readonly tabindex="-1" style="cursor:default" title="Считается автоматически по координатам"></div>
       </div>
       <p class="hint" id="declHint"></p>
     </div>
@@ -280,6 +280,7 @@ var SATS=[
 var $=function(id){return document.getElementById(id)};
 var S={lat:52.2869,lon:104.3050,tz:8,satLon:145.0,satName:"Экспресс-АМУ7",decl:0,declManual:false,offset:24,H:600,W:550,tab:"dish",sunDate:null,sunTime:null};
 try{var saved=JSON.parse(localStorage.getItem("installer-helper")||"null");if(saved)Object.assign(S,saved)}catch(e){}
+S.declManual=false;   /* declination is always taken from the WMM model (field is read-only) */
 function placeName(){return S.city||(S.lat.toFixed(4)+", "+S.lon.toFixed(4))}
 function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,place:placeName(),offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual,city:S.city||"",cityRegion:S.cityRegion||"",date:$("sunDate").value||null}))}catch(e){}
   /* pass the chosen point and satellite to the animation pages */
@@ -413,8 +414,8 @@ function syncInputs(){
 function refreshDecl(){
   var a=autoDecl();
   if(!S.declManual&&a!==null)S.decl=Math.round(a*10)/10;
-  $("decl").value=S.decl;
-  $("declHint").textContent=a===null?"Модель склонения недоступна, введите склонение вручную.":
+  $("decl").value=(S.decl>0?"+":"")+f1(S.decl);
+  $("declHint").textContent=a===null?"Модель склонения недоступна.":
     (S.declManual?"Склонение введено вручную. По модели WMM для этой точки: "+deg(a)+". Очистите поле, чтобы вернуть расчёт.":"Склонение по модели WMM-2025: "+deg(a)+(a>=0?" (восточное)":" (западное)")+".");
 }
 
