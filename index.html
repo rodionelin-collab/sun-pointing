@@ -29,7 +29,7 @@ header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-be
 h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
 header p{margin:0;color:var(--muted);font-size:13px}
 h2{font-size:17px;margin:0;font-weight:600;text-wrap:balance}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0;align-content:start}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
 label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;display:block;margin-bottom:4px}
 input,select,button{font:inherit;color:var(--ink)}
@@ -62,6 +62,11 @@ button.ghost{background:transparent;color:var(--accent);border:1px solid var(--a
 nav{display:flex;flex-wrap:wrap;gap:6px}
 nav button{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
 nav button[aria-selected="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+#sat{height:40.5px}
+.actbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.actbtn{display:inline-flex;flex-direction:column;justify-content:center;align-items:center;min-height:46px;padding:6px 16px;border-radius:8px;border:1px solid var(--accent);color:var(--accent);background:var(--panel);font-weight:600;font-size:15px;text-decoration:none;line-height:1.15}
+.actbtn:hover{background:var(--accent-soft)}
+.actbtn small{display:block;font-size:11px;font-weight:400;opacity:.85;margin-top:2px}
 nav button.two{line-height:1.1;padding-top:6px;padding-bottom:6px}
 nav button.two small{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:2px}
 .data{font-family:var(--f-data);font-variant-numeric:tabular-nums}
@@ -109,7 +114,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
           <ul class="ac-list" id="acList" role="listbox" hidden></ul>
         </div>
         <p class="err" id="coordsErr" hidden></p>
-        <p class="hint" id="coordsInfo" style="margin:4px 0 0"></p>
+        <p class="hint" id="coordsInfo" style="margin:4px 0 0;min-height:1.5em"></p>
       </div>
       <div class="row">
         <div><label for="tz">Часовой пояс</label><div style="position:relative"><input id="tz" type="text" inputmode="decimal" autocomplete="off"><span id="tzMsk" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none"></span></div><p class="hint" id="tzHint" style="margin:4px 0 0"></p></div>
@@ -122,6 +127,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
       <div>
         <label for="sat">Спутник</label>
         <select id="sat"></select>
+        <p class="hint" id="satInfo" style="margin:4px 0 0;min-height:1.5em"></p>
       </div>
       <div>
         <label for="satlon">Точка стояния спутника</label>
@@ -179,7 +185,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
   <!-- SUN -->
   <section class="panel" data-pane="sun" hidden>
     <h2>Наведение по солнцу</h2>
-    <p class="hint"><a href="sun.html" style="color:var(--accent);font-weight:600">Посмотреть анимацию: как это выглядит в 3D →</a> · <a href="video.html" style="color:var(--accent);font-weight:600">Создать видео для клиента →</a></p>
+    <div class="actbtns"><a class="actbtn" href="sun.html">Посмотреть анимацию 3D</a><a class="actbtn two" href="video.html">Создать видео<small>для клиента</small></a></div>
     <p class="hint" style="font-size:14px;color:var(--ink);max-width:68ch">Солнце за день проходит по небу с востока на запад. Один раз в день оно оказывается точно в той стороне, где висит спутник, только выше или ниже него. В эту минуту достаточно развернуть антенну «лицом» к солнцу, и по сторонам света она будет смотреть точно на спутник. Ни компас, ни транспортир не нужны.</p>
     <div class="row">
       <div><label for="sunDate">Планируемая дата установки</label><input id="sunDate" type="date"></div>
@@ -211,7 +217,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
   <!-- COMPASS -->
   <section class="panel" data-pane="compass" hidden>
     <h2>Наведение по компасу в телефоне</h2>
-    <p class="hint"><a href="compass.html" style="color:var(--accent);font-weight:600">Анимация: компас в телефоне →</a></p>
+    <div class="actbtns"><a class="actbtn" href="compass.html">Посмотреть анимацию 3D</a><a class="actbtn two" href="video.html">Создать видео<small>для клиента</small></a></div>
     <div class="grid2">
       <div style="display:grid;gap:12px;align-content:start">
         <dl class="kv cmpKv"></dl>
@@ -230,7 +236,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
 
   <section class="panel" data-pane="magcomp" hidden>
     <h2>Наведение по магнитному компасу</h2>
-    <p class="hint"><a href="magnetic.html" style="color:var(--accent);font-weight:600">Анимация: магнитный компас →</a></p>
+    <div class="actbtns"><a class="actbtn" href="magnetic.html">Посмотреть анимацию 3D</a><a class="actbtn two" href="video.html">Создать видео<small>для клиента</small></a></div>
     <div class="grid2">
       <div style="display:grid;gap:12px;align-content:start">
         <dl class="kv cmpKv"></dl>
@@ -273,7 +279,6 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
     <p class="hint">Сверка идёт по времени веб-сервера, точность около 1 секунды. Если расхождение больше 30 секунд, поправьте часы устройства.</p>
   </section>
 
-  <p class="note">Не перенесено из настольной программы: сканирование транспондеров и индикация уровня сигнала через DVB-карту SkyStar (браузер не работает с этим оборудованием), список транспондеров спутников, определение координат по IP. Для точной доводки используйте измеритель сигнала или модем.</p>
 </div>
 
 
@@ -534,6 +539,7 @@ $("sunPick").addEventListener("click",function(){var d=$("sunDate");d.focus();tr
 
 /* ---------- render ---------- */
 function render(){
+  if($("satInfo"))$("satInfo").textContent="Позиция на орбите: "+lonTxt(S.satLon);
   var L=look(S.lat,S.lon,S.satLon),vis=L.el>0;
   var mag=((L.az-S.decl)%360+360)%360;
   $("rAz").textContent=deg(L.az);
