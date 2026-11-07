@@ -261,8 +261,8 @@ function snakeAt(t){
   return {az:a[0]+(b[0]-a[0])*k,el:a[1]+(b[1]-a[1])*k,p:p,idx:i,frac:k,L:L};
 }
 function state(t){
-  var p1=ease(t/6),sunAz=SUN_AZ0+w180(SAT_AZ-SUN_AZ0)*p1,sunEl=SUN_EL,clk=null;
-  if(SUNM){var tt=t<6?SUN_T0+(MTX-SUN_T0)*p1:MTX,sp=sunAt(tt);sunAz=t<6?sp.az:SAT_AZ;sunEl=Math.max(6,t<6?sp.el:SUNM.el);clk=t<6?tt:null}
+  var p1=ease(t/6),sunAz=SUN_AZ0+w180(SAT_AZ-SUN_AZ0)*p1,sunEl=SUN_EL,sunElR=SUN_EL_REAL,clk=null;
+  if(SUNM){var tt=t<6?SUN_T0+(MTX-SUN_T0)*p1:MTX,sp=sunAt(tt);sunAz=t<6?sp.az:SAT_AZ;sunEl=Math.max(6,t<6?sp.el:SUNM.el);sunElR=t<6?sp.el:SUNM.el;clk=t<6?tt:null}
   SUN_EL_CUR=sunEl;
   var rot=ease((t-8)/3.6);
   var sn=snakeAt(t);
@@ -272,7 +272,7 @@ function state(t){
   var dAz=Math.abs(dishAz-sunAz);
   var lvl=t<11.4?0:sig(dishAz-SAT_AZ,dEl);
   var gv=t>=8?clamp((t-8)/0.6)*(1-clamp((t-14.6)/0.6)):0;
-  return {sn:sn,dEl:dEl,gv:gv,t:t,sunAz:sunAz,sunEl:sunEl,clk:clk,dishAz:dishAz,step:step,secs:secs,dAz:dAz,par:t>=11.4&&t<14.6&&dAz<0.8?clamp((t-11.4)/0.5):0,lvl:Math.max(0,Math.min(1,lvl)),pulse:t>=6&&t<7.8?clamp((t-6)/1.6):-1};
+  return {sn:sn,dEl:dEl,gv:gv,t:t,sunAz:sunAz,sunEl:sunEl,sunElR:sunElR,clk:clk,dishAz:dishAz,step:step,secs:secs,dAz:dAz,par:t>=11.4&&t<14.6&&dAz<0.8?clamp((t-11.4)/0.5):0,lvl:Math.max(0,Math.min(1,lvl)),pulse:t>=6&&t<7.8?clamp((t-6)/1.6):-1};
 }
 /* world: x east, y north, z up (metres) */
 var MAST_H=0.95, STICK=[1.7*Math.sin(SAT_AZ*D)+1.5*Math.cos(SAT_AZ*D),1.7*Math.cos(SAT_AZ*D)-1.5*Math.sin(SAT_AZ*D)], STICK_H=0.95, FRAME=0.62;
@@ -364,6 +364,10 @@ function drawView(v,S,g){
   var c=p2(g.C),sd=P.dir(dirv(SAT_AZ,SAT_EL),g.C),un=P.dir(dirv(S.sunAz,S.sunEl),g.C);
   if(sd){setA(e.satRay,{x1:c[0],y1:c[1],x2:sd[0],y2:sd[1],opacity:1});setA(e.sat,{transform:"translate("+sd[0].toFixed(1)+" "+sd[1].toFixed(1)+")",opacity:1})}else{setA(e.satRay,{opacity:0});setA(e.sat,{opacity:0})}
   if(un){setA(e.sunRay,{x1:c[0],y1:c[1],x2:un[0],y2:un[1],opacity:1});setA(e.sun,{transform:"translate("+un[0].toFixed(1)+" "+un[1].toFixed(1)+")",opacity:1})}else{setA(e.sunRay,{opacity:0});setA(e.sun,{opacity:0})}
+  if(P===BACK){   /* names and elevations next to the satellite and the sun, as in the side view */
+    if(!e.satT){e.satT=mk("text",{"font-size":10,fill:"var(--cyan)","paint-order":"stroke",stroke:"var(--card)","stroke-width":3},v.svg);e.sunT=mk("text",{"font-size":10,fill:"var(--amber)","paint-order":"stroke",stroke:"var(--card)","stroke-width":3},v.svg)}
+    if(sd){setA(e.satT,{x:sd[0]+22,y:sd[1]+4,opacity:1});e.satT.textContent="спутник "+F1(SAT_EL)+"°"}else setA(e.satT,{opacity:0});
+    if(un){var close=sd&&Math.abs(un[1]-sd[1])<16;setA(e.sunT,{x:un[0]+22,y:un[1]+(close?18:4),opacity:1});e.sunT.textContent="солнце "+F1(S.sunElR)+"°"}else setA(e.sunT,{opacity:0})}
   if(sd&&S.pulse>=0)setA(e.pulse,{cx:sd[0],cy:sd[1],r:10+S.pulse*22,opacity:1-S.pulse});else setA(e.pulse,{opacity:0});
   function ext(el,p,q,col){var vx=q[0]-p[0],vy=q[1]-p[1],L=Math.hypot(vx,vy)||1,ux=vx/L,uy=vy/L;setA(el,{x1:p[0]-ux*18,y1:p[1]-uy*18,x2:q[0]+ux*40,y2:q[1]+uy*40,stroke:col,opacity:S.gv})}
   function tick(el,p,q){var mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2,vx=q[0]-p[0],vy=q[1]-p[1],L=Math.hypot(vx,vy)||1,ux=vx/L,uy=vy/L,nx=-uy*8,ny=ux*8,d="";
@@ -414,7 +418,7 @@ var vSide=buildView($("vSide"),{proj:SIDE,bg:function(svg){
   for(var x=8;x<320;x+=14)mk("line",{x1:x,y1:SIDE.cy+1,x2:x-8,y2:SIDE.cy+9,stroke:"var(--grid)","stroke-width":1.2},svg);
 },extra:function(v){
   v.e.elSat=mk("text",{"font-size":10,fill:"var(--cyan)"},v.svg);v.e.elSun=mk("text",{"font-size":10,fill:"var(--amber)"},v.svg);
-  v.update=function(S,g){var sd=SIDE.dir(dirv(SAT_AZ,SAT_EL),g.C),un=SIDE.dir(dirv(S.sunAz,S.sunEl),g.C);setA(v.e.elSat,{x:sd[0]-6,y:sd[1]-12,"text-anchor":"end"});v.e.elSat.textContent="спутник "+F1(SAT_EL)+"°";setA(v.e.elSun,{x:un[0]-4,y:un[1]+26,"text-anchor":"end"});v.e.elSun.textContent="солнце "+F1(SUN_EL_REAL)+"°"};
+  v.update=function(S,g){var sd=SIDE.dir(dirv(SAT_AZ,SAT_EL),g.C),un=SIDE.dir(dirv(S.sunAz,S.sunEl),g.C);setA(v.e.elSat,{x:sd[0]-6,y:sd[1]-12,"text-anchor":"end"});v.e.elSat.textContent="спутник "+F1(SAT_EL)+"°";setA(v.e.elSun,{x:un[0]-4,y:un[1]+26,"text-anchor":"end"});v.e.elSun.textContent="солнце "+F1(S.sunElR)+"°"};
   v.noPar=true}});
 var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
   var hy=BACK.horizonY();
