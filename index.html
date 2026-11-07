@@ -569,20 +569,26 @@ function renderSun(L){
 
 function renderCompass(L,mag){
   $("cmpKv").innerHTML="<dt>Азимут по компасу</dt><dd>"+deg(mag)+"</dd><dt>Истинный азимут</dt><dd>"+deg(L.az)+"</dd><dt>Магнитное склонение</dt><dd>"+(S.decl>=0?"+":"")+f1(S.decl)+"° "+(S.decl>=0?"восточное":"западное")+"</dd><dt>Направление</dt><dd>"+dirWord(L.az)+"</dd>";
-  var c=160,R=120,svg='<circle cx="'+c+'" cy="'+c+'" r="'+R+'" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>';
-  for(var k=0;k<360;k+=5){var ar=k*D2R,r1=k%45?(k%15?R-5:R-9):R-14;svg+='<line x1="'+(c+R*Math.sin(ar)).toFixed(1)+'" y1="'+(c-R*Math.cos(ar)).toFixed(1)+'" x2="'+(c+r1*Math.sin(ar)).toFixed(1)+'" y2="'+(c-r1*Math.cos(ar)).toFixed(1)+'" stroke="var(--muted)" stroke-width="1"/>'}
-  var lbl={0:"N",90:"E",180:"S",270:"W"};
-  for(var q in lbl){var a2=q*D2R;svg+='<text x="'+(c+(R-28)*Math.sin(a2)).toFixed(1)+'" y="'+(c-(R-28)*Math.cos(a2)+5).toFixed(1)+'" font-size="15" font-weight="700" text-anchor="middle" fill="'+(q==0?"var(--warn)":"var(--ink)")+'">'+lbl[q]+'</text>'}
-  // true north marker
-  var tn=(S.decl)*D2R;
-  svg+='<line x1="'+(c+(R+4)*Math.sin(tn)).toFixed(1)+'" y1="'+(c-(R+4)*Math.cos(tn)).toFixed(1)+'" x2="'+(c+(R+16)*Math.sin(tn)).toFixed(1)+'" y2="'+(c-(R+16)*Math.cos(tn)).toFixed(1)+'" stroke="var(--ink)" stroke-width="2"/>';
-  svg+='<text x="'+(c+(R+20)*Math.sin(tn)+(S.decl>=0?4:-4)).toFixed(1)+'" y="'+(c-(R+22)*Math.cos(tn)).toFixed(1)+'" font-size="10" text-anchor="'+(S.decl>=0?"start":"end")+'" fill="var(--muted)">ист. север</text>';
-  var ma=mag*D2R;
-  svg+='<line x1="'+c+'" y1="'+c+'" x2="'+(c+(R-18)*Math.sin(ma)).toFixed(1)+'" y2="'+(c-(R-18)*Math.cos(ma)).toFixed(1)+'" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>';
-  svg+='<circle cx="'+(c+(R-18)*Math.sin(ma)).toFixed(1)+'" cy="'+(c-(R-18)*Math.cos(ma)).toFixed(1)+'" r="6" fill="var(--accent)"/>';
+  /* compass dial (magnetic north up): degree scale, С/В/Ю/З, a real needle (red end → north, grey end → south) and the satellite direction marked on the scale */
+  function P(a,r){var x=a*D2R;return [(c+r*Math.sin(x)).toFixed(1),(c-r*Math.cos(x)).toFixed(1)]}
+  var c=170,R=122,svg='<circle cx="'+c+'" cy="'+c+'" r="'+(R+6)+'" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/><circle cx="'+c+'" cy="'+c+'" r="'+(R-34)+'" fill="none" stroke="var(--line)"/>';
+  for(var k=0;k<360;k+=5){var p1=P(k,R),p2=P(k,k%30?(k%10?R-6:R-10):R-14);svg+='<line x1="'+p1[0]+'" y1="'+p1[1]+'" x2="'+p2[0]+'" y2="'+p2[1]+'" stroke="var(--muted)" stroke-width="'+(k%30?1:1.6)+'"/>'}
+  for(var b=0;b<360;b+=30){var pt=P(b,R-25);svg+='<text x="'+pt[0]+'" y="'+(+pt[1]+4)+'" font-size="11" font-weight="600" text-anchor="middle" fill="var(--muted)" style="font-family:var(--f-data)" transform="rotate('+b+' '+pt[0]+' '+pt[1]+')">'+b+'</text>'}
+  [["С",0],["В",90],["Ю",180],["З",270]].forEach(function(q){var pt=P(q[1],R-52);svg+='<text x="'+pt[0]+'" y="'+(+pt[1]+6)+'" font-size="17" font-weight="700" text-anchor="middle" fill="'+(q[1]===0?"var(--warn)":"var(--ink)")+'">'+q[0]+'</text>'});
+  /* true north tick */
+  var tn=S.decl,a1=P(tn,R+8),a2=P(tn,R+20),at=P(tn,R+26);
+  svg+='<line x1="'+a1[0]+'" y1="'+a1[1]+'" x2="'+a2[0]+'" y2="'+a2[1]+'" stroke="var(--ink)" stroke-width="2"/><text x="'+at[0]+'" y="'+(+at[1]-2)+'" font-size="10" text-anchor="'+(Math.abs(tn)<3?"middle":tn>0?"start":"end")+'" fill="var(--muted)">ист. север</text>';
+  /* satellite direction: dashed ray, marker on the scale, value outside */
+  var e1=P(mag,R+6),e0=P(mag,16),m1=P(mag,R+4),ml=P(mag-4,R+16),mr=P(mag+4,R+16),lt=P(mag,R+34),sx=Math.sin(mag*D2R),cy2=-Math.cos(mag*D2R);
+  svg+='<line x1="'+e0[0]+'" y1="'+e0[1]+'" x2="'+e1[0]+'" y2="'+e1[1]+'" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="7 5"/>';
+  svg+='<path d="M'+m1[0]+' '+m1[1]+'L'+ml[0]+' '+ml[1]+'L'+mr[0]+' '+mr[1]+'Z" fill="var(--accent)"/>';
+  var anc=Math.abs(sx)<0.35?"middle":sx>0?"start":"end",ly=+lt[1]+(cy2>0.35?14:cy2<-0.35?-2:5);
+  svg+='<text x="'+lt[0]+'" y="'+(ly-15)+'" font-size="11" text-anchor="'+anc+'" fill="var(--accent)">на спутник</text><text x="'+lt[0]+'" y="'+ly+'" font-size="16" font-weight="700" text-anchor="'+anc+'" fill="var(--accent)" style="font-family:var(--f-data)">'+deg(mag)+'</text>';
+  /* needle */
+  var nN=P(0,R-66),nS=P(180,R-66),nL=P(270,8),nR=P(90,8);
+  svg+='<path d="M'+nN[0]+' '+nN[1]+'L'+nR[0]+' '+nR[1]+'L'+nL[0]+' '+nL[1]+'Z" fill="#d23b2f"/><path d="M'+nS[0]+' '+nS[1]+'L'+nR[0]+' '+nR[1]+'L'+nL[0]+' '+nL[1]+'Z" fill="#9aa8b2"/>';
   svg+='<circle cx="'+c+'" cy="'+c+'" r="5" fill="var(--ink)"/>';
-  svg+='<text x="'+c+'" y="'+(c+R*0.45)+'" font-size="18" font-weight="700" text-anchor="middle" fill="var(--accent)" style="font-family:var(--f-data)">'+deg(mag)+'</text>';
-  $("cmpSvg").setAttribute("viewBox","-20 -20 360 360");
+  $("cmpSvg").setAttribute("viewBox","-30 -30 400 400");
   $("cmpSvg").innerHTML=svg;
 }
 
