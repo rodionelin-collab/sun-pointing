@@ -236,8 +236,18 @@ var SN_PTS=(function(){var p=[[ERR,-3.5],[-SN_AMP,-3.5],[SN_AMP,-3.5]],el=-3.5,s
   p.push([side*SN_AMP,0]);p.push([0,0]);return p})();
 var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],(SN_PTS[q][1]-SN_PTS[q-1][1])*12));
 function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*1.6*1.6)-(dEl*dEl)/(2*0.6*0.6))}
+/* slow-down: inside the signal zone (sig>0.1) the antenna moves 2x slower; outside speed unchanged */
+var SN_TAB=(function(){var tot=SN_LEN[SN_LEN.length-1],N=6000,c=[0],cost=0;
+  for(var j=1;j<=N;j++){var L=tot*(j-0.5)/N,i=1;while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;
+    var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));
+    cost+=(tot/N)*(sig(a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k)>0.1?2:1);c.push(cost)}
+  return c})();
+(function(){var r=SN_TAB[SN_TAB.length-1]/SN_LEN[SN_LEN.length-1],gap=T_END-SN_T1;SN_T1=SN_T0+(SN_T1-SN_T0)*r;T_END=SN_T1+gap})();
+window.__spDbg=function(){return {T0:SN_T0,T1:SN_T1,TE:T_END,snakeAt:snakeAt,sig:sig}};
+function snCostToLen(p){var C=SN_TAB,g=p*C[C.length-1],lo=0,hi=C.length-1;while(hi-lo>1){var m=(lo+hi)>>1;if(C[m]<g)lo=m;else hi=m}
+  var k=(g-C[lo])/((C[hi]-C[lo])||1);return (lo+k)/(C.length-1)*SN_LEN[SN_LEN.length-1]}
 function snakeAt(t){
-  var p=clamp((t-SN_T0)/(SN_T1-SN_T0)),L=p*SN_LEN[SN_LEN.length-1],i=1;
+  var p=clamp((t-SN_T0)/(SN_T1-SN_T0)),L=snCostToLen(p),i=1;
   while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;
   var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));
   return {az:a[0]+(b[0]-a[0])*k,el:a[1]+(b[1]-a[1])*k,p:p,idx:i};
