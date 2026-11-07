@@ -132,7 +132,7 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
 "use strict";
 var $=function(id){return document.getElementById(id)};
 /* video quality presets: the drawing is always laid out at 720×1280 and scaled down into the encoded frame */
-var QUAL={max:{w:720,h:1280,fps:25,br:4e6},mid:{w:540,h:960,fps:15,br:1.6e6},low:{w:432,h:768,fps:10,br:0.7e6}};
+var QUAL={max:{w:720,h:1280,fps:25,br:2e6},mid:{w:540,h:960,fps:15,br:1e6},low:{w:432,h:768,fps:10,br:0.5e6}};
 var OW=720,OH=1280,W=720,H=1280,FPS=25,GH=420,SLOW=2,   /* animations play at half speed in the video */
     BR=4e6,BRQ=(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));return /[?&]test=1/.test(location.search)&&b>0?b:0})();   /* 4 Mbit/s, keyframe every 2 s: browser hardware encoders blur thin lines and small text at low bitrates */
 var TEST=/[?&]test=1(&|$)/.test(location.search),TT=parseFloat(new URLSearchParams(location.search).get("tt"));if(isNaN(TT))TT=-1;   /* short clips for checking the pipeline */
