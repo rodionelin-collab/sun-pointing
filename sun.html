@@ -267,6 +267,7 @@ var SN_TAB=(function(){var tot=SN_LEN[SN_LEN.length-1],N=6000,c=[0],cost=0;
   return c})();
 (function(){var r=SN_TAB[SN_TAB.length-1]/SN_LEN[SN_LEN.length-1],gap=T_END-SN_T1;SN_T1=SN_T0+(SN_T1-SN_T0)*r;T_END=SN_T1+gap})();
 window.__spDbg=function(){return {T0:SN_T0,T1:SN_T1,TE:T_END,snakeAt:snakeAt,sig:sig}};
+function snPtAtG(L){var i=1;while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k]}
 function snCostToLen(p){var C=SN_TAB,g=p*C[C.length-1],lo=0,hi=C.length-1;while(hi-lo>1){var m=(lo+hi)>>1;if(C[m]<g)lo=m;else hi=m}
   var k=(g-C[lo])/((C[hi]-C[lo])||1);return (lo+k)/(C.length-1)*SN_LEN[SN_LEN.length-1]}
 function snakeAt(t){
@@ -663,20 +664,21 @@ var G=null;
   }
   markAntenna(scene.children.slice(ANT0,ANT1));
   /* fading trail of the converter during the snake (main 3D view only: not part of ANTSET, so the panels don't draw it) */
-  var EL_EX=6,TRAIL=[],TR_N=260,TR_DT=14,   /* EL_EX: the 0,5° elevation steps are drawn 6× larger in the main 3D view so the snake is visible */
-    trGeo=new THREE.SphereGeometry(0.014,8,6);
+  /* contrail of the converter during the snake: about two passes long (measured along the path), fading towards the tail.
+     The dish keeps its true elevation; only the trail spreads the 0,5° passes apart (TR_K metres per degree), so the head stays on the converter */
+  var TRAIL=[],TR_N=220,TR_LEN=150,TR_K=0.08,trGeo=new THREE.SphereGeometry(0.014,8,6);
   for(var ti=0;ti<TR_N;ti++){var tm=new THREE.Mesh(trGeo,new THREE.MeshBasicMaterial({color:0xe0650b,transparent:true,depthWrite:false}));tm.visible=false;scene.add(tm);TRAIL.push(tm)}
-  function drawTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8);
-    TRAIL.forEach(function(m,i){var tt=S.t-TR_DT*i/(TR_N-1);if(!on||tt<SN_T0){m.visible=false;return}
-      var sn=snakeAt(tt),g=dishGeom(SAT_AZ+sn.az,sn.el*EL_EX),q=W(g.lnb[0],g.lnb[1],g.lnb[2]),k=1-i/TR_N;
-      m.position.copy(q);m.scale.setScalar(0.6+0.4*k);m.material.opacity=0.85*k*fade;m.visible=true})}
+  function drawTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),L0=snCostToLen(clamp((S.t-SN_T0)/(SN_T1-SN_T0))),el0=S.dEl;
+    TRAIL.forEach(function(m,i){var L=L0-TR_LEN*i/(TR_N-1);if(!on||L<0){m.visible=false;return}
+      var q=snPtAtG(L),g=dishGeom(SAT_AZ+q[0],q[1]),v=W(g.lnb[0],g.lnb[1],g.lnb[2]),k=1-i/TR_N;v.y+=(q[1]-el0)*TR_K;
+      m.position.copy(v);m.scale.setScalar(0.7+0.3*k);m.material.opacity=(0.95*Math.pow(k,1.5)*fade);m.visible=true})}
   addPanel(vTop.cv,camTop(TOP.cx,TOP.cy,TOP.k),{shadows:true,frozen:true});   /* top and side views stop once the azimuth is found; the snake shows only in the snake panel and the back view */
   addPanel(vSide.cv,camSide(bh,SIDE.cx,SIDE.cy,SIDE.k),{shadows:true,frozen:true});
   addPanel(vBack.cv,camBack(BACK.cam),{shadows:true,back:true});
   if(PR){[vTop,vSide,vBack].forEach(function(v){["dishSh","armSh","stickSh","frame","mast","stick","dish","arm","lnb"].forEach(function(k){if(v.e[k])v.e[k].style.display="none"})});if(vBack.e.gOut)vBack.e.gOut.style.display="none"}
   G={render:function(S,SF){
-    var exE=S.t>SN_T0?S.dEl*EL_EX:S.dEl,g=dishGeom(S.dishAz,exE);
-    head.rotation.y=-S.dishAz*D;tiltP.rotation.x=exE*D;
+    var g=dishGeom(S.dishAz,S.dEl);
+    head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
     var sd=dirv(S.sunAz,S.sunEl),sv=W(sd[0],sd[1],sd[2]);
     sunL.position.copy(sv.clone().multiplyScalar(18));sunL.target.position.set(0,0,0);
     var sp=W(sd[0]*7,sd[1]*7,0.6+sd[2]*7);sunMesh.position.copy(sp);glow.position.copy(sp);sunLbl.position.copy(sp).add(new THREE.Vector3(0,0.6,0));
