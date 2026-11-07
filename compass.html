@@ -288,6 +288,9 @@ function setA(e,a){for(var k in a)e.setAttribute(k,typeof a[k]==="number"?a[k].t
 function ptsStr(a){return a.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1)}).join(" ")}
 function tr(x,y,r,s){return "translate("+x.toFixed(1)+" "+y.toFixed(1)+")"+(r!==undefined?" rotate("+r.toFixed(1)+")":"")+(s!==undefined?" scale("+s+")":"")}
 
+function mkPanelCanvas(svg,before,w,h){w=w||320;h=h||260;var fo=document.createElementNS(NS,"foreignObject");fo.setAttribute("x",0);fo.setAttribute("y",0);fo.setAttribute("width",w);fo.setAttribute("height",h);
+  var cv=document.createElementNS("http://www.w3.org/1999/xhtml","canvas");cv.width=2*w;cv.height=2*h;cv.setAttribute("style","width:"+w+"px;height:"+h+"px;display:block");fo.appendChild(cv);
+  if(before)svg.insertBefore(fo,before);else svg.appendChild(fo);return cv}
 /* ================= panel 1: the phone compass (phone upright, rose turns) ================= */
 var COMPV=(function(){
   var svg=$("vComp"),cx=160,cy=126;
@@ -334,6 +337,7 @@ var TOPV=(function(){
   var svg=$("vTop"),k=17,AS=2.6,cen=[1.4*bw[0],1.4*bw[1]],ox=160,oy=140;
   function P(p){return [ox+(p[0]-cen[0])*k,oy-(p[1]-cen[1])*k]}
   function PA(p){return P([p[0]*AS,p[1]*AS])}            /* antenna drawn 1.8× larger for legibility */
+  var cv=mkPanelCanvas(svg);
   var sight=mk("line",{stroke:"var(--cyan)","stroke-width":2,"stroke-dasharray":"7 5"},svg);
   var guide=mk("line",{"stroke-width":3.5,"stroke-linecap":"round",opacity:0},svg);
   var frame=mk("path",{fill:"none",stroke:"#5d7a8e","stroke-width":2,"stroke-linejoin":"round"},svg);
@@ -354,7 +358,7 @@ var TOPV=(function(){
   var mNT=mk("text",{"font-size":9,fill:"var(--red)","text-anchor":"end"},svg);mNT.textContent="С магн.";
   
   var lab=mk("text",{x:12,y:254,"font-size":12,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
-  return {draw:function(S,g){
+  return {cv:cv,camArgs:[ox-cen[0]*k,oy+cen[1]*k,k],AS:AS,hide:[frame,dish,arm,lnb,mast],draw:function(S,g){
     var c=P(S.cp);setA(comp,{transform:tr(c[0],c[1],S.heading)});setA(compT,{x:c[0]+12,y:c[1]+4});
     setA(tN,{x1:c[0],y1:c[1]-10,x2:c[0],y2:c[1]-34});setA(tNT,{x:c[0],y:c[1]-37});
     var mx=c[0]+24*Math.sin(DECL*D),my=c[1]-24*Math.cos(DECL*D);setA(mN,{x1:c[0]+10*Math.sin(DECL*D),y1:c[1]-10*Math.cos(DECL*D),x2:mx,y2:my});setA(mNT,{x:mx-3,y:my-2});
@@ -415,6 +419,7 @@ var BACKV=(function(){
   var stake=mk("g",{},svg);var sPole=mk("line",{stroke:"var(--warn)","stroke-width":3},stake);var sFlag=mk("path",{fill:"var(--warn)"},stake);
   var satG=mk("g",{},svg);mk("rect",{x:-4,y:-3.5,width:8,height:7,fill:"var(--cyan)"},satG);mk("rect",{x:-14,y:-2,width:9,height:4,fill:"none",stroke:"var(--cyan)","stroke-width":1.2},satG);mk("rect",{x:5,y:-2,width:9,height:4,fill:"none",stroke:"var(--cyan)","stroke-width":1.2},satG);
   var satRay=mk("line",{stroke:"var(--cyan)","stroke-width":1.3,"stroke-dasharray":"6 5"},svg);
+  var cv=mkPanelCanvas(svg);
   var dish=mk("polygon",{fill:"#d5e1e8",stroke:"var(--cyan)","stroke-width":1.6},svg);
   var frame=mk("path",{fill:"none",stroke:"#5d7a8e","stroke-width":2.5,"stroke-linejoin":"round"},svg);
   var mast=mk("line",{stroke:"#4e6676","stroke-width":4,"stroke-linecap":"round"},svg);
@@ -428,7 +433,7 @@ var BACKV=(function(){
   var lnbI=mk("circle",{r:7,fill:"none",stroke:"#3a444b","stroke-width":1.4,"stroke-dasharray":"3 2.5"},gIn);
   var cross=mk("line",{x1:160,y1:14,x2:160,y2:250,stroke:"var(--green)","stroke-width":1,"stroke-dasharray":"3 4",opacity:0},svg);
   var lab=mk("text",{x:12,y:22,"font-size":11,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
-  return {draw:function(S,g){
+  return {cv:cv,cam:{eye:eye,fw:fw,up:up,f:f,cx:cx,cy:cy},hide:[dish,frame,mast,gOut],draw:function(S,g){
     var sd=Pd(dirv(SAT_AZ,SAT_EL)),c=P(g.C);
     if(sd){setA(satG,{transform:tr(sd[0],Math.max(14,sd[1]))});setA(satRay,{x1:c[0],y1:c[1],x2:sd[0],y2:Math.max(14,sd[1])})}
     var b0=P([STAKE[0],STAKE[1],0]),b1=P([STAKE[0],STAKE[1],STAKE_H]);
@@ -474,6 +479,7 @@ var G=null;
   var legM=new THREE.MeshStandardMaterial({color:0xb4c0c8,metalness:.3,roughness:.55});
   var trx=new THREE.MeshStandardMaterial({color:0x3a444b,metalness:.35,roughness:.5});
   function rod(a,b,r,mat){var d=new THREE.Vector3().subVectors(b,a),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),10),mat);m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());m.castShadow=true;return m}
+  var ANT0=scene.children.length;
   /* tripod */
   scene.add(rod(W(0,0,0.08),W(0,0,MAST_H),0.045,legM));
   TRI.legs.forEach(function(sg){scene.add(rod(V(sg[0]),V(sg[1]),0.022,legM))});
@@ -494,6 +500,7 @@ var G=null;
   for(var f=-3;f<=3;f++){var fin=new THREE.Mesh(new THREE.BoxGeometry(0.17,0.12,0.012),trx);fin.position.z=f*0.03;lnb.add(fin)}
   var horn=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.03,0.12,16),trx);horn.position.copy(V([g0.C[0]-g0.lnb[0],g0.C[1]-g0.lnb[1],g0.C[2]-g0.lnb[2]]).normalize().multiplyScalar(0.12));horn.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),horn.position.clone().normalize());lnb.add(horn);
   tiltI.add(lnb);
+  var ANT1=scene.children.length;
   /* satellite */
   var sat=new THREE.Group(),cyanM=new THREE.MeshBasicMaterial({color:0x0a8fb3});sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.22,0.22,0.22),cyanM));
   [-1,1].forEach(function(s){var p=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.02,0.18),new THREE.MeshBasicMaterial({color:0x2d6f8a}));p.position.x=s*0.38;sat.add(p)});
@@ -540,6 +547,35 @@ var G=null;
   $("camReset").addEventListener("click",function(){userCam=false;this.hidden=true});
   function resize(){var w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<1.3?58:42;camera.updateProjectionMatrix()}
   if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);resize();
+  /* ===== the same 3D antenna, rendered into the flat views with matching projections ===== */
+  var PR=null,PANELS=[],PRS=760;
+  try{PR=new THREE.WebGLRenderer({antialias:true,alpha:true});PR.setPixelRatio(1);PR.setSize(PRS,PRS,false);PR.shadowMap.enabled=true;PR.shadowMap.type=THREE.PCFSoftShadowMap;if(THREE.sRGBEncoding)PR.outputEncoding=THREE.sRGBEncoding;PR.setClearColor(0x000000,0);PR.toneMapping=THREE.LinearToneMapping;PR.toneMappingExposure=0.72}catch(e){PR=null}
+  function camTop(sx0,sy0,ks,w,h){w=w||320;h=h||260;var c=new THREE.OrthographicCamera(-sx0/ks,(w-sx0)/ks,sy0/ks,-(h-sy0)/ks,1,200);c.position.set(0,80,0);c.up.set(0,0,-1);c.lookAt(0,0,0);return c}
+  function camSide(bhv,cx,cy,k,w,h){w=w||320;h=h||260;var R=new THREE.Vector3(bhv[0],0,-bhv[1]),back=new THREE.Vector3().crossVectors(R,new THREE.Vector3(0,1,0)).normalize();
+    var c=new THREE.OrthographicCamera(-cx/k,(w-cx)/k,cy/k,-(h-cy)/k,1,200);c.position.copy(back.multiplyScalar(80));c.up.set(0,1,0);c.lookAt(0,0,0);return c}
+  function camBack(o,w,h){w=w||320;h=h||260;var c=new THREE.PerspectiveCamera(2*Math.atan(o.cy/o.f)*180/Math.PI,o.cx/o.cy,0.05,200);c.setViewOffset(2*o.cx,2*o.cy,0,0,w,h);
+    var e=W(o.eye[0],o.eye[1],o.eye[2]);c.position.copy(e);c.up.copy(W(o.up[0],o.up[1],o.up[2]));c.lookAt(e.clone().add(W(o.fw[0],o.fw[1],o.fw[2])));c.updateProjectionMatrix();return c}
+  function addPanel(cv,cam,obs){if(!PR||!cv)return;obs=obs||{};var p={cv:cv,ctx:cv.getContext("2d"),cam:cam,vis:true,scale:obs.scale||1,shadows:!!obs.shadows};
+    if(window.IntersectionObserver){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}
+  var ANTSET=new Set();
+  function markAntenna(list){list.forEach(function(o){if(!o.isSprite)ANTSET.add(o)})}
+  var CATCH=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.ShadowMaterial({opacity:0.22}));CATCH.rotation.x=-Math.PI/2;CATCH.position.y=0.002;CATCH.receiveShadow=true;CATCH.visible=false;scene.add(CATCH);
+  function renderPanels(){
+    if(!PR||!PANELS.length)return;
+    var saved=[];scene.children.forEach(function(o){if(o.isLight||o===CATCH)return;var on=ANTSET.has(o);if(o.visible!==on){saved.push([o,o.visible]);o.visible=on}});
+    var bg=scene.background,fog=scene.fog;scene.background=null;scene.fog=null;
+    PANELS.forEach(function(p){if(!p.vis)return;var cw=p.cv.width,ch=p.cv.height,sc=p.scale;
+      if(sc!==1)ANTSET.forEach(function(o){o.scale.multiplyScalar(sc);o.position.multiplyScalar(sc)});
+      CATCH.visible=p.shadows;PR.setViewport(0,0,cw,ch);PR.render(scene,p.cam);
+      p.ctx.clearRect(0,0,cw,ch);p.ctx.drawImage(PR.domElement,0,PRS-ch,cw,ch,0,0,cw,ch);
+      if(sc!==1)ANTSET.forEach(function(o){o.scale.multiplyScalar(1/sc);o.position.multiplyScalar(1/sc)});
+    });
+    CATCH.visible=false;scene.background=bg;scene.fog=fog;saved.forEach(function(s){s[0].visible=s[1]});
+  }
+  markAntenna(scene.children.slice(ANT0,ANT1));
+  addPanel(TOPV.cv,camTop.apply(null,TOPV.camArgs),{scale:TOPV.AS});
+  addPanel(BACKV.cv,camBack(BACKV.cam));
+  if(PR)TOPV.hide.concat(BACKV.hide).forEach(function(e){e.style.display="none"});
   G={render:function(S){
     head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
     comp.position.copy(W(S.cp[0],S.cp[1],0));
@@ -556,6 +592,7 @@ var G=null;
       camera.position.copy(W(R*Math.sin(ca),R*Math.cos(ca),3+4*up));camera.lookAt(target);if(controls)controls.target.copy(target)}
     if(controls&&userCam)controls.update();
     renderer.render(scene,camera);
+    renderPanels();
   }};
 })();
 
