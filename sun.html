@@ -210,6 +210,11 @@ var SUN_AZ0=SUNM?SUNM.az0:SAT_AZ-32;
 var CLK0=SUNM?SUNM.t-29*60000:(function(){return DAY0+9*3600000})();
 TOK.TIME=hhmm(CLK0+29*60000);
 var MTX=CLK0+29*60000;                       /* moment of exact coincidence */
+/* the sun's real path on the planned date: step 1 shows it travelling across the sky for up to 3 h before the match */
+var SUN_PATH=(function(){if(!SUNM)return null;var a=[];for(var m=-180;m<=180;m+=3){var tt=MTX+m*60000,p=sunPos(new Date(tt),PRM.lat,PRM.lon);a.push({t:tt,az:p.az,el:p.el})}return a})();
+var SUN_T0=(function(){if(!SUN_PATH)return MTX;for(var i=0;i<SUN_PATH.length;i++)if(SUN_PATH[i].el>=4&&SUN_PATH[i].t<=MTX)return SUN_PATH[i].t;return MTX-24*60000})();
+function sunAt(tt){var p=sunPos(new Date(tt),PRM.lat,PRM.lon);return p}
+var SUN_EL_CUR=null;
 var WIN=(function(){                         /* window while the sun is within ±1° of the satellite azimuth */
   if(!SUNM)return [MTX-3*60000,MTX+3*60000];
   function at(tg,lo,hi){var fl=w180(sunPos(new Date(lo),PRM.lat,PRM.lon).az-tg),fh=w180(sunPos(new Date(hi),PRM.lat,PRM.lon).az-tg);if(Math.sign(fl)===Math.sign(fh))return null;
@@ -256,7 +261,9 @@ function snakeAt(t){
   return {az:a[0]+(b[0]-a[0])*k,el:a[1]+(b[1]-a[1])*k,p:p,idx:i,frac:k,L:L};
 }
 function state(t){
-  var p1=ease(t/6),sunAz=SUN_AZ0+w180(SAT_AZ-SUN_AZ0)*p1;
+  var p1=ease(t/6),sunAz=SUN_AZ0+w180(SAT_AZ-SUN_AZ0)*p1,sunEl=SUN_EL,clk=null;
+  if(SUNM){var tt=t<6?SUN_T0+(MTX-SUN_T0)*p1:MTX,sp=sunAt(tt);sunAz=t<6?sp.az:SAT_AZ;sunEl=Math.max(6,t<6?sp.el:SUNM.el);clk=t<6?tt:null}
+  SUN_EL_CUR=sunEl;
   var rot=ease((t-8)/3.6);
   var sn=snakeAt(t);
   var dishAz=104+(SAT_AZ-104)*rot+sn.az,dEl=sn.el;
@@ -265,7 +272,7 @@ function state(t){
   var dAz=Math.abs(dishAz-sunAz);
   var lvl=t<11.4?0:sig(dishAz-SAT_AZ,dEl);
   var gv=t>=8?clamp((t-8)/0.6)*(1-clamp((t-14.6)/0.6)):0;
-  return {sn:sn,dEl:dEl,gv:gv,t:t,sunAz:sunAz,dishAz:dishAz,step:step,secs:secs,dAz:dAz,par:t>=11.4&&t<14.6&&dAz<0.8?clamp((t-11.4)/0.5):0,lvl:Math.max(0,Math.min(1,lvl)),pulse:t>=6&&t<7.8?clamp((t-6)/1.6):-1};
+  return {sn:sn,dEl:dEl,gv:gv,t:t,sunAz:sunAz,sunEl:sunEl,clk:clk,dishAz:dishAz,step:step,secs:secs,dAz:dAz,par:t>=11.4&&t<14.6&&dAz<0.8?clamp((t-11.4)/0.5):0,lvl:Math.max(0,Math.min(1,lvl)),pulse:t>=6&&t<7.8?clamp((t-6)/1.6):-1};
 }
 /* world: x east, y north, z up (metres) */
 var MAST_H=0.95, STICK=[1.7*Math.sin(SAT_AZ*D)+1.5*Math.cos(SAT_AZ*D),1.7*Math.cos(SAT_AZ*D)-1.5*Math.sin(SAT_AZ*D)], STICK_H=0.95, FRAME=0.62;
@@ -279,7 +286,7 @@ function dishGeom(az,dEl){
   for(var k=0;k<40;k++){var t=k/40*2*Math.PI;rim.push(at(R*Math.cos(t),R*Math.sin(t),0))}
   return {C:C,n:n,u1:u1,u2:u2,R:R,rim:rim,root:at(0,-0.92*R,0.02),lnb:at(0,-0.25,0.95),strutL:at(-0.92*R,0.1,0),strutR:at(0.92*R,0.1,0),armMid:at(0,-0.35,0.5),person:[-1.15*s-0.55*c,-1.15*c+0.55*s,0]};
 }
-function shadowPt(p,sunAz){var k=p[2]/Math.tan(SUN_EL*D);return [p[0]-Math.sin(sunAz*D)*k,p[1]-Math.cos(sunAz*D)*k,0]}
+function shadowPt(p,sunAz){var k=p[2]/Math.tan((SUN_EL_CUR||SUN_EL)*D);return [p[0]-Math.sin(sunAz*D)*k,p[1]-Math.cos(sunAz*D)*k,0]}
 /* tripod, as in the product photo: three legs with foot plates, braces to the pipe */
 var TRI=(function(){
   var legs=[],braces=[],feet=[];
@@ -354,7 +361,7 @@ function drawView(v,S,g){
   var ss=p2(shadowPt([STICK[0],STICK[1],STICK_H],S.sunAz));setA(e.stickSh,{x1:s0[0],y1:s0[1],x2:ss[0],y2:ss[1]});
   var r0=p2(g.root),l0=p2(g.lnb);setA(e.arm,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});var cc=p2(g.C),la=Math.atan2(l0[1]-cc[1],l0[0]-cc[0])/D,ls2=Math.max(0.55,Math.min(1,Math.hypot(l0[0]-cc[0],l0[1]-cc[1])/30));e.lnb.setAttribute("transform","translate("+l0[0].toFixed(1)+" "+l0[1].toFixed(1)+") rotate("+la.toFixed(1)+") scale("+ls2.toFixed(2)+" 1)");
   var rs=p2(shadowPt(g.root,S.sunAz)),ls=p2(shadowPt(g.lnb,S.sunAz));setA(e.armSh,{x1:rs[0],y1:rs[1],x2:ls[0],y2:ls[1]});
-  var c=p2(g.C),sd=P.dir(dirv(SAT_AZ,SAT_EL),g.C),un=P.dir(dirv(S.sunAz,SUN_EL),g.C);
+  var c=p2(g.C),sd=P.dir(dirv(SAT_AZ,SAT_EL),g.C),un=P.dir(dirv(S.sunAz,S.sunEl),g.C);
   if(sd){setA(e.satRay,{x1:c[0],y1:c[1],x2:sd[0],y2:sd[1],opacity:1});setA(e.sat,{transform:"translate("+sd[0].toFixed(1)+" "+sd[1].toFixed(1)+")",opacity:1})}else{setA(e.satRay,{opacity:0});setA(e.sat,{opacity:0})}
   if(un){setA(e.sunRay,{x1:c[0],y1:c[1],x2:un[0],y2:un[1],opacity:1});setA(e.sun,{transform:"translate("+un[0].toFixed(1)+" "+un[1].toFixed(1)+")",opacity:1})}else{setA(e.sunRay,{opacity:0});setA(e.sun,{opacity:0})}
   if(sd&&S.pulse>=0)setA(e.pulse,{cx:sd[0],cy:sd[1],r:10+S.pulse*22,opacity:1-S.pulse});else setA(e.pulse,{opacity:0});
@@ -407,7 +414,7 @@ var vSide=buildView($("vSide"),{proj:SIDE,bg:function(svg){
   for(var x=8;x<320;x+=14)mk("line",{x1:x,y1:SIDE.cy+1,x2:x-8,y2:SIDE.cy+9,stroke:"var(--grid)","stroke-width":1.2},svg);
 },extra:function(v){
   v.e.elSat=mk("text",{"font-size":10,fill:"var(--cyan)"},v.svg);v.e.elSun=mk("text",{"font-size":10,fill:"var(--amber)"},v.svg);
-  v.update=function(S,g){var sd=SIDE.dir(dirv(SAT_AZ,SAT_EL),g.C),un=SIDE.dir(dirv(S.sunAz,SUN_EL),g.C);setA(v.e.elSat,{x:sd[0]-6,y:sd[1]-12,"text-anchor":"end"});v.e.elSat.textContent="спутник "+F1(SAT_EL)+"°";setA(v.e.elSun,{x:un[0]-4,y:un[1]+26,"text-anchor":"end"});v.e.elSun.textContent="солнце "+F1(SUN_EL_REAL)+"°"};
+  v.update=function(S,g){var sd=SIDE.dir(dirv(SAT_AZ,SAT_EL),g.C),un=SIDE.dir(dirv(S.sunAz,S.sunEl),g.C);setA(v.e.elSat,{x:sd[0]-6,y:sd[1]-12,"text-anchor":"end"});v.e.elSat.textContent="спутник "+F1(SAT_EL)+"°";setA(v.e.elSun,{x:un[0]-4,y:un[1]+26,"text-anchor":"end"});v.e.elSun.textContent="солнце "+F1(SUN_EL_REAL)+"°"};
   v.noPar=true}});
 var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
   var hy=BACK.horizonY();
@@ -560,6 +567,9 @@ var G=null;
   var satDir=dirv(SAT_AZ,SAT_EL);sat.position.copy(W(satDir[0]*6.5,satDir[1]*6.5,1+satDir[2]*6.5));scene.add(sat);
   var satLbl=label("спутник","#111111",0.8,true);satLbl.position.copy(sat.position).add(new THREE.Vector3(0,0.45,0));scene.add(satLbl);
   var satLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(dishGeom(SAT_AZ).C),sat.position.clone()]),new THREE.LineDashedMaterial({color:0x0a8fb3,dashSize:.18,gapSize:.12}));satLine.computeLineDistances();scene.add(satLine);
+  /* dashed trail of the sun's path across the sky (from the start of the animation to 3 h after the match) */
+  if(SUN_PATH){var trailPts=SUN_PATH.filter(function(q){return q.t>=SUN_T0&&q.el>0}).map(function(q){var d=dirv(q.az,Math.max(6,q.el));return W(d[0]*7,d[1]*7,0.6+d[2]*7)});
+    if(trailPts.length>1){var trail=new THREE.Line(new THREE.BufferGeometry().setFromPoints(trailPts),new THREE.LineDashedMaterial({color:0xe39a1e,dashSize:.18,gapSize:.14,transparent:true,opacity:.75}));trail.computeLineDistances();scene.add(trail)}}
   var sunLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(1,1,1)]),new THREE.LineDashedMaterial({color:0xd98a00,dashSize:.08,gapSize:.12}));scene.add(sunLine);
   var pulse=new THREE.Mesh(new THREE.RingGeometry(0.3,0.36,48),new THREE.MeshBasicMaterial({color:0x1f9d63,transparent:true,side:THREE.DoubleSide,depthWrite:false}));scene.add(pulse);
   /* parallel guide lines on the ground */
@@ -621,7 +631,7 @@ var G=null;
   G={render:function(S){
     var g=dishGeom(S.dishAz,S.dEl);
     head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
-    var sd=dirv(S.sunAz,SUN_EL),sv=W(sd[0],sd[1],sd[2]);
+    var sd=dirv(S.sunAz,S.sunEl),sv=W(sd[0],sd[1],sd[2]);
     sunL.position.copy(sv.clone().multiplyScalar(18));sunL.target.position.set(0,0,0);
     var sp=W(sd[0]*7,sd[1]*7,0.6+sd[2]*7);sunMesh.position.copy(sp);glow.position.copy(sp);sunLbl.position.copy(sp).add(new THREE.Vector3(0,0.6,0));
     var c=V(g.C);sunLine.geometry.setFromPoints([c,sp]);sunLine.computeLineDistances();
@@ -651,7 +661,7 @@ var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce
 var T=reduce?13.5:0,playing=!reduce,last=null,lastStep=-1;
 function frame(t){
   var S=state(t);LASTS=S;
-  var hl=t>=6&&t<14.6;$("clock").textContent=hl?hhmm(MTX,true):hhmm(CLK0+S.secs*1000,true);$("clock").classList.toggle("is-match",hl);$("matchMsg").hidden=!hl;
+  var hl=t>=6&&t<14.6;$("clock").textContent=hl?hhmm(MTX,true):hhmm(S.clk!=null?S.clk:CLK0+S.secs*1000,true);$("clock").classList.toggle("is-match",hl);$("matchMsg").hidden=!hl;
   if(S.step!==lastStep){lastStep=S.step;$("cap").innerHTML="<b>"+(S.step+1)+"/5</b>"+STEPS[S.step][1];
     chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
   $("prog").style.width=(t/T_END*100).toFixed(2)+"%";
