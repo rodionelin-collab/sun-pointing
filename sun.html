@@ -458,12 +458,12 @@ var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
   var hidTxt=mk("text",{"font-size":9.5,fill:"var(--muted)",display:"none"},svg);hidTxt.textContent="";
   svg.appendChild(v.e.cross);
   /* fading trail of the converter during the snake, as seen from behind the dish */
-  var BT_N=140,BT_DT=14,BT_K=16,btl=[];   /* BT_K: px per degree of elevation, spreads the 0,5° passes apart so the snake reads */
-  for(var bi=0;bi<BT_N;bi++)btl.push(mk("line",{stroke:"#e0650b","stroke-width":2.2,"stroke-linecap":"round",opacity:0},svg));
-  function backTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),prev=null,el0=snakeAt(S.t).el;
+  var BT_N=240,BT_DT=40,BT_GAP=3.5,btl=[];
+  for(var bi=0;bi<BT_N;bi++)btl.push(mk("line",{stroke:"#e0650b","stroke-width":1.6,"stroke-linecap":"round",opacity:0},svg));
+  function backTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),prev=null;
     for(var i=0;i<=BT_N;i++){var tt=S.t-BT_DT*i/BT_N,p=null;
-      if(on&&tt>=SN_T0){var sn=snakeAt(tt);p=BACK.pt(dishGeom(SAT_AZ+sn.az,sn.el).lnb);p=[p[0],p[1]-(sn.el-el0)*BT_K]}
-      if(i>0){var ln=btl[i-1];if(p&&prev)setA(ln,{x1:prev[0],y1:prev[1],x2:p[0],y2:p[1],opacity:(0.9*(1-i/BT_N)*fade).toFixed(3)});else setA(ln,{opacity:0})}
+      if(on&&tt>=SN_T0){var sn=snakeAt(tt);p=BACK.pt(dishGeom(SAT_AZ+sn.az,SN_PTS[0][1]).lnb);p=[p[0],p[1]-(sn.el-SN_PTS[0][1])/0.5*BT_GAP]}   /* anchored: the first pass stays put, each next 0,5° pass is drawn BT_GAP px above it */
+      if(i>0){var ln=btl[i-1];if(p&&prev)setA(ln,{x1:prev[0],y1:prev[1],x2:p[0],y2:p[1],opacity:(0.9*(1-0.75*i/BT_N)*fade).toFixed(3)});else setA(ln,{opacity:0})}
       prev=p}}
   v.update=function(S,g){
     setA(v.e.cross,{opacity:S.par});backTrail(S);
@@ -635,7 +635,7 @@ var G=null;
     var c=new THREE.OrthographicCamera(-cx/k,(w-cx)/k,cy/k,-(h-cy)/k,1,200);c.position.copy(back.multiplyScalar(80));c.up.set(0,1,0);c.lookAt(0,0,0);return c}
   function camBack(o,w,h){w=w||320;h=h||260;var c=new THREE.PerspectiveCamera(2*Math.atan(o.cy/o.f)*180/Math.PI,o.cx/o.cy,0.05,200);c.setViewOffset(2*o.cx,2*o.cy,0,0,w,h);
     var e=W(o.eye[0],o.eye[1],o.eye[2]);c.position.copy(e);c.up.copy(W(o.up[0],o.up[1],o.up[2]));c.lookAt(e.clone().add(W(o.fw[0],o.fw[1],o.fw[2])));c.updateProjectionMatrix();return c}
-  function addPanel(cv,cam,obs){if(!PR||!cv)return;obs=obs||{};var p={cv:cv,ctx:cv.getContext("2d"),cam:cam,vis:true,scale:obs.scale||1,shadows:!!obs.shadows,frozen:!!obs.frozen};
+  function addPanel(cv,cam,obs){if(!PR||!cv)return;obs=obs||{};var p={cv:cv,ctx:cv.getContext("2d"),cam:cam,vis:true,scale:obs.scale||1,shadows:!!obs.shadows,frozen:!!obs.frozen,back:!!obs.back};
     if(window.IntersectionObserver&&!REC){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}window.__spPanels=PANELS;
   var ANTSET=new Set();
   function markAntenna(list){list.forEach(function(o){if(!o.isSprite)ANTSET.add(o)})}
@@ -647,7 +647,7 @@ var G=null;
     var bg=scene.background,fog=scene.fog;scene.background=null;scene.fog=null;
     PANELS.forEach(function(p){if(!p.vis)return;var cw=p.cv.width,ch=p.cv.height,sc=p.scale;
       if(sc!==1)ANTSET.forEach(function(o){o.scale.multiplyScalar(sc);o.position.multiplyScalar(sc)});
-      pose(p.frozen?SF:S);CATCH.visible=p.shadows;PR.setViewport(0,0,cw,ch);PR.render(scene,p.cam);
+      pose(p.frozen?SF:p.back?backS(S):S);CATCH.visible=p.shadows;PR.setViewport(0,0,cw,ch);PR.render(scene,p.cam);
       p.ctx.clearRect(0,0,cw,ch);p.ctx.drawImage(PR.domElement,0,PRS-ch,cw,ch,0,0,cw,ch);
       if(sc!==1)ANTSET.forEach(function(o){o.scale.multiplyScalar(1/sc);o.position.multiplyScalar(1/sc)});
     });
@@ -664,7 +664,7 @@ var G=null;
       m.position.copy(q);m.scale.setScalar(0.6+0.4*k);m.material.opacity=0.85*k*fade;m.visible=true})}
   addPanel(vTop.cv,camTop(TOP.cx,TOP.cy,TOP.k),{shadows:true,frozen:true});   /* top and side views stop once the azimuth is found; the snake shows only in the snake panel and the back view */
   addPanel(vSide.cv,camSide(bh,SIDE.cx,SIDE.cy,SIDE.k),{shadows:true,frozen:true});
-  addPanel(vBack.cv,camBack(BACK.cam),{shadows:true});
+  addPanel(vBack.cv,camBack(BACK.cam),{shadows:true,back:true});
   if(PR){[vTop,vSide,vBack].forEach(function(v){["dishSh","armSh","stickSh","frame","mast","stick","dish","arm","lnb"].forEach(function(k){if(v.e[k])v.e[k].style.display="none"})});if(vBack.e.gOut)vBack.e.gOut.style.display="none"}
   G={render:function(S,SF){
     var exE=S.t>SN_T0?S.dEl*EL_EX:S.dEl,g=dishGeom(S.dishAz,exE);
@@ -698,6 +698,8 @@ var G=null;
 /* ================= playback ================= */
 var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 var T=reduce?13.5:0,playing=!reduce,last=null,lastStep=-1;
+var BK_EX=1;   /* back view keeps the true elevation; the trail spreads the passes in screen space instead */
+function backS(S){return S.t>SN_T0?Object.assign({},S,{dEl:S.dEl*BK_EX}):S}
 var FROZ=null;   /* state at the moment the azimuth is found (shadows parallel, just before the snake) */
 function frame(t){
   var S=state(t);LASTS=S;
@@ -708,7 +710,7 @@ function frame(t){
   barEls.forEach(function(b,k){b.style.background=(k/16<S.lvl||(k===0&&S.lvl>0.01))?(S.lvl>0.93?"var(--green)":"var(--cyan)"):"var(--grid)"});
   var st=$("sigTxt");st.textContent=Math.round(S.lvl*100)+"% · "+(S.lvl>0.93?"максимум":S.lvl>0.3?"есть":S.lvl>0.01?"слабый":"нет");st.style.color=S.lvl>0.93?"var(--green)":S.lvl>0.01?"var(--cyan)":"var(--muted)";
   var SF=t>14.5?(FROZ||(FROZ=state(14.5))):S,g=dishGeom(S.dishAz,S.dEl),gF=dishGeom(SF.dishAz,SF.dEl);
-  views.forEach(function(v){var fz=v!==vBack;drawView(v,fz?SF:S,fz?gF:g)});SNK.draw(S);
+  var SB=backS(S);views.forEach(function(v){var fz=v!==vBack;drawView(v,fz?SF:SB,fz?gF:dishGeom(SB.dishAz,SB.dEl))});SNK.draw(S);
   if(G)G.render(S,SF);
 }
 function loop(ts){
