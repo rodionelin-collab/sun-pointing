@@ -273,7 +273,11 @@ var SATS=[
 var $=function(id){return document.getElementById(id)};
 var S={lat:52.2869,lon:104.3050,tz:8,satLon:145.0,satName:"Экспресс-АМУ7",decl:0,declManual:false,offset:24,H:600,W:550,tab:"dish",sunDate:null,sunTime:null};
 try{var saved=JSON.parse(localStorage.getItem("installer-helper")||"null");if(saved)Object.assign(S,saved)}catch(e){}
-function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual}))}catch(e){}}
+function placeName(){var cs=document.getElementById("city");if(cs&&cs.value!=="")return CITIES[+cs.value][0];return S.lat.toFixed(4)+", "+S.lon.toFixed(4)}
+function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,place:placeName(),offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual}))}catch(e){}
+  /* pass the chosen point and satellite to the animation pages */
+  var q="?lat="+S.lat.toFixed(5)+"&lon="+S.lon.toFixed(5)+"&tz="+S.tz+"&satLon="+S.satLon+"&decl="+S.decl+"&sat="+encodeURIComponent(S.satName||"")+"&place="+encodeURIComponent(placeName());
+  document.querySelectorAll('a[href^="sun.html"],a[href^="compass.html"],a[href^="magnetic.html"]').forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+q)})}
 
 /* ---------- geometry ---------- */
 function look(lat,lon,satLon){
