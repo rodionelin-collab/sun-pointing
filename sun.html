@@ -157,8 +157,9 @@ function sunPos(date,lat,lon){
 function w180(x){x=((x%360)+360)%360;return x>180?x-360:x}
 var LK=lookAngles(PRM.lat,PRM.lon,PRM.satLon);
 var DEMO=LK.el<5?"Спутник «"+PRM.satName+"» из этой точки не виден или стоит слишком низко — показан пример.":"";
-var AZ=DEMO?150:Math.round(LK.az), ELV=DEMO?32:Math.round(LK.el*10)/10, DECLR=DEMO?-5:Math.round(PRM.decl);
-var MAGR=((AZ-DECLR)%360+360)%360;
+var AZ=DEMO?150:Math.round(LK.az*10)/10, ELV=DEMO?32:Math.round(LK.el*10)/10, DECLR=DEMO?-5:Math.round(PRM.decl*10)/10;
+var MAGR=Math.round((((AZ-DECLR)%360+360)%360)*10)/10;
+function F1(x){return (Math.round(x*10)/10).toFixed(1).replace(".",",")}
 /* sun: today's moment when the sun azimuth equals the satellite azimuth */
 var SUNM=(function(){
   if(DEMO)return null;
@@ -170,11 +171,11 @@ var SUNM=(function(){
   return null;
 })();
 function hhmm(ms,sec){var d=new Date(ms+PRM.tz*3600000),p=function(n){return String(n).padStart(2,"0")};return p(d.getUTCHours())+":"+p(d.getUTCMinutes())+(sec?":"+p(d.getUTCSeconds()):"")}
-var TOK={AZ:String(AZ),MAG:String(MAGR),EL:String(ELV).replace(".",","),D:String(Math.abs(DECLR)),SAT:PRM.satName,PLACE:PRM.place,
-  DECLS:(DECLR>0?"+":DECLR<0?"−":"")+Math.abs(DECLR)+"°",
+var TOK={AZ:F1(AZ),MAG:F1(MAGR),EL:F1(ELV),D:F1(Math.abs(DECLR)),SAT:PRM.satName,PLACE:PRM.place,
+  DECLS:(DECLR>0?"+":DECLR<0?"−":"")+F1(Math.abs(DECLR))+"°",
   SIDE:DECLR<0?"левее":"правее",
-  CALC:DECLR===0?String(AZ):DECLR<0?AZ+" + "+Math.abs(DECLR)+" = "+MAGR:AZ+" − "+Math.abs(DECLR)+" = "+MAGR,
-  DECLNOTE:DECLR===0?"здесь магнитный и настоящий север почти совпадают":"он здесь на "+Math.abs(DECLR)+"° "+(DECLR<0?"левее":"правее")+" настоящего"};
+  CALC:DECLR===0?F1(AZ):DECLR<0?F1(AZ)+" + "+F1(Math.abs(DECLR))+" = "+F1(MAGR):F1(AZ)+" − "+F1(Math.abs(DECLR))+" = "+F1(MAGR),
+  DECLNOTE:DECLR===0?"здесь магнитный и настоящий север почти совпадают":"он здесь на "+F1(Math.abs(DECLR))+"° "+(DECLR<0?"левее":"правее")+" настоящего"};
 TOK.DATE=(function(){var n=new Date(DAY0+PRM.tz*3600000),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return n.getUTCDate()+" "+m[n.getUTCMonth()]+" "+n.getUTCFullYear()})();
 function fmt(s){return String(s).replace(/\{([A-Z]+)\}/g,function(m,k){return TOK[k]!==undefined?TOK[k]:m})}
 function fmtDom(root){var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,list=[];while((n=w.nextNode()))if(/\{[A-Z]+\}/.test(n.nodeValue))list.push(n);list.forEach(function(n){n.nodeValue=fmt(n.nodeValue)})}
@@ -379,7 +380,7 @@ var vSide=buildView($("vSide"),{proj:SIDE,bg:function(svg){
   for(var x=8;x<320;x+=14)mk("line",{x1:x,y1:SIDE.cy+1,x2:x-8,y2:SIDE.cy+9,stroke:"var(--grid)","stroke-width":1.2},svg);
 },extra:function(v){
   v.e.elSat=mk("text",{"font-size":10,fill:"var(--cyan)"},v.svg);v.e.elSun=mk("text",{"font-size":10,fill:"var(--amber)"},v.svg);
-  v.update=function(S,g){var sd=SIDE.dir(dirv(SAT_AZ,SAT_EL),g.C),un=SIDE.dir(dirv(S.sunAz,SUN_EL),g.C);setA(v.e.elSat,{x:sd[0]-6,y:sd[1]-12,"text-anchor":"end"});v.e.elSat.textContent="спутник "+Math.round(SAT_EL)+"°";setA(v.e.elSun,{x:un[0]-4,y:un[1]+26,"text-anchor":"end"});v.e.elSun.textContent="солнце "+Math.round(SUN_EL_REAL)+"°"};
+  v.update=function(S,g){var sd=SIDE.dir(dirv(SAT_AZ,SAT_EL),g.C),un=SIDE.dir(dirv(S.sunAz,SUN_EL),g.C);setA(v.e.elSat,{x:sd[0]-6,y:sd[1]-12,"text-anchor":"end"});v.e.elSat.textContent="спутник "+F1(SAT_EL)+"°";setA(v.e.elSun,{x:un[0]-4,y:un[1]+26,"text-anchor":"end"});v.e.elSun.textContent="солнце "+F1(SUN_EL_REAL)+"°"};
   v.noPar=true}});
 var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
   var hy=BACK.horizonY();

@@ -197,8 +197,9 @@ function sunPos(date,lat,lon){
 function w180(x){x=((x%360)+360)%360;return x>180?x-360:x}
 var LK=lookAngles(PRM.lat,PRM.lon,PRM.satLon);
 var DEMO=LK.el<5?"Спутник «"+PRM.satName+"» из этой точки не виден или стоит слишком низко — показан пример.":"";
-var AZ=DEMO?150:Math.round(LK.az), ELV=DEMO?32:Math.round(LK.el*10)/10, DECLR=DEMO?-5:Math.round(PRM.decl);
-var MAGR=((AZ-DECLR)%360+360)%360;
+var AZ=DEMO?150:Math.round(LK.az*10)/10, ELV=DEMO?32:Math.round(LK.el*10)/10, DECLR=DEMO?-5:Math.round(PRM.decl*10)/10;
+var MAGR=Math.round((((AZ-DECLR)%360+360)%360)*10)/10;
+function F1(x){return (Math.round(x*10)/10).toFixed(1).replace(".",",")}
 /* sun: today's moment when the sun azimuth equals the satellite azimuth */
 var SUNM=(function(){
   if(DEMO)return null;
@@ -210,14 +211,14 @@ var SUNM=(function(){
   return null;
 })();
 function hhmm(ms,sec){var d=new Date(ms+PRM.tz*3600000),p=function(n){return String(n).padStart(2,"0")};return p(d.getUTCHours())+":"+p(d.getUTCMinutes())+(sec?":"+p(d.getUTCSeconds()):"")}
-var TOK={AZ:String(AZ),MAG:String(MAGR),EL:String(ELV).replace(".",","),D:String(Math.abs(DECLR)),SAT:PRM.satName,PLACE:PRM.place,
-  DECLS:(DECLR>0?"+":DECLR<0?"−":"")+Math.abs(DECLR)+"°",
+var TOK={AZ:F1(AZ),MAG:F1(MAGR),EL:F1(ELV),D:F1(Math.abs(DECLR)),SAT:PRM.satName,PLACE:PRM.place,
+  DECLS:(DECLR>0?"+":DECLR<0?"−":"")+F1(Math.abs(DECLR))+"°",
   SIDE:DECLR<0?"левее":"правее",
-  CALC:DECLR===0?String(AZ):DECLR<0?AZ+" + "+Math.abs(DECLR)+" = "+MAGR:AZ+" − "+Math.abs(DECLR)+" = "+MAGR,
-  DECLNOTE:DECLR===0?"здесь магнитный и настоящий север почти совпадают":"он здесь на "+Math.abs(DECLR)+"° "+(DECLR<0?"левее":"правее")+" настоящего"};
+  CALC:DECLR===0?F1(AZ):DECLR<0?F1(AZ)+" + "+F1(Math.abs(DECLR))+" = "+F1(MAGR):F1(AZ)+" − "+F1(Math.abs(DECLR))+" = "+F1(MAGR),
+  DECLNOTE:DECLR===0?"здесь магнитный и настоящий север почти совпадают":"он здесь на "+F1(Math.abs(DECLR))+"° "+(DECLR<0?"левее":"правее")+" настоящего"};
 TOK.DATE=(function(){var n=new Date(DAY0+PRM.tz*3600000),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return n.getUTCDate()+" "+m[n.getUTCMonth()]+" "+n.getUTCFullYear()})();
 TOK.CORR=DECLR===0?"магнитное склонение здесь ≈ 0°, поправка не нужна":
-  AZ+"° (азимут) "+(DECLR<0?"+ ":"− ")+Math.abs(DECLR)+"° — поправка на магнитное склонение в месте установки ("+TOK.DECLS+", "+(DECLR<0?"западное":"восточное")+")";
+  F1(AZ)+"° (азимут) "+(DECLR<0?"+ ":"− ")+F1(Math.abs(DECLR))+"° — поправка на магнитное склонение в месте установки ("+TOK.DECLS+", "+(DECLR<0?"западное":"восточное")+")";
 function fmt(s){return String(s).replace(/\{([A-Z]+)\}/g,function(m,k){return TOK[k]!==undefined?TOK[k]:m})}
 function fmtDom(root){var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,list=[];while((n=w.nextNode()))if(/\{[A-Z]+\}/.test(n.nodeValue))list.push(n);list.forEach(function(n){n.nodeValue=fmt(n.nodeValue)})}
 
@@ -372,10 +373,10 @@ var MERGE=(function(){
   var lab=mk("text",{x:8,y:372,"font-size":12,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
   var TXT=[
     [0,"НАЧАЛО","Компас лежит на ладони. Красная стрелка <b>всегда</b> смотрит на север — её мы никогда не крутим, она поворачивается сама."],
-    [1,"ШАГ 1 · КРУТИМ КОЛЬЦО","Стоим на месте и пальцами крутим <b>только кольцо с градусами</b>, пока число "+MAGR+" не встанет напротив указателя на корпусе."],
+    [1,"ШАГ 1 · КРУТИМ КОЛЬЦО","Стоим на месте и пальцами крутим <b>только кольцо с градусами</b>, пока число "+F1(MAGR)+" не встанет напротив указателя на корпусе."],
     [4.5,"ШАГ 2 · ОТХОДИМ ОТ ЖЕЛЕЗА","Рядом с антенной стрелку уводит в сторону. Отходим на 3–5 шагов назад и ждём, пока стрелка успокоится и снова покажет на север."],
     [9,"ШАГ 3 · ПОВОРАЧИВАЕМСЯ САМИ","Кольцо больше не трогаем. Поворачиваемся <b>всем телом вместе с компасом</b>. Стрелка стоит на месте, а под ней поворачиваются кольцо и корпус. Ждём, когда буква С на кольце подъедет под красную стрелку."],
-    [11,"ГОТОВО","Красная стрелка легла на букву С. Значит, от севера до указателя ровно <b>"+MAGR+"°</b> — те самые, что мы выставили на кольце. Указатель смотрит через антенну на спутник: на этой линии ставим вешку."],
+    [11,"ГОТОВО","Красная стрелка легла на букву С. Значит, от севера до указателя ровно <b>"+F1(MAGR)+"°</b> — те самые, что мы выставили на кольце. Указатель смотрит через антенну на спутник: на этой линии ставим вешку."],
     [12.5,"ШАГ 4 · АНТЕННА НА ВЕШКУ","Компас больше не нужен. Встаём за зеркалом и разворачиваем антенну, пока она не будет смотреть точно на вешку."],
     [17,"ШАГ 5 · ДОНАВОДИМ","Компас даёт лишь примерное направление, поэтому точное положение находим по сигналу модема «змейкой»: на каждом положении угла места ведём антенну на 30° влево и 30° вправо от предполагаемого направления на спутник."]
   ];
@@ -389,7 +390,7 @@ var MERGE=(function(){
     setA(needle,{transform:tr(c[0],c[1],S.needle)});
     setA(house,{stroke:S.inN?"var(--green)":"var(--red)","stroke-dasharray":S.inN?"none":"3 2"});
     var showArc=S.t>=11&&S.t<17;
-    if(showArc){arc.setAttribute("d",arcPath(c,CR+28,S.needle,S.heading));var mid=S.needle+((S.heading-S.needle+360)%360)/2;setA(arcT,{x:c[0]+(CR+42)*Math.sin(mid*D),y:c[1]-(CR+42)*Math.cos(mid*D)+4});arcT.textContent=Math.round(S.reading)+"°"}
+    if(showArc){arc.setAttribute("d",arcPath(c,CR+28,S.needle,S.heading));var mid=S.needle+((S.heading-S.needle+360)%360)/2;setA(arcT,{x:c[0]+(CR+42)*Math.sin(mid*D),y:c[1]-(CR+42)*Math.cos(mid*D)+4});arcT.textContent=F1(S.reading)+"°"}
     setA(arc,{opacity:showArc?1:0});setA(arcT,{opacity:showArc?1:0});
     var st=P(STAKE),c1=P(COMP1);
     setA(sight,{x1:c1[0],y1:c1[1],x2:c1[0]+(st[0]-c1[0])*S.line,y2:c1[1]+(st[1]-c1[1])*S.line,opacity:S.line>0?1:0});
@@ -570,7 +571,7 @@ var G=null;
   var compLbl=label("компас","#111111",0.7);compLbl.position.y=1.55;comp.add(compLbl);
   /* green 155° arc from the needle (north) to the pointer */
   var arcMat=new THREE.MeshBasicMaterial({color:0x1f9d63}),arcMesh=null,arcKey="";
-  var arcLbl=(function(){var c=document.createElement("canvas");c.width=256;c.height=128;var x=c.getContext("2d");x.font="700 76px 'JetBrains Mono', monospace";x.textAlign="center";x.textBaseline="middle";x.lineWidth=12;x.strokeStyle="rgba(255,255,255,.9)";x.strokeText(MAGR+"°",128,64);x.fillStyle="#1f9d63";x.fillText(MAGR+"°",128,64);
+  var arcLbl=(function(){var c=document.createElement("canvas");c.width=256;c.height=128;var x=c.getContext("2d");x.font="700 76px 'JetBrains Mono', monospace";x.textAlign="center";x.textBaseline="middle";x.lineWidth=12;x.strokeStyle="rgba(255,255,255,.9)";x.strokeText(F1(MAGR)+"°",128,64);x.fillStyle="#1f9d63";x.fillText(F1(MAGR)+"°",128,64);
     var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false}));sp.scale.set(0.5,0.25,1);sp.renderOrder=6;return sp})();scene.add(arcLbl);
   /* stake */
   var stake=new THREE.Group();stake.position.copy(W(STAKE[0],STAKE[1],0));scene.add(stake);
@@ -661,7 +662,7 @@ var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce
 var T=reduce?16:0,playing=!reduce,last=null,lastStep=-1;
 function frame(t){
   var S=state(t);
-  $("readout").textContent=Math.round(S.reading)+"°";
+  $("readout").textContent=F1(S.reading)+"°";
   if(S.step!==lastStep){lastStep=S.step;$("cap").innerHTML="<b>"+(S.step+1)+"/5</b>"+STEPS[S.step][1];
     chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
   $("prog").style.width=(t/T_END*100).toFixed(2)+"%";
