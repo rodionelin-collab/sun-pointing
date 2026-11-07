@@ -85,7 +85,7 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
       <button type="button" id="go">Создать видео</button>
       <button type="button" class="ghost" id="stop" hidden>Остановить</button>
     </div>
-    <p class="hint" id="eta">Ролик длится около 2,5 минуты (все три способа). Сборка идёт прямо в браузере и занимает несколько минут — не закрывайте и не сворачивайте вкладку.</p>
+    <p class="hint" id="eta">Ролик длится около 5 минут (все три способа). Сборка идёт прямо в браузере и занимает 6–8 минут — не закрывайте и не сворачивайте вкладку.</p>
     <div id="progWrap" hidden>
       <div class="bar"><i id="prog"></i></div>
       <p class="hint" id="progTxt" style="margin-top:6px"></p>
@@ -119,7 +119,8 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
 (function(){
 "use strict";
 var $=function(id){return document.getElementById(id)};
-var W=720,H=1280,FPS=25,GH=420,BR=4e6;(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));if(/[?&]test=1/.test(location.search)&&b>0)BR=b})();   /* 4 Mbit/s, keyframe every 2 s: browser hardware encoders blur thin lines and small text at low bitrates */
+var W=720,H=1280,FPS=25,GH=420,SLOW=2,   /* animations play at half speed in the video */
+    BR=4e6;(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));if(/[?&]test=1/.test(location.search)&&b>0)BR=b})();   /* 4 Mbit/s, keyframe every 2 s: browser hardware encoders blur thin lines and small text at low bitrates */
 var TEST=/[?&]test=1(&|$)/.test(location.search),TT=parseFloat(new URLSearchParams(location.search).get("tt"));if(isNaN(TT))TT=-1;   /* short clips for checking the pipeline */
 var METHODS={sun:{page:"sun.html",name:"По солнцу",lead:"Ловим момент, когда солнце стоит точно в стороне спутника, и разворачиваем антенну «лицом» к солнцу."},
   compass:{page:"compass.html",name:"Компас в телефоне",lead:"Находим направление на спутник по компасу в телефоне, ставим вешку и разворачиваем на неё антенну."},
@@ -291,8 +292,8 @@ function methodFrame(ctx,w,k,i,n,S,prog){
   ctx.save();rr(ctx,gx,gy,gw,gh,16);ctx.clip();var gl=R.gl,sw=gl.width,sh=gl.height,sc=Math.max(gw/sw,gh/sh),dw=sw*sc,dh=sh*sc;
   try{ctx.drawImage(gl,gx+(gw-dw)/2,gy+(gh-dh)/2,dw,dh)}catch(e){}
   var hd=R.head();ctx.font="600 15px "+FM;var bw=Math.max(ctx.measureText(hd.label).width,0)+28;ctx.font="700 34px "+FM;bw=Math.max(bw,ctx.measureText(hd.value).width+28);
-  rr(ctx,gx+gw-bw-12,gy+12,bw,78,12,"rgba(255,255,255,.92)",C.line);ctx.fillStyle=C.muted;ctx.font="600 15px "+FM;ctx.fillText(hd.label,gx+gw-bw,gy+36);
-  ctx.fillStyle=hd.ok?C.green:C.ink;ctx.font="700 34px "+FM;ctx.fillText(hd.value,gx+gw-bw,gy+76);
+  rr(ctx,gx+12,gy+12,bw,78,12,"rgba(255,255,255,.92)",C.line);ctx.fillStyle=C.muted;ctx.font="600 15px "+FM;ctx.fillText(hd.label,gx+26,gy+36);   /* top-left: the satellite and the sun sit in the upper right of the 3D view */
+  ctx.fillStyle=hd.ok?C.green:C.ink;ctx.font="700 34px "+FM;ctx.fillText(hd.value,gx+26,gy+76);
   if(hd.note){ctx.font="600 17px "+FB;rr(ctx,gx+12,gy+gh-76,gw-24,64,10,"rgba(255,255,255,.92)");ctx.fillStyle=C.green;wrap(ctx,hd.note,gx+24,gy+gh-52,gw-48,21,3)}
   ctx.restore();
   /* caption */
@@ -349,16 +350,16 @@ function build(){
     return (function next(){if(k>=n)return Promise.resolve();k++;if(k%10===0)setProg(label);return emit().then(next)})()}
   return (document.fonts?document.fonts.ready:Promise.resolve()).then(function(){return Promise.all([imgReady(LOGO),imgReady(LOGOSQ),fontsReady])}).then(function(){return makeSink(cv)}).then(function(s){
     if(!s)throw new Error("этот браузер не умеет записывать видео. Откройте страницу в Chrome, Edge или Safari.");sink=s;
-    list.forEach(function(k){durs[k]=TEST?TD:(k==="sun"?46:49)});   /* estimate; the real length is taken when each page loads */
+    list.forEach(function(k){durs[k]=TEST?TD:(k==="sun"?46:49)*SLOW});   /* estimate; the real length is taken when each page loads */
     if(TOK)return;return loadPage(METHODS[list[0]].page).then(function(w){TOK=w.__spRec.tok})})
   .then(function(){showCtx();total=INTRO+OUT+SUPP+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:MI)+durs[k]},0);
     return still(function(c){introCard(c,list)},INTRO,"Заставка")})
   .then(function(){return list.reduce(function(p,k,i){return p.then(function(){
       return still(function(c){methodCard(c,k,i,list.length)},k==="sun"?6:MI,METHODS[k].name)
       .then(function(){return loadPage(METHODS[k].page)})
-      .then(function(w){if(!TEST){total+=w.__spRec.dur-durs[k];durs[k]=w.__spRec.dur}var n=Math.round(durs[k]*FPS),f=0,R=w.__spRec,st=TEST?(TT>=0?TT:R.dur-3):0;
+      .then(function(w){if(!TEST){total+=w.__spRec.dur*SLOW-durs[k];durs[k]=w.__spRec.dur*SLOW}var n=Math.round(durs[k]*FPS),f=0,R=w.__spRec,st=TEST?(TT>=0?TT:R.dur-3):0;
         var vid=null;
-        return (function next(){if(f>=n)return Promise.resolve();var t=st+f/FPS;if(vid===null){vid=R.views[0];if(R.only)R.only(vid)}var S=R.set(t);if(R.views[S.step]!==vid){vid=R.views[S.step];if(R.only)R.only(vid);S=R.set(t)}   /* only the 2D view shown in the video gets its 3D panel rendered */
+        return (function next(){if(f>=n)return Promise.resolve();var t=st+f/(FPS*SLOW);if(vid===null){vid=R.views[0];if(R.only)R.only(vid)}var S=R.set(t);if(R.views[S.step]!==vid){vid=R.views[S.step];if(R.only)R.only(vid);S=R.set(t)}   /* only the 2D view shown in the video gets its 3D panel rendered */
           return methodFrame(ctx,w,k,i,list.length,S,f/n).then(function(){f++;if(f%5===0)setProg(METHODS[k].name+" — кадр "+f+" из "+n);return emit()}).then(next)})()})})},Promise.resolve())})
   .then(function(){return still(function(c){outroCard(c,list)},OUT+(list.indexOf("sun")>=0?3:0),"Финальная заставка")})
   .then(function(){return still(supportCard,SUPP,"Контакты техподдержки")})
