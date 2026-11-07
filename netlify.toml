@@ -1,2 +1,8 @@
 [build]
   publish = "."
+
+# old address of the installer helper -> main page
+[[redirects]]
+  from = "/helper.html"
+  to = "/"
+  status = 301
