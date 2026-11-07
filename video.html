@@ -76,10 +76,12 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
 
   <div class="card">
     <div class="ctx" id="ctx">Точка и спутник берутся из Помощника установщика.</div>
+    <div id="dateBox">   <!-- the date matters only for the sun method -->
     <div class="row">
       <div><label class="k" for="dateIn">Планируемая дата установки</label><input type="date" id="dateIn"></div>
     </div>
     <p class="warn" id="dateWarn" hidden>Эта дата уже прошла — для способа «по солнцу» выберите сегодняшний или более поздний день.</p>
+    </div>
     <div>
       <span class="k" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Какие способы включить</span>
       <div class="methods" style="margin-top:6px">
@@ -156,9 +158,10 @@ function pageQuery(){var q=new URLSearchParams(location.search);q.delete("test")
 (function(){var q=new URLSearchParams(location.search);q.delete("test");q.delete("rec");var s=q.toString();if(s)document.querySelectorAll(".tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+"?"+s)})})();
 
 var TOK=null;
-function showCtx(){
+function sunOn(){var c=document.querySelector('.methods input[value="sun"]');return !c||c.checked}
+function showCtx(){$("dateBox").hidden=!sunOn();
   if(!TOK){$("ctx").innerHTML="Точка и спутник берутся из Помощника установщика.";return}
-  $("ctx").innerHTML="Точка: <b>"+esc(TOK.PLACE)+"</b> · спутник <b>"+esc(TOK.SAT)+"</b> · азимут <b>"+TOK.AZ+"°</b> · угол места <b>"+TOK.EL+"°</b> · планируемая дата установки <b>"+fmtDate(date)+"</b>";
+  $("ctx").innerHTML="Точка: <b>"+esc(TOK.PLACE)+"</b> · спутник <b>"+esc(TOK.SAT)+"</b> · азимут <b>"+TOK.AZ+"°</b> · угол места <b>"+TOK.EL+"°</b>"+(sunOn()?" · планируемая дата установки <b>"+fmtDate(date)+"</b>":"");
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function fmtDate(d){var p=d.split("-"),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return (+p[2])+" "+m[+p[1]-1]+" "+p[0]}
@@ -225,7 +228,7 @@ function drawSupport(ctx,y){ /* centred block, returns bottom */
   ctx.font="400 28px "+FB;SUPPORT.forEach(function(s){ctx.fillStyle=C.ink;ctx.fillText(s,W/2,y);y+=40});ctx.textAlign="left";return y}
 
 var TD=parseFloat(new URLSearchParams(location.search).get("td"))||3;
-if(TEST)window.__vdraw=function(n){var c=$("preview").getContext("2d");$("prevCard").hidden=false;var L=["sun","compass","magnetic"];if(n==="intro")introCard(c,L);else if(n==="support")supportCard(c);else if(n==="method")methodCard(c,"sun",0,3);else outroCard(c,L)};
+if(TEST)window.__vdraw=function(n){var c=$("preview").getContext("2d");$("prevCard").hidden=false;var L=["sun","compass","magnetic"];if(n==="intro")introCard(c,L);else if(n==="intro2")introCard(c,["compass","magnetic"]);else if(n==="support")supportCard(c);else if(n==="method")methodCard(c,"sun",0,3);else outroCard(c,L)};
 /* ---------- drawing helpers ---------- */
 var C={bg:"#f2f5f7",card:"#ffffff",line:"#cdd8e0",ink:"#000000",muted:"#000000",cyan:"#0a8fb3",green:"#1f9d63",warn:"#e0650b",grid:"#e4ebf0"};
 var FB="Raleway,system-ui,sans-serif",FM="Raleway,ui-monospace,monospace";
@@ -275,8 +278,8 @@ function introCard(ctx,list){
   valCard(ctx,gx,gy+ch+gap,cw,ch,"Угол места",TOK.EL+"°","над горизонтом");
   valCard(ctx,gx+cw+gap,gy+ch+gap,cw,ch,"Поворот конвертора",(sk>0.05?"+":"")+F1v(sk)+"°",Math.abs(sk)<0.5?"конвертор ставится ровно":(sk>0?"по":"против")+" часовой стрелки, если смотреть из-за антенны на спутник");
   ctx.textAlign="center";ctx.fillStyle=C.ink;
-  var y=gy+2*ch+gap+62;ctx.font="400 26px "+FB;ctx.fillText("Планируемая дата установки: "+fmtDate(date),W/2,y);
-  y+=56;ctx.font="600 24px "+FB;ctx.fillText("Способы наведения в ролике:",W/2,y);
+  var y=gy+2*ch+gap+62;if(list.indexOf("sun")>=0){ctx.font="400 26px "+FB;ctx.fillText("Планируемая дата установки: "+fmtDate(date),W/2,y);y+=56}   /* the date matters only for the sun method */
+  ctx.font="600 24px "+FB;ctx.fillText("Способы наведения в ролике:",W/2,y);
   ctx.font="400 24px "+FB;y+=36;ctx.fillText(list.map(function(k,i){return METHODS[k].name}).join("  ·  "),W/2,y);
   ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,y+62);ctx.lineTo(W-70,y+62);ctx.stroke();drawSupport(ctx,y+108);ctx.textAlign="left"}
 function methodCard(ctx,k,i,n){
@@ -353,7 +356,7 @@ function estLen(){var list=Array.prototype.slice.call(document.querySelectorAll(
   return (5+5+6+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:2.5)+(k==="sun"?46:49)*SLOW},0))*1.03}
 function updEst(){var L=estLen();Object.keys(QUAL).forEach(function(k){var mb=QUAL[k].br*0.8*L/8/1e6,el=$("qs-"+k);if(el)el.textContent="≈ "+(mb>=20?Math.round(mb/5)*5:Math.round(mb))+" МБ"});
   var e=$("eta");if(e){var m=L/60;e.textContent="Ролик длится около "+(Math.round(m*2)/2).toString().replace(".",",")+" мин. Сборка идёт прямо в браузере — не закрывайте и не сворачивайте вкладку. Чем ниже качество, тем меньше файл и быстрее сборка."}}
-document.querySelectorAll(".methods input").forEach(function(i){i.addEventListener("change",updEst)});updEst();
+document.querySelectorAll(".methods input").forEach(function(i){i.addEventListener("change",function(){updEst();showCtx()})});updEst();
 function qualKey(){var r=document.querySelector('input[name="qual"]:checked');return r&&QUAL[r.value]?r.value:"max"}
 /* ---------- build ---------- */
 var busy=false,cancelled=false;
@@ -390,7 +393,7 @@ function build(){
   .then(function(){return still(supportCard,SUPP,"Контакты техподдержки")})
   .then(function(){setProg("Сохраняем файл");return sink.done()})
   .then(function(blob){dropFrame();busy=false;$("go").disabled=false;$("stop").hidden=true;$("prog").style.width="100%";
-    var ext=sink.kind==="mp4"?"mp4":"webm",name=("Наведение_"+TOK.SAT+"_"+TOK.PLACE+"_"+date).replace(/[\\/:*?"<>|\s]+/g,"_")+"."+ext,url=URL.createObjectURL(blob);
+    var ext=sink.kind==="mp4"?"mp4":"webm",name=("Наведение_"+TOK.SAT+"_"+TOK.PLACE+(list.indexOf("sun")>=0?"_"+date:"")).replace(/[\\/:*?"<>|\s]+/g,"_")+"."+ext,url=URL.createObjectURL(blob);
     $("vid").src=url;$("dl").href=url;$("dl").setAttribute("download",name);$("outName").textContent=name;
     $("outInfo").textContent=(blob.size/1048576).toFixed(1).replace(".",",")+" МБ · "+Math.round(total)+" с · вертикальное видео "+OW+"×"+OH+(ext==="webm"?" · формат WebM (iPhone может не открыть — лучше собирать в Chrome на компьютере)":"");
     $("progTxt").textContent="Готово.";$("out").hidden=false;
