@@ -420,6 +420,7 @@ var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
   var hy=BACK.horizonY();
   mk("rect",{x:0,y:hy,width:320,height:260-hy,fill:"#e6edf2"},svg);
   mk("line",{x1:0,y1:hy,x2:320,y2:hy,stroke:"var(--line)","stroke-width":1.2},svg);
+  mk("text",{x:8,y:hy-6,"font-size":10,fill:"var(--muted)"},svg).textContent="линия горизонта";
   mk("line",{x1:160,y1:hy-8,x2:160,y2:hy+8,stroke:"var(--muted)"},svg);
 },extra:function(v){
   v.e.cross=mk("g",{opacity:0},v.svg);mk("line",{x1:160,y1:20,x2:160,y2:250,stroke:"var(--green)","stroke-width":1,"stroke-dasharray":"3 4"},v.e.cross);

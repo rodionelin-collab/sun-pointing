@@ -444,6 +444,7 @@ var BACKV=(function(){
   var svg=$("vBack"),hy=cy-f*dot(fw0,up)/dot(fw0,fw);
   mk("rect",{x:0,y:hy,width:320,height:260-hy,fill:"#e6edf2"},svg);
   mk("line",{x1:0,y1:hy,x2:320,y2:hy,stroke:"var(--line)","stroke-width":1.2},svg);
+  mk("text",{x:8,y:hy-6,"font-size":10,fill:"var(--muted)"},svg).textContent="линия горизонта";
   var sight=mk("line",{stroke:"var(--cyan)","stroke-width":1.6,"stroke-dasharray":"6 4",display:"none"},svg); /* sight line hidden in the behind-antenna view: it confused readers */
   var stake=mk("g",{},svg);var sPole=mk("line",{stroke:"var(--warn)","stroke-width":3},stake);var sFlag=mk("path",{fill:"var(--warn)"},stake);var sLbl=mk("text",{"font-size":9.5,fill:"var(--ink)"},stake);mk("tspan",{x:0,dy:0},sLbl).textContent="вешка или визуальный";mk("tspan",{x:0,dy:12},sLbl).textContent="ориентир по направлению";mk("tspan",{x:0,dy:12},sLbl).textContent="на спутник";
   var satG=mk("g",{},svg);mk("rect",{x:-4,y:-3.5,width:8,height:7,fill:"var(--cyan)"},satG);mk("rect",{x:-14,y:-2,width:9,height:4,fill:"none",stroke:"var(--cyan)","stroke-width":1.2},satG);mk("rect",{x:5,y:-2,width:9,height:4,fill:"none",stroke:"var(--cyan)","stroke-width":1.2},satG);
