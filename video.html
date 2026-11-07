@@ -196,8 +196,8 @@ var SUPPORT=["Телефон: +7 (3952) 79-87-86, доб. 2","e-mail: support@da
 function drawLogo(ctx,cx,y,w){if(!LOGO.naturalWidth)return 0;var h=w*LOGO.naturalHeight/LOGO.naturalWidth;ctx.drawImage(LOGO,cx-w/2,y,w,h);return h}
 function drawSq(ctx){if(!LOGOSQ.naturalWidth)return;var w=74,h=w*LOGOSQ.naturalHeight/LOGOSQ.naturalWidth;ctx.save();ctx.globalAlpha=.75;ctx.drawImage(LOGOSQ,W-w-24,18,w,h);ctx.restore()}
 function drawSupport(ctx,y){ /* centred block, returns bottom */
-  ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="700 28px "+FB;ctx.fillText("Техподдержка",W/2,y);y+=42;
-  ctx.font="400 25px "+FB;SUPPORT.forEach(function(s){ctx.fillStyle=C.ink;ctx.fillText(s,W/2,y);y+=36});ctx.textAlign="left";return y}
+  ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="600 26px "+FB;ctx.fillText("Техподдержка",W/2,y);y+=44;
+  ctx.font="400 28px "+FB;SUPPORT.forEach(function(s){ctx.fillStyle=C.ink;ctx.fillText(s,W/2,y);y+=40});ctx.textAlign="left";return y}
 
 if(TEST)window.__vdraw=function(n){var c=$("preview").getContext("2d");$("prevCard").hidden=false;var L=["sun","compass","magnetic"];if(n==="intro")introCard(c,L);else if(n==="support")supportCard(c);else if(n==="method")methodCard(c,"sun",0,3);else outroCard(c,L)};
 /* ---------- drawing helpers ---------- */
@@ -225,8 +225,8 @@ function introCard(ctx,list){
     {t:"Азимут  "+TOK.AZ+"°",f:"600 40px "+FM,lh:58},{t:"Угол места  "+TOK.EL+"°",f:"600 40px "+FM,lh:58},
     {t:"Планируемая дата установки: "+fmtDate(date),f:"400 28px "+FB,c:C.muted,lh:110},
     {t:"Способы наведения в ролике:",f:"600 26px "+FB,lh:44}].concat(list.map(function(k,i){return {t:(i+1)+". "+METHODS[k].name,f:"400 28px "+FB,lh:42}})),330);
-  var lh=drawLogo(ctx,W/2,54,330);ctx.textAlign="center";ctx.fillStyle=C.muted;ctx.font="500 24px "+FB;ctx.fillText(SITE,W/2,54+lh+38);ctx.textAlign="left";
-  ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,1068);ctx.lineTo(W-70,1068);ctx.stroke();drawSupport(ctx,1118)}
+  var lh=drawLogo(ctx,W/2,54,330);ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="400 28px "+FB;ctx.fillText(SITE,W/2,54+lh+40);ctx.textAlign="left";
+  ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,1040);ctx.lineTo(W-70,1040);ctx.stroke();drawSupport(ctx,1088)}
 function methodCard(ctx,k,i,n){
   card(ctx,[{t:"СПОСОБ "+(i+1)+" ИЗ "+n,f:"600 26px "+FM,c:C.cyan,lh:76},{t:METHODS[k].name,f:"700 54px "+FB,lh:90},
     {t:METHODS[k].lead,f:"400 30px "+FB,c:C.muted,wrap:true,lh:42,gap:40}].concat(k==="sun"?[
@@ -234,7 +234,7 @@ function methodCard(ctx,k,i,n){
 function SUNNOTE(){return "Время совпадения направления на солнце и на спутник рассчитано на "+fmtDate(date)+". Если антенну будут устанавливать в другой день, способ по солнцу может не сработать: время совпадения для другой даты нужно уточнить заново в Помощнике установщика."}
 function supportCard(ctx){
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  var lh=drawLogo(ctx,W/2,150,380);ctx.textAlign="center";ctx.fillStyle=C.muted;ctx.font="500 26px "+FB;ctx.fillText(SITE,W/2,150+lh+42);
+  var lh=drawLogo(ctx,W/2,150,380);ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="400 28px "+FB;ctx.fillText(SITE,W/2,150+lh+44);
   ctx.fillStyle=C.ink;ctx.font="600 32px "+FB;ctx.textAlign="left";
   ctx.textAlign="center";
   var lines=["Если у вас сложности с наведением","спутникового комплекта, обратитесь","в нашу службу технической поддержки."];
