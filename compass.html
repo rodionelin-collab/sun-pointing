@@ -331,7 +331,7 @@ var COMPV=(function(){
 
 /* ================= panel 2: top view ================= */
 var TOPV=(function(){
-  var svg=$("vTop"),k=17,AS=1.8,cen=[1.3*bw[0],1.3*bw[1]],ox=160,oy=128;
+  var svg=$("vTop"),k=17,AS=2.6,cen=[1.4*bw[0],1.4*bw[1]],ox=160,oy=140;
   function P(p){return [ox+(p[0]-cen[0])*k,oy-(p[1]-cen[1])*k]}
   function PA(p){return P([p[0]*AS,p[1]*AS])}            /* antenna drawn 1.8× larger for legibility */
   var sight=mk("line",{stroke:"var(--cyan)","stroke-width":2,"stroke-dasharray":"7 5"},svg);
@@ -339,7 +339,11 @@ var TOPV=(function(){
   var frame=mk("path",{fill:"none",stroke:"#5d7a8e","stroke-width":2,"stroke-linejoin":"round"},svg);
   var dish=mk("polygon",{fill:"#d5e1e8",stroke:"var(--cyan)","stroke-width":1.5},svg);
   var arm=mk("line",{stroke:"#7b8d99","stroke-width":2.5,"stroke-linecap":"round"},svg);
-  var lnb=mk("circle",{r:4,fill:"#3a444b"},svg);
+  var lnb=mk("g",{},svg);
+  mk("path",{d:"M-5 -2.6L-13 -5.5L-13 5.5L-5 2.6Z",fill:"#3a444b"},lnb);
+  mk("rect",{x:-5,y:-4.5,width:15,height:9,rx:1.2,fill:"#3a444b"},lnb);
+  mk("path",{d:"M-1.5 -7V7M2 -7V7M5.5 -7V7M9 -6V6",stroke:"#3a444b","stroke-width":1.6},lnb);
+  mk("rect",{x:9,y:-2,width:4,height:4,fill:"#6b7882"},lnb);
   var mast=mk("circle",{r:3,fill:"#4e6676"},svg);
   var stakeG=mk("g",{},svg);mk("circle",{r:5,fill:"var(--warn)"},stakeG);mk("circle",{r:2,fill:"#fff"},stakeG);
   var stakeT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);mk("tspan",{x:0,dy:0},stakeT).textContent="вешка или визуальный ориентир";mk("tspan",{x:0,dy:12},stakeT).textContent="по направлению на спутник";
@@ -349,17 +353,17 @@ var TOPV=(function(){
   var tNT=mk("text",{"font-size":9,fill:"var(--ink)","text-anchor":"middle"},svg);tNT.textContent="С ист.";
   var mNT=mk("text",{"font-size":9,fill:"var(--red)","text-anchor":"end"},svg);mNT.textContent="С магн.";
   
-  var lab=mk("text",{x:12,y:250,"font-size":12,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
+  var lab=mk("text",{x:12,y:254,"font-size":12,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
   return {draw:function(S,g){
     var c=P(S.cp);setA(comp,{transform:tr(c[0],c[1],S.heading)});setA(compT,{x:c[0]+12,y:c[1]+4});
     setA(tN,{x1:c[0],y1:c[1]-10,x2:c[0],y2:c[1]-34});setA(tNT,{x:c[0],y:c[1]-37});
     var mx=c[0]+24*Math.sin(DECL*D),my=c[1]-24*Math.cos(DECL*D);setA(mN,{x1:c[0]+10*Math.sin(DECL*D),y1:c[1]-10*Math.cos(DECL*D),x2:mx,y2:my});setA(mNT,{x:mx-3,y:my-2});
     var st=P(STAKE),c1=P(COMP1);
     var lx=c1[0]+(st[0]-c1[0])*S.line,ly=c1[1]+(st[1]-c1[1])*S.line;setA(sight,{x1:c1[0],y1:c1[1],x2:lx,y2:ly,opacity:S.line>0?1:0});
-    setA(stakeG,{transform:tr(st[0],st[1]),opacity:S.stake});var lft=st[0]>160,sx=lft?st[0]-9:st[0]+9;setA(stakeT,{x:sx,y:st[1]-2,"text-anchor":lft?"end":"start",opacity:S.stake});stakeT.querySelectorAll("tspan").forEach(function(t){t.setAttribute("x",sx.toFixed(1))});
+    setA(stakeG,{transform:tr(st[0],st[1]),opacity:S.stake});var sx=Math.max(92,Math.min(228,st[0]));setA(stakeT,{x:sx,y:st[1]-30,"text-anchor":"middle",opacity:S.stake});stakeT.querySelectorAll("tspan").forEach(function(t){t.setAttribute("x",sx.toFixed(1))});
     var d="";TRI.legs.concat(TRI.braces).forEach(function(sg){var a=PA(sg[0]),b=PA(sg[1]);d+="M"+a[0].toFixed(1)+" "+a[1].toFixed(1)+"L"+b[0].toFixed(1)+" "+b[1].toFixed(1)});frame.setAttribute("d",d);
     dish.setAttribute("points",ptsStr(g.rim.map(PA)));
-    var r0=PA(g.root),l0=PA(g.lnb);setA(arm,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});setA(lnb,{cx:l0[0],cy:l0[1]});
+    var r0=PA(g.root),l0=PA(g.lnb);setA(arm,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});var cc=PA(g.C),la=Math.atan2(l0[1]-cc[1],l0[0]-cc[0])/D;lnb.setAttribute("transform","translate("+l0[0].toFixed(1)+" "+l0[1].toFixed(1)+") rotate("+la.toFixed(1)+") scale(0.8)");
     var m0=PA([0,0,0]);setA(mast,{cx:m0[0],cy:m0[1]});
     var ge=[m0[0]+Math.sin(S.dishAz*D)*95,m0[1]-Math.cos(S.dishAz*D)*95];
     var col=S.ok?"var(--green)":"var(--warn)";setA(guide,{x1:m0[0],y1:m0[1],x2:ge[0],y2:ge[1],stroke:col,opacity:S.gv});
