@@ -81,7 +81,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
     <div class="sp-tabs"><a href="compass.html" aria-current="page">Компас в телефоне</a><a href="sun.html">По солнцу</a><a href="magnetic.html">Магнитный компас</a></div>
   </nav>
 
-  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · <a href="index.html">изменить в Помощнике</a></div>
+  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · дата <b>{DATE}</b> · <a href="index.html">изменить в Помощнике</a></div>
   <div class="sp-demo" id="demo" hidden></div>
 
   <div class="sp-head">
@@ -184,6 +184,7 @@ var TOK={AZ:String(AZ),MAG:String(MAGR),EL:String(ELV).replace(".",","),D:String
   SIDE:DECLR<0?"левее":"правее",
   CALC:DECLR===0?String(AZ):DECLR<0?AZ+" + "+Math.abs(DECLR)+" = "+MAGR:AZ+" − "+Math.abs(DECLR)+" = "+MAGR,
   DECLNOTE:DECLR===0?"здесь магнитный и настоящий север почти совпадают":"он здесь на "+Math.abs(DECLR)+"° "+(DECLR<0?"левее":"правее")+" настоящего"};
+TOK.DATE=(function(){var n=new Date(Date.now()+PRM.tz*3600000),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return n.getUTCDate()+" "+m[n.getUTCMonth()]+" "+n.getUTCFullYear()})();
 function fmt(s){return String(s).replace(/\{([A-Z]+)\}/g,function(m,k){return TOK[k]!==undefined?TOK[k]:m})}
 function fmtDom(root){var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,list=[];while((n=w.nextNode()))if(/\{[A-Z]+\}/.test(n.nodeValue))list.push(n);list.forEach(function(n){n.nodeValue=fmt(n.nodeValue)})}
 

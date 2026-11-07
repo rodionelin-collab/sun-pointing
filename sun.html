@@ -24,6 +24,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-link{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none;border-bottom:1px solid currentColor}
 .sp-clock{font-family:var(--f-mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
 .sp-clock small{display:block;font-size:11px;color:var(--muted);font-weight:400;letter-spacing:.12em}
+.sp-clock .sp-date{display:block;font:600 14px var(--f-body);color:var(--ink);margin:1px 0 2px}
+.sp-clock #clock{display:block;transition:color .3s}
+.sp-clock #clock.is-match{color:var(--green);font-weight:800}
+.sp-match{display:block;font:600 12.5px var(--f-body);color:var(--green);max-width:26ch;line-height:1.3;margin-top:3px}
 .sp button{font:600 13px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
 .sp button:hover{border-color:var(--cyan);color:var(--cyan)}
 .sp button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
@@ -76,12 +80,12 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
     <div class="sp-tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html" aria-current="page">По солнцу</a><a href="magnetic.html">Магнитный компас</a></div>
   </nav>
 
-  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · <a href="index.html">изменить в Помощнике</a></div>
+  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · дата <b>{DATE}</b> · <a href="index.html">изменить в Помощнике</a></div>
   <div class="sp-demo" id="demo" hidden></div>
 
   <div class="sp-head">
     <h1>Наведение антенны по солнцу</h1>
-    <div class="sp-clock"><small>ВРЕМЯ НА ТОЧКЕ</small><span id="clock">--:--:--</span></div>
+    <div class="sp-clock"><small>ДАТА И ВРЕМЯ НА ТОЧКЕ</small><span class="sp-date">{DATE}</span><span id="clock">--:--:--</span><span class="sp-match" id="matchMsg" hidden>в это время направление на спутник и на солнце совпадут</span></div>
     <button id="btnPlay" type="button">Пауза</button>
     <button id="btnRestart" type="button">С начала</button>
   </div>
@@ -164,6 +168,7 @@ var TOK={AZ:String(AZ),MAG:String(MAGR),EL:String(ELV).replace(".",","),D:String
   SIDE:DECLR<0?"левее":"правее",
   CALC:DECLR===0?String(AZ):DECLR<0?AZ+" + "+Math.abs(DECLR)+" = "+MAGR:AZ+" − "+Math.abs(DECLR)+" = "+MAGR,
   DECLNOTE:DECLR===0?"здесь магнитный и настоящий север почти совпадают":"он здесь на "+Math.abs(DECLR)+"° "+(DECLR<0?"левее":"правее")+" настоящего"};
+TOK.DATE=(function(){var n=new Date(Date.now()+PRM.tz*3600000),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return n.getUTCDate()+" "+m[n.getUTCMonth()]+" "+n.getUTCFullYear()})();
 function fmt(s){return String(s).replace(/\{([A-Z]+)\}/g,function(m,k){return TOK[k]!==undefined?TOK[k]:m})}
 function fmtDom(root){var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,list=[];while((n=w.nextNode()))if(/\{[A-Z]+\}/.test(n.nodeValue))list.push(n);list.forEach(function(n){n.nodeValue=fmt(n.nodeValue)})}
 
@@ -544,7 +549,7 @@ var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce
 var T=reduce?13.5:0,playing=!reduce,last=null,lastStep=-1;
 function frame(t){
   var S=state(t);
-  $("clock").textContent=hhmm(CLK0+S.secs*1000,true);
+  $("clock").textContent=hhmm(CLK0+S.secs*1000,true);var hl=t>=6&&t<14.6;$("clock").classList.toggle("is-match",hl);$("matchMsg").hidden=!hl;
   if(S.step!==lastStep){lastStep=S.step;$("cap").innerHTML="<b>"+(S.step+1)+"/5</b>"+STEPS[S.step][1];
     chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
   $("prog").style.width=(t/T_END*100).toFixed(2)+"%";
