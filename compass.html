@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Наведение по компасу</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap">
+<link rel="preload" href="fonts/raleway-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/raleway-cyrillic-600-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="dtk.css">
+<script>window.__spFontsReady=(function(){if(!document.fonts||!document.fonts.load)return Promise.resolve();var s="Азимут 0123 °",w=["400","500","600","700"];return Promise.race([Promise.all(w.map(function(x){return document.fonts.load(x+" 16px Raleway",s)})),new Promise(function(r){setTimeout(r,3000)})]).catch(function(){})})();</script>
 <style>
 /* Layout: header (title, readout, controls) → 3D stage → caption + step chips → four synchronized 2D views → signal meter. Same light technical-schematic look as the sun page. */
 :root{
@@ -152,7 +152,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
-(function(){
+/* start once Raleway is loaded, so text drawn into canvases (3D labels, compass dial) uses the site font */
+(window.__spFontsReady||Promise.resolve()).then(function(){
 "use strict";
 /* ================= model & timeline ================= */
 var D=Math.PI/180;
@@ -669,7 +670,7 @@ var LASTS=null;
 window.__spRec={dur:T_END,steps:STEPS.map(function(s){return s[0]}),texts:STEPS.map(function(s){return s[1]}),views:["vComp","vComp","vTop","vBack","vSnake"],tok:TOK,
   set:function(t){T=t;frame(t);return LASTS},only:function(id){(window.__spPanels||[]).forEach(function(p){var s=p.cv.closest("svg");p.vis=!!s&&s.id===id})},head:function(){return {label:"НА ЭКРАНЕ ТЕЛЕФОНА",value:$("readout").textContent,ok:false,note:""}},gl:$("gl")};
 frame(T);if(!REC)requestAnimationFrame(loop);
-})();
+});
 </script>
 
 </body>
