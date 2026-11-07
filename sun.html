@@ -54,17 +54,27 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-bars i{flex:1;height:18px;border-radius:2px;background:var(--grid)}
 #sigTxt{font:600 13px var(--f-mono);min-width:7ch;text-align:right}
 @media (max-width:640px){.sp-stage{aspect-ratio:4/3}.sp-hint{font-size:12px}}
+.sp-nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.sp-back{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none}
+.sp-back:hover{text-decoration:underline}
+.sp-tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--grid);border-radius:10px;padding:4px}
+.sp-tabs a{font:600 13.5px var(--f-body);color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:7px}
+.sp-tabs a:hover{color:var(--ink)}
+.sp-tabs a[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,35,45,.12)}
 </style>
 </head>
 <body style="margin:0">
 
 
 <div class="sp-wrap sp" id="sp">
+  <nav class="sp-nav" aria-label="Способы наведения">
+    <a class="sp-back" href="index.html">← Помощник установщика</a>
+    <div class="sp-tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html" aria-current="page">По солнцу</a><a href="magnetic.html">Магнитный компас</a></div>
+  </nav>
+
   <div class="sp-head">
     <h1>Наведение антенны по солнцу</h1>
     <div class="sp-clock"><small>ВРЕМЯ НА ТОЧКЕ</small><span id="clock">09:05:00</span></div>
-    <a class="sp-link" href="index.html">← Помощник установщика</a>
-    <a class="sp-link" href="compass.html">По компасу</a>
     <button id="btnPlay" type="button">Пауза</button>
     <button id="btnRestart" type="button">С начала</button>
   </div>
