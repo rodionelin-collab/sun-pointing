@@ -159,13 +159,9 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
           <p class="hint" style="color:var(--ink)">Плоскость зеркала офсетной антенны направлена не туда, куда антенна «смотрит»: антенна смотрит выше на несколько десятков градусов. Эта разница называется <b>угол офсетности</b>. Он указан в паспорте антенны, обычно 22–26°. Зная его, можно выставить наклон зеркала с помощью отвеса и рулетки.</p>
           <div class="row">
             <div><label for="offset">Угол офсетности (из паспорта), °</label><input id="offset" type="number" step="0.1" value="24"></div>
-            <div><label for="dishH">Высота зеркала, мм</label><input id="dishH" type="number" step="1" value="600"></div>
+            <div><label for="dishD">Диаметр антенны, м</label><input id="dishD" type="number" step="0.1" min="0.5" max="4" value="1.2"></div>
           </div>
-          <div class="row">
-            <div><label for="dishW">Ширина зеркала, мм</label><input id="dishW" type="number" step="1" value="550"></div>
-            <div style="align-self:end"><button class="ghost" id="estOffset" type="button">Прикинуть угол по размерам</button></div>
-          </div>
-          <p class="hint">Если паспорта нет, угол можно прикинуть по размерам зеркала: измерьте его высоту и ширину и нажмите кнопку. Это приблизительная оценка.</p>
+          <p class="hint">Диаметр — от 0,5 до 4,0 м, указан в паспорте или маркировке антенны. Если угол офсетности неизвестен, оставьте типичные 24°.</p>
           <dl class="kv" id="dishKv"></dl>
           <ol class="steps" id="dishSteps"></ol>
         </div>
@@ -277,10 +273,10 @@ var SATS=[
 ["ABS-2A",75.0,0],["AsiaSat 7",105.5,0],["Horizons 3e",169.0,0]
 ];
 var $=function(id){return document.getElementById(id)};
-var S={lat:52.2869,lon:104.3050,tz:8,satLon:145.0,satName:"Экспресс-АМУ7",decl:0,declManual:false,offset:24,H:600,W:550,tab:"dish",sunDate:null,sunTime:null};
+var S={lat:52.2869,lon:104.3050,tz:8,satLon:145.0,satName:"Экспресс-АМУ7",decl:0,declManual:false,offset:24,Dm:1.2,tab:"dish",sunDate:null,sunTime:null};
 try{var saved=JSON.parse(localStorage.getItem("installer-helper")||"null");if(saved)Object.assign(S,saved)}catch(e){}
 function placeName(){return S.city||(S.lat.toFixed(4)+", "+S.lon.toFixed(4))}
-function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,place:placeName(),offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual,city:S.city||"",date:$("sunDate").value||null}))}catch(e){}
+function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,place:placeName(),offset:S.offset,Dm:S.Dm,tab:S.tab,decl:S.decl,declManual:S.declManual,city:S.city||"",date:$("sunDate").value||null}))}catch(e){}
   /* pass the chosen point and satellite to the animation pages */
   var q="?lat="+S.lat.toFixed(5)+"&lon="+S.lon.toFixed(5)+"&tz="+S.tz+"&satLon="+S.satLon+"&decl="+S.decl+"&sat="+encodeURIComponent(S.satName||"")+"&place="+encodeURIComponent(placeName())+($("sunDate").value?"&date="+$("sunDate").value:"");
   document.querySelectorAll('a[href^="sun.html"],a[href^="compass.html"],a[href^="magnetic.html"],a[href^="video.html"]').forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+q)});
@@ -407,7 +403,7 @@ function syncInputs(){
   $("satlon").value=S.satLon;
   var si=SATS.findIndex(function(s){return s[0]===S.satName&&Math.abs(s[1]-S.satLon)<1e-6});
   satSel.value=si>=0?String(si):"custom";
-  $("offset").value=S.offset;$("dishH").value=S.H;$("dishW").value=S.W;
+  if(!(S.Dm>=0.5&&S.Dm<=4))S.Dm=1.2;$("offset").value=S.offset;$("dishD").value=S.Dm;
 }
 function refreshDecl(){
   var a=autoDecl();
@@ -487,8 +483,9 @@ satSel.addEventListener("change",function(){
   var s=SATS[+satSel.value];S.satName=s[0];S.satLon=s[1];$("satlon").value=s[1];render();
 });
 $("satlon").addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)&&v>=-180&&v<=180){S.satLon=v;S.satName="";satSel.value="custom";render()}});
-["offset","dishH","dishW"].forEach(function(id){$(id).addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)){if(id==="offset")S.offset=v;if(id==="dishH")S.H=v;if(id==="dishW")S.W=v;render()}})});
-$("estOffset").addEventListener("click",function(){if(S.W>0&&S.H>0&&S.W<=S.H){S.offset=Math.round(Math.acos(S.W/S.H)*R2D*10)/10;$("offset").value=S.offset;render()}});
+$("offset").addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)){S.offset=v;render()}});
+$("dishD").addEventListener("input",function(){var v=parseFloat(String(this.value).replace(",","."));if(!isNaN(v)&&v>=0.5&&v<=4){S.Dm=v;render()}});
+$("dishD").addEventListener("change",function(){var v=parseFloat(String(this.value).replace(",","."));if(isNaN(v))v=1.2;v=Math.max(0.5,Math.min(4,v));S.Dm=Math.round(v*10)/10;this.value=S.Dm;render()});
 
 document.querySelectorAll("nav button").forEach(function(b){b.addEventListener("click",function(){S.tab=b.dataset.tab;showTab();save()})});
 function showTab(){
@@ -527,7 +524,7 @@ function renderDish(L){
     "<li><b>Поймав максимум сигнала</b>, верните антенну в эту точку и затяните все болты.</li>";
   $("elNote").textContent="Не удивляйтесь, что зеркало стоит почти вертикально, хотя антенна должна смотреть вверх на "+deg(L.el)+". У офсетной антенны конвертор вынесен вниз и вперёд, и антенна «смотрит» заметно выше, чем повёрнута плоскость зеркала. Поэтому угол места не меряют транспортиром по зеркалу — его выставляют по шкале кронштейна.";
   var b=L.el-S.offset; // plate tilt from vertical, + = face looks up
-  var d=S.H*Math.sin(Math.abs(b)*D2R);
+  var d=S.Dm*1000*Math.sin(Math.abs(b)*D2R);   /* plumb offset over the dish height (≈ diameter) */
   $("dishKv").innerHTML=
     "<dt>Угол места</dt><dd>"+deg(L.el)+"</dd>"+
     "<dt>Угол офсетности</dt><dd>"+deg(S.offset)+"</dd>"+
