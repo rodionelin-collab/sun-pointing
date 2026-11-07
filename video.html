@@ -30,6 +30,10 @@ h1{font-size:22px;margin:4px 0 0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
 .ctx{font-size:14px;line-height:1.5;color:var(--muted)}
 .ctx b{color:var(--ink)}
+.ctx{line-height:2.4}
+#dateBox{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;vertical-align:middle;line-height:1.4}
+#dateBox[hidden]{display:none}
+#dateBox input{min-height:40px;padding:4px 8px;font:600 14px var(--f-body,Raleway,sans-serif);color:var(--ink)}
 label.k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;display:block;margin-bottom:4px}
 input[type=date]{font:600 15px var(--f-body);border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card);color:var(--ink)}
 .methods{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:15px}
@@ -75,13 +79,8 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
   <p class="hint">Соберём один вертикальный ролик для смартфона с анимациями наведения для выбранной точки, спутника и даты. Его можно скачать и отправить клиенту в мессенджер.</p>
 
   <div class="card">
-    <div class="ctx" id="ctx">Точка и спутник берутся из Помощника установщика.</div>
-    <div id="dateBox">   <!-- the date matters only for the sun method -->
-    <div class="row">
-      <div><label class="k" for="dateIn">Планируемая дата установки</label><input type="date" id="dateIn"></div>
-    </div>
+    <div class="ctx"><span id="ctx">Точка и спутник берутся из Помощника установщика.</span><span id="dateBox"> · <label for="dateIn">планируемая дата установки</label> <input type="date" id="dateIn"></span></div>
     <p class="warn" id="dateWarn" hidden>Эта дата уже прошла — для способа «по солнцу» выберите сегодняшний или более поздний день.</p>
-    </div>
     <div>
       <span class="k" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Какие способы включить</span>
       <div class="methods" style="margin-top:6px">
@@ -159,9 +158,9 @@ function pageQuery(){var q=new URLSearchParams(location.search);q.delete("test")
 
 var TOK=null;
 function sunOn(){var c=document.querySelector('.methods input[value="sun"]');return !c||c.checked}
-function showCtx(){$("dateBox").hidden=!sunOn();
+function showCtx(){$("dateBox").hidden=!sunOn();if(!sunOn())$("dateWarn").hidden=true;else checkDate();
   if(!TOK){$("ctx").innerHTML="Точка и спутник берутся из Помощника установщика.";return}
-  $("ctx").innerHTML="Точка: <b>"+esc(TOK.PLACE)+"</b> · спутник <b>"+esc(TOK.SAT)+"</b> · азимут <b>"+TOK.AZ+"°</b> · угол места <b>"+TOK.EL+"°</b>"+(sunOn()?" · планируемая дата установки <b>"+fmtDate(date)+"</b>":"");
+  $("ctx").innerHTML="Точка: <b>"+esc(TOK.PLACE)+"</b> · спутник <b>"+esc(TOK.SAT)+"</b> · азимут <b>"+TOK.AZ+"°</b> · угол места <b>"+TOK.EL+"°</b>";   /* the date field follows on the same line (sun method only) */
 }
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function fmtDate(d){var p=d.split("-"),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return (+p[2])+" "+m[+p[1]-1]+" "+p[0]}
