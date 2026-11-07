@@ -111,7 +111,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
   <div class="sp-views">
     <div class="sp-view"><h2>КОМПАС В ТЕЛЕФОНЕ</h2><svg id="vComp" viewBox="0 0 320 260" role="img" aria-label="Компас в телефоне: число на экране и картушка"></svg><p>На экране — направление, куда смотрит верхний край телефона. Поворачиваемся, пока не будет {MAG}°: тогда верх телефона смотрит на спутник.</p></div>
     <div class="sp-view"><h2>ВИД СВЕРХУ</h2><svg id="vTop" viewBox="0 0 320 260" role="img" aria-label="Вид сверху: компас, линия на ориентир, антенна"></svg><p>Компас телефона отсчитывает от магнитного севера, а {DECLNOTE}. Линия от телефона через антенну идёт к вешке, на неё и разворачиваем антенну.</p></div>
-    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма.</p></div>
+    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Как только сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум пройден: выше не поднимайтесь, опустите зеркало на шаг обратно и по этому проходу вернитесь в точку, где сигнал был самым сильным.</p></div>
     <div class="sp-view"><h2>ВИД ИЗ-ЗА АНТЕННЫ</h2><svg id="vBack" viewBox="0 0 320 260" role="img" aria-label="Вид из-за антенны глазами установщика"></svg><p>Так видит установщик: верх вешки должен оказаться точно над центром зеркала. Низ вешки, штанга и приёмопередатчик за зеркалом показаны пунктиром.</p></div>
   </div>
 
@@ -226,10 +226,10 @@ var COMP0=[-0.9*bw[0]+0.75*bp[0],-0.9*bw[1]+0.75*bp[1]],COMP1=[-4.2*bw[0],-4.2*b
 var STAKE=[7*bw[0],7*bw[1]],STAKE_H=3;
 /* snake around the final error */
 var SN_T0=17.3,SN_T1=29.3;
-/* fine pointing: 15 passes of ±30° in azimuth, 0.5° elevation step, then back to the best point in two straight moves */
+/* fine pointing: passes of ±30° in azimuth, 0.5° up until the signal drops, then back to the best point in two straight moves */
 var SN_AMP=30;
 var SN_PTS=(function(){var p=[[ERR,-3.5],[-SN_AMP,-3.5],[SN_AMP,-3.5]],el=-3.5,side=1;
-  for(var r=1;r<15;r++){el+=0.5;p.push([side*SN_AMP,el]);side=-side;p.push([side*SN_AMP,el])}
+  for(var r=1;r<9;r++){el+=0.5;p.push([side*SN_AMP,el]);side=-side;p.push([side*SN_AMP,el])}
   p.push([side*SN_AMP,0]);p.push([0,0]);return p})();
 var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],(SN_PTS[q][1]-SN_PTS[q-1][1])*12));
 function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*1.6*1.6)-(dEl*dEl)/(2*0.6*0.6))}
@@ -382,16 +382,16 @@ var TOPV=(function(){
 
 /* ================= panel 3: snake ================= */
 var SNK=(function(){
-  var svg=$("vSnake"),cx=160,cy=112,kx=118/SN_AMP,ky=22;
+  var svg=$("vSnake"),cx=160,cy=82,kx=118/SN_AMP,ky=28;
   function P(a,e){return [cx+a*kx,cy-e*ky]}
   [0.1,0.3,0.5,0.7,0.9].forEach(function(lv){var m=Math.sqrt(-2*Math.log(lv));mk("ellipse",{cx:cx,cy:cy,rx:1.6*kx*m,ry:0.6*ky*m,fill:"var(--cyan)","fill-opacity":0.1,stroke:"var(--cyan)","stroke-opacity":.35},svg)});
-  mk("line",{x1:16,y1:cy,x2:304,y2:cy,stroke:"var(--line)"},svg);mk("line",{x1:cx,y1:22,x2:cx,y2:206,stroke:"var(--line)"},svg);
+  mk("line",{x1:16,y1:cy,x2:304,y2:cy,stroke:"var(--line)"},svg);mk("line",{x1:cx,y1:30,x2:cx,y2:200,stroke:"var(--line)"},svg);
   for(var a=-SN_AMP;a<=SN_AMP;a+=SN_AMP/3){var pp=P(a,0);mk("line",{x1:pp[0],y1:cy-3,x2:pp[0],y2:cy+3,stroke:"var(--muted)"},svg)}
-  for(var e=-3.5;e<=3.51;e+=0.5){var pq=P(0,e);mk("line",{x1:cx-(e%1===0?4:2),y1:pq[1],x2:cx+(e%1===0?4:2),y2:pq[1],stroke:"var(--muted)"},svg)}
+  for(var e=-3.5;e<=1.51;e+=0.5){var pq=P(0,e);mk("line",{x1:cx-(e%1===0?4:2),y1:pq[1],x2:cx+(e%1===0?4:2),y2:pq[1],stroke:"var(--muted)"},svg)}
   [[-SN_AMP,"−"+SN_AMP+"°"],[SN_AMP,"+"+SN_AMP+"°"]].forEach(function(q){var pp=P(q[0],0);mk("text",{x:pp[0],y:cy+4,"font-size":10,"font-weight":600,"text-anchor":q[0]<0?"end":"start",dx:q[0]<0?-6:6,fill:"var(--ink)","paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg).textContent=q[1]});
   mk("text",{x:304,y:20,"font-size":10,"text-anchor":"end",fill:"var(--muted)"},svg).textContent="азимут →";
   mk("text",{x:cx+6,y:20,"font-size":10,fill:"var(--muted)"},svg).textContent="↑ угол места";
-  mk("text",{x:160,y:226,"font-size":10,"text-anchor":"middle",fill:"var(--ink)"},svg).textContent="15 проходов: ±"+SN_AMP+"° по азимуту, шаг 0,5–1° вверх";
+  mk("text",{x:160,y:226,"font-size":10,"text-anchor":"middle",fill:"var(--ink)"},svg).textContent="±"+SN_AMP+"° по азимуту, шаг 0,5–1° вверх до спада сигнала";
   var bpt=P(0,0);mk("circle",{cx:bpt[0],cy:bpt[1],r:3,fill:"var(--cyan)"},svg);
   mk("polyline",{points:ptsStr(SN_PTS.map(function(q){return P(q[0],q[1])})),fill:"none",stroke:"var(--muted)","stroke-width":1.2,"stroke-dasharray":"3 4",opacity:.6},svg);
   var done=mk("polyline",{fill:"none",stroke:"var(--amber)","stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"},svg);
