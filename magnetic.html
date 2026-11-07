@@ -627,7 +627,7 @@ var G=null;
   var markL=(function(){var c=document.createElement("canvas");c.width=320;c.height=140;var x=c.getContext("2d");x.fillStyle="rgba(255,255,255,.92)";x.fillRect(6,6,308,128);x.fillStyle="#0a8fb3";x.textAlign="center";x.textBaseline="middle";
     x.font="600 34px Raleway, sans-serif";x.fillText("на спутник",160,44);x.font="700 54px Raleway, monospace";x.fillText(F1(MAG_AZ)+"°",160,100);
     var tx=new THREE.CanvasTexture(c);if(THREE.sRGBEncoding)tx.encoding=THREE.sRGBEncoding;var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:false,toneMapped:false}));sp.scale.set(0.5,0.22,1);return sp})();
-  markL.center.set(0.5,0);markL.position.set(Math.sin(MAG_AZ*D)*(RD+0.42),TOPY+0.1,-Math.cos(MAG_AZ*D)*(RD+0.42));   /* label beyond and above the arrow so the arrow stays visible */dialG.add(markL);
+  var mR=REC?RD+0.2:RD+0.42;markL.center.set(0.5,0);markL.position.set(Math.sin(MAG_AZ*D)*mR,TOPY+(REC?0.14:0.1),-Math.cos(MAG_AZ*D)*mR);   /* in the video (narrow vertical frame) the label sits closer to the dial so it is not cut at the edge */   /* label beyond and above the arrow so the arrow stays visible */dialG.add(markL);
   var ndl=new THREE.Group();ndl.position.y=TOPY+0.03;comp.add(ndl);
   var nR=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.2,4),new THREE.MeshBasicMaterial({color:0xd23b2f}));nR.rotation.x=-Math.PI/2;nR.position.z=-0.1;nR.scale.set(1,1,0.35);ndl.add(nR);
   var nW=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.2,4),new THREE.MeshBasicMaterial({color:0x6f8290}));nW.rotation.x=Math.PI/2;nW.position.z=0.1;nW.scale.set(1,1,0.35);ndl.add(nW);

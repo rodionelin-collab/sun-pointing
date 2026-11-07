@@ -347,6 +347,13 @@ function makeSink(cv){return pickCodec().then(function(codec){
     done:function(){return new Promise(function(r){rec.onstop=function(){r(new Blob(parts,{type:mt.split(";")[0]}))};rec.stop()})},cancel:function(){try{rec.stop()}catch(e){}}}})}
 
 /* quality choice: the page always starts at maximum */
+/* size estimate for each quality: the browser encoder keeps close to the target bitrate (≈80% of it on average),
+   so size ≈ bitrate × length; the length depends on the methods ticked */
+function estLen(){var list=Array.prototype.slice.call(document.querySelectorAll(".methods input:checked")).map(function(i){return i.value});
+  return (5+5+6+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:2.5)+(k==="sun"?46:49)*SLOW},0))*1.03}
+function updEst(){var L=estLen();Object.keys(QUAL).forEach(function(k){var mb=QUAL[k].br*0.8*L/8/1e6,el=$("qs-"+k);if(el)el.textContent="≈ "+(mb>=20?Math.round(mb/5)*5:Math.round(mb))+" МБ"});
+  var e=$("eta");if(e){var m=L/60;e.textContent="Ролик длится около "+(Math.round(m*2)/2).toString().replace(".",",")+" мин. Сборка идёт прямо в браузере — не закрывайте и не сворачивайте вкладку. Чем ниже качество, тем меньше файл и быстрее сборка."}}
+document.querySelectorAll(".methods input").forEach(function(i){i.addEventListener("change",updEst)});updEst();
 function qualKey(){var r=document.querySelector('input[name="qual"]:checked');return r&&QUAL[r.value]?r.value:"max"}
 /* ---------- build ---------- */
 var busy=false,cancelled=false;
