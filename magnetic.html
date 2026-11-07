@@ -560,7 +560,6 @@ var G=null;
   /* big, detailed baseplate compass on a small stand (drawn larger than life so the scale is readable) */
   var comp=new THREE.Group();scene.add(comp);
   var RD=0.32,TOPY=1.0;
-  comp.add(rod(W(0,0,0),W(0,0,TOPY-0.03),0.014,new THREE.MeshStandardMaterial({color:0x8b6a45,roughness:.9})));
   var plateG=new THREE.Group();comp.add(plateG);plateG.visible=false;   /* plain compass: no baseplate / index — the satellite mark is on the scale */
   var plate=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.014,0.92),new THREE.MeshStandardMaterial({color:0xdbe9ef,transparent:true,opacity:.9,roughness:.3}));plate.position.set(0,TOPY-0.012,-0.04);plate.castShadow=true;plateG.add(plate);
   function flatArrow(len,wid,thick,color){var sh=new THREE.Shape();sh.moveTo(0,len/2);sh.lineTo(-wid/2,-len/2);sh.lineTo(wid/2,-len/2);sh.lineTo(0,len/2);
@@ -668,7 +667,7 @@ var G=null;
       arcMesh.visible=true;var mid=(a0+(((a1-a0)%360+360)%360)/2)*D;arcLbl.position.set(cpos.x+(RD+0.32)*Math.sin(mid),cpos.y+0.05,cpos.z-(RD+0.32)*Math.cos(mid));arcLbl.visible=true}
     else{if(arcMesh)arcMesh.visible=false;arcLbl.visible=false}
     stake.scale.set(1,Math.max(0.001,S.stake),1);stake.visible=S.stake>0;
-    var c1=W(COMP1[0],COMP1[1],0),st=W(STAKE[0],STAKE[1],0);placeRibbon(sight,c1,c1.clone().lerp(st,S.line),0.012);sMat.opacity=0.85*Math.min(1,S.line*3);
+    var st=W(STAKE[0],STAKE[1],0),dv=W(Math.sin(LINE_AZ*D),Math.cos(LINE_AZ*D),0),c1=W(COMP1[0],COMP1[1],0).addScaledVector(dv,RD+0.18);placeRibbon(sight,c1,c1.clone().lerp(st,S.line),TOPY);   /* sight line from the satellite mark on the compass to the stake, at compass height */sMat.opacity=0.85*Math.min(1,S.line*3);
     var m0=W(0,0,0),ge=W(Math.sin(S.dishAz*D)*5,Math.cos(S.dishAz*D)*5,0);placeRibbon(guide,m0,ge,0.016);gMat.color.setHex(S.ok?0x1f9d63:0xe0650b);gMat.opacity=0.9*S.gv;
     var txt=null,col="#e0650b",pos=null;
     if(S.t>=4.5&&S.t<9&&S.defl>6){txt="рядом металл — стрелка врёт";pos=W(S.cp[0],S.cp[1],1.9)}
