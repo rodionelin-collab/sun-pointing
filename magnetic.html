@@ -481,7 +481,7 @@ var BACKV=(function(){
     setA(armO,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});setA(lnbO,{cx:l0[0],cy:l0[1]});
     setA(armI,{x1:r0[0]+nx,y1:r0[1]+ny,x2:l0[0]+nx,y2:l0[1]+ny});setA(armI2,{x1:r0[0]-nx,y1:r0[1]-ny,x2:l0[0]-nx,y2:l0[1]-ny});setA(lnbI,{cx:l0[0],cy:l0[1]});
     setA(cross,{opacity:S.ok&&S.t<SN_T0?1:0});
-    lab.textContent=S.stake<0.5?"":S.ok?"✓ вешка точно над центром зеркала":"вешка ещё не над центром";setA(lab,{fill:S.ok?"var(--green)":"var(--warn)"});
+    lab.textContent=S.stake<0.5?"":S.ok?"✓ вешка точно над центром зеркала":"";setA(lab,{fill:S.ok?"var(--green)":"var(--warn)"});
   }};
 })();
 
