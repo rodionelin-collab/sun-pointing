@@ -509,7 +509,7 @@ var G=null;
   var arrowM=flatArrow(0.16,0.13,0.012,0x0a8fb3);arrowM.position.set(0,TOPY-0.006,-0.56);plateG.add(arrowM);
   var idxM=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.006,0.07),new THREE.MeshBasicMaterial({color:0x14232d}));idxM.position.set(0,TOPY+0.03,-RD-0.03);plateG.add(idxM);
   function dialTex(){var c=document.createElement("canvas");c.width=c.height=1024;var x=c.getContext("2d"),o=512;
-    x.fillStyle="#dfe7ec";x.beginPath();x.arc(o,o,505,0,7);x.fill();
+    x.fillStyle="#d3dbe1";x.beginPath();x.arc(o,o,508,0,7);x.fill();x.strokeStyle="#8fa1ad";x.lineWidth=6;x.beginPath();x.arc(o,o,505,0,7);x.stroke();
     x.fillStyle="#ffffff";x.beginPath();x.arc(o,o,385,0,7);x.fill();
     x.strokeStyle="#90a4b1";x.lineWidth=6;x.beginPath();x.arc(o,o,385,0,7);x.stroke();
     x.strokeStyle="#5f7380";for(var a=0;a<360;a+=5){var r1=a%30===0?325:a%10===0?345:360;x.lineWidth=a%30===0?7:3;x.beginPath();x.moveTo(o+380*Math.sin(a*D),o-380*Math.cos(a*D));x.lineTo(o+r1*Math.sin(a*D),o-r1*Math.cos(a*D));x.stroke()}
@@ -517,10 +517,10 @@ var G=null;
     for(var b=0;b<360;b+=30){x.save();x.translate(o+445*Math.sin(b*D),o-445*Math.cos(b*D));x.rotate(b*D);x.fillText(String(b),0,0);x.restore()}
     x.font="700 100px 'Golos Text', sans-serif";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.save();x.translate(o+255*Math.sin(q[1]*D),o-255*Math.cos(q[1]*D));x.rotate(q[1]*D);x.fillStyle=q[2];x.fillText(q[0],0,0);x.restore()});
     x.strokeStyle="#d23b2f";x.lineWidth=8;x.setLineDash([22,14]);x.beginPath();x.moveTo(o,o-300);x.lineTo(o-45,o-235);x.lineTo(o-45,o+40);x.lineTo(o+45,o+40);x.lineTo(o+45,o-235);x.closePath();x.stroke();
-    var t=new THREE.CanvasTexture(c);t.anisotropy=8;return t}
+    var t=new THREE.CanvasTexture(c);t.anisotropy=8;if(THREE.sRGBEncoding)t.encoding=THREE.sRGBEncoding;return t}
   var dialG=new THREE.Group();comp.add(dialG);
   var dialSide=new THREE.Mesh(new THREE.CylinderGeometry(RD,RD,0.03,64),new THREE.MeshStandardMaterial({color:0x90a4b1}));dialSide.position.y=TOPY;dialSide.castShadow=true;dialG.add(dialSide);
-  var dialFace=new THREE.Mesh(new THREE.CircleGeometry(RD,64),new THREE.MeshStandardMaterial({map:dialTex(),roughness:.6}));dialFace.rotation.x=-Math.PI/2;dialFace.position.y=TOPY+0.016;dialG.add(dialFace);
+  var dialFace=new THREE.Mesh(new THREE.CircleGeometry(RD,64),new THREE.MeshBasicMaterial({map:dialTex()}));dialFace.rotation.x=-Math.PI/2;dialFace.position.y=TOPY+0.016;dialG.add(dialFace);
   var ndl=new THREE.Group();ndl.position.y=TOPY+0.03;comp.add(ndl);
   var nR=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.2,4),new THREE.MeshBasicMaterial({color:0xd23b2f}));nR.rotation.x=-Math.PI/2;nR.position.z=-0.1;nR.scale.set(1,1,0.35);ndl.add(nR);
   var nW=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.2,4),new THREE.MeshBasicMaterial({color:0xf4f7f9}));nW.rotation.x=Math.PI/2;nW.position.z=0.1;nW.scale.set(1,1,0.35);ndl.add(nW);
