@@ -290,6 +290,8 @@ var SN_TAB=(function(){var tot=SN_LEN[SN_LEN.length-1],N=6000,c=[0],cost=0;
   return c})();
 (function(){var r=SN_TAB[SN_TAB.length-1]/SN_LEN[SN_LEN.length-1],gap=T_END-SN_T1;SN_T1=SN_T0+(SN_T1-SN_T0)*r;T_END=SN_T1+gap})();
 window.__spDbg=function(){return {T0:SN_T0,T1:SN_T1,TE:T_END,snakeAt:snakeAt,sig:sig}};
+function snPtAtG(L){var i=1;while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k]}
+function snLenAt(t){return snCostToLen(clamp((t-SN_T0)/(SN_T1-SN_T0)))}
 function snCostToLen(p){var C=SN_TAB,g=p*C[C.length-1],lo=0,hi=C.length-1;while(hi-lo>1){var m=(lo+hi)>>1;if(C[m]<g)lo=m;else hi=m}
   var k=(g-C[lo])/((C[hi]-C[lo])||1);return (lo+k)/(C.length-1)*SN_LEN[SN_LEN.length-1]}
 function snakeAt(t){
@@ -508,6 +510,13 @@ var BACKV=(function(){
   var lnbI=mk("circle",{r:7,fill:"none",stroke:"#3a444b","stroke-width":1.4,"stroke-dasharray":"3 2.5"},gIn);
   var cross=mk("line",{x1:160,y1:14,x2:160,y2:250,stroke:"var(--green)","stroke-width":1,"stroke-dasharray":"3 4",opacity:0},svg);
   var lab=mk("text",{x:12,y:22,"font-size":11,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
+  /* contrail of the converter during the snake (about two passes, fading); the first pass stays put, each next 0,5° pass is drawn BT_GAP px higher */
+  var BT_N=160,BT_LEN=150,BT_GAP=1.8,btl=[];for(var bi=0;bi<BT_N;bi++)btl.push(mk("line",{stroke:"#e0650b","stroke-width":1.3,"stroke-linecap":"round",opacity:0},svg));
+  function backTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),prev=null,L0=snLenAt(S.t);
+    for(var i=0;i<=BT_N;i++){var L=L0-BT_LEN*i/BT_N,p=null;
+      if(on&&L>=0){var q=snPtAtG(L);p=P(dishGeom(SAT_AZ+q[0],SN_PTS[0][1]).lnb);p=[p[0],p[1]-(q[1]-SN_PTS[0][1])/0.5*BT_GAP]}
+      if(i>0){var ln=btl[i-1],k=1-i/BT_N;if(p&&prev)setA(ln,{x1:prev[0],y1:prev[1],x2:p[0],y2:p[1],opacity:(0.95*k*k*fade).toFixed(3)});else setA(ln,{opacity:0})}
+      prev=p}}
   return {cv:cv,cam:{eye:eye,fw:fw,up:up,f:f,cx:cx,cy:cy},hide:[dish,frame,mast,gOut],draw:function(S,g){
     var sd=Pd(dirv(SAT_AZ,SAT_EL)),c=P(g.C);
     if(sd){setA(satG,{transform:tr(sd[0],Math.max(14,sd[1]))});setA(satRay,{x1:c[0],y1:c[1],x2:sd[0],y2:Math.max(14,sd[1])})}
@@ -521,6 +530,7 @@ var BACKV=(function(){
     var r0=P(g.root),l0=P(g.lnb),dx=l0[0]-r0[0],dy=l0[1]-r0[1],L=Math.hypot(dx,dy)||1,nx=-dy/L*3.6,ny=dx/L*3.6;
     setA(armO,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});setA(lnbO,{cx:l0[0],cy:l0[1]});
     setA(armI,{x1:r0[0]+nx,y1:r0[1]+ny,x2:l0[0]+nx,y2:l0[1]+ny});setA(armI2,{x1:r0[0]-nx,y1:r0[1]-ny,x2:l0[0]-nx,y2:l0[1]-ny});setA(lnbI,{cx:l0[0],cy:l0[1]});
+    backTrail(S);
     setA(cross,{opacity:S.ok&&S.t<SN_T0?1:0});
     lab.textContent="";setA(lab,{fill:S.ok?"var(--green)":"var(--warn)"});
   }};
@@ -679,8 +689,16 @@ var G=null;
   addPanel(MERGE.cv,camTop.apply(null,MERGE.camArgs),{scale:MERGE.AS});
   addPanel(BACKV.cv,camBack(BACKV.cam));
   if(PR)MERGE.hide.concat(BACKV.hide).forEach(function(e){e.style.display="none"});
+  /* main 3D view only: the elevation offset is drawn 5x larger (the dish visibly rises pass by pass during the snake and ends on the satellite);
+     contrail of the converter, about two passes long, fading towards the tail; the panels keep the true elevation */
+  var EL_EX=5,TRAIL=[],TR_N=220,TR_LEN=150,trGeo=new THREE.SphereGeometry(0.02,8,6);
+  for(var ti=0;ti<TR_N;ti++){var tm=new THREE.Mesh(trGeo,new THREE.MeshBasicMaterial({color:0xe0650b,transparent:true,depthWrite:false}));tm.visible=false;scene.add(tm);TRAIL.push(tm)}
+  function drawTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),L0=snLenAt(S.t);
+    TRAIL.forEach(function(m,i){var L=L0-TR_LEN*i/(TR_N-1);if(!on||L<0){m.visible=false;return}
+      var q=snPtAtG(L),g=dishGeom(SAT_AZ+q[0],q[1]*EL_EX),v=W(g.lnb[0],g.lnb[1],g.lnb[2]),k=1-i/TR_N;
+      m.position.copy(v);m.scale.setScalar(0.7+0.3*k);m.material.opacity=(0.95*Math.pow(k,1.5)*fade);m.visible=true})}
   G={render:function(S){
-    head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
+    head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*EL_EX*D;drawTrail(S);
     comp.position.copy(W(S.cp[0],S.cp[1],0));
     plateG.rotation.y=-S.heading*D;dialG.rotation.y=-(S.heading-S.reading)*D;ndl.rotation.y=-S.needle*D;
     compLbl.visible=(ease((S.t-0.6)/1.4)-ease((S.t-12.3)/1.5))<0.3;
@@ -708,6 +726,7 @@ var G=null;
     if(controls&&userCam)controls.update();
     (function(){var p=new THREE.Vector3(),r=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0).multiplyScalar(stLbl.scale.x*1.05);stLbl.getWorldPosition(p);var q=p.clone().add(r);p.project(camera);q.project(camera);stLbl.center.set(q.x>0.97?1.04:-0.04,0.5)})(); /* keep the stake label inside the frame */
     renderer.render(scene,camera);
+    tiltP.rotation.x=S.dEl*D;TRAIL.forEach(function(m){m.visible=false});   /* panels: true elevation, no 3D trail */
     renderPanels();
   }};
 })();
