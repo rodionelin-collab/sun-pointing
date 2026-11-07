@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Помощник установщика</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a single working column — point & satellite on top, the four key angles as a readout strip, then method panels (dish, sun, compass, all satellites, clock) */
+:root{
+  --bg:#eef2f4; --panel:#ffffff; --ink:#122029; --muted:#5b6b75; --line:#d3dce1;
+  --accent:#0f6e8c; --accent-soft:#e0eff4; --sun:#c27a00; --warn:#b3261e; --ok:#2e7d32;
+  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-data:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1519; --panel:#152027; --ink:#e3ebef; --muted:#93a4ad; --line:#26353e;
+  --accent:#4fb3d4; --accent-soft:#17323d; --sun:#f0b23c; --warn:#ff8a80; --ok:#81c784; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1519; --panel:#152027; --ink:#e3ebef; --muted:#93a4ad; --line:#26353e;
+  --accent:#4fb3d4; --accent-soft:#17323d; --sun:#f0b23c; --warn:#ff8a80; --ok:#81c784; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
+h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:0;color:var(--muted);font-size:13px}
+h2{font-size:17px;margin:0;font-weight:600;text-wrap:balance}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;display:block;margin-bottom:4px}
+input,select,button{font:inherit;color:var(--ink)}
+input,select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.err{color:var(--warn);font-size:13px;margin:0}
+button{background:var(--accent);color:var(--panel);border:0;border-radius:7px;padding:8px 14px;font-weight:600;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+/* readout strip */
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cell{background:var(--panel);padding:14px 16px;display:grid;gap:2px;align-content:start}
+.cell .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.cell .v{font-family:var(--f-data);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
+.cell .s{font-size:13px;color:var(--muted)}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);justify-self:start}
+.status.bad{color:var(--warn);background:transparent;border:1px solid var(--warn)}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav button{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.data{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+td.n{font-family:var(--f-data);text-align:right;font-variant-numeric:tabular-nums}
+tr.sel td{background:var(--accent-soft)}
+tbody tr{cursor:pointer}
+tr.dim td{color:var(--muted)}
+.tag{font-size:11px;font-weight:600;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 5px;margin-left:6px}
+.scroll{overflow-x:auto}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0}
+.kv dt{color:var(--muted);font-size:14px}
+.kv dd{margin:0;font-family:var(--f-data);font-variant-numeric:tabular-nums;font-weight:600}
+ol.steps{margin:0;padding-left:20px;display:grid;gap:6px}
+svg{max-width:100%;height:auto;display:block}
+svg text{font-family:var(--f-body);fill:var(--ink)}
+.fig{display:grid;place-items:center;background:var(--bg);border-radius:8px;padding:10px}
+.note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin:0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body style="margin:0">
+
+
+<div class="wrap">
+  <header>
+    <h1>Помощник установщика антенны</h1>
+    <p>Азимут, угол места, поворот конвертора, наведение по солнцу и компасу · <a href="index.html" style="color:var(--accent)">анимация метода по солнцу</a></p>
+  </header>
+
+  <section class="grid2">
+    <div class="panel">
+      <h2>Точка установки</h2>
+      <div>
+        <label for="city">Город из списка</label>
+        <select id="city"></select>
+      </div>
+      <div>
+        <label for="coords">Координаты (широта, долгота)</label>
+        <input id="coords" placeholder="52.2869, 104.3050 или 52°17'13&quot; N 104°18'18&quot; E" autocomplete="off">
+        <p class="err" id="coordsErr" hidden></p>
+      </div>
+      <div class="row">
+        <div><label for="tz">Часовой пояс точки, UTC+</label><input id="tz" type="number" step="0.5" min="-12" max="14"></div>
+        <div><label for="decl">Магн. склонение, °</label><input id="decl" type="number" step="0.1"></div>
+      </div>
+      <p class="hint" id="declHint"></p>
+    </div>
+    <div class="panel">
+      <h2>Спутник</h2>
+      <div>
+        <label for="sat">Спутник</label>
+        <select id="sat"></select>
+      </div>
+      <div>
+        <label for="satlon">Долгота спутника, ° (восточная +, западная −)</label>
+        <input id="satlon" type="number" step="0.1" min="-180" max="180">
+      </div>
+      <p class="hint">Можно выбрать спутник из списка или вписать любую орбитальную позицию. Строка в таблице «Все спутники» тоже выбирает спутник.</p>
+    </div>
+  </section>
+
+  <section class="readout" aria-live="polite">
+    <div class="cell"><span class="k">Азимут истинный</span><span class="v" id="rAz">—</span><span class="s">от географического севера</span></div>
+    <div class="cell"><span class="k">Азимут по компасу</span><span class="v" id="rMag">—</span><span class="s" id="rMagS">с учётом склонения</span></div>
+    <div class="cell"><span class="k">Угол места</span><span class="v" id="rEl">—</span><span class="s" id="rElS"></span></div>
+    <div class="cell"><span class="k">Поворот конвертора</span><span class="v" id="rSkew">—</span><span class="s" id="rSkewS"></span></div>
+  </section>
+
+  <nav role="tablist" aria-label="Способы наведения">
+    <button role="tab" data-tab="dish" aria-selected="true">Наклон антенны</button>
+    <button role="tab" data-tab="sun" aria-selected="false">По солнцу</button>
+    <button role="tab" data-tab="compass" aria-selected="false">По компасу</button>
+    <button role="tab" data-tab="all" aria-selected="false">Все спутники</button>
+    <button role="tab" data-tab="clock" aria-selected="false">Часы</button>
+  </nav>
+
+  <!-- DISH -->
+  <section class="panel" data-pane="dish">
+    <h2>Угол офсетности и наклон зеркала</h2>
+    <div class="grid2">
+      <div style="display:grid;gap:12px;align-content:start">
+        <div class="row">
+          <div><label for="offset">Угол офсетности, °</label><input id="offset" type="number" step="0.1" value="24"></div>
+          <div><label for="dishH">Высота зеркала, мм</label><input id="dishH" type="number" step="1" value="600"></div>
+        </div>
+        <div class="row">
+          <div><label for="dishW">Ширина зеркала, мм</label><input id="dishW" type="number" step="1" value="550"></div>
+          <div style="align-self:end"><button class="ghost" id="estOffset" type="button">Оценить офсет по размерам</button></div>
+        </div>
+        <p class="hint">Точный угол офсетности берите из паспорта антенны. Оценка по размерам (arccos ширины к высоте) даёт приблизительное значение.</p>
+        <dl class="kv" id="dishKv"></dl>
+        <ol class="steps" id="dishSteps"></ol>
+      </div>
+      <div class="fig"><svg id="dishSvg" viewBox="0 0 320 300" width="320" role="img" aria-label="Схема наклона зеркала с отвесом"></svg></div>
+    </div>
+  </section>
+
+  <!-- SUN -->
+  <section class="panel" data-pane="sun" hidden>
+    <h2>Наведение по солнцу</h2>
+    <p class="hint"><a href="index.html" style="color:var(--accent);font-weight:600">Посмотреть анимацию: как это выглядит в 3D →</a></p>
+    <p class="hint" style="font-size:14px;color:var(--ink);max-width:68ch">Солнце за день проходит по небу с востока на запад. Один раз в день оно оказывается точно в той стороне, где висит спутник, только выше или ниже него. В эту минуту достаточно развернуть антенну «лицом» к солнцу, и по сторонам света она будет смотреть точно на спутник. Ни компас, ни транспортир не нужны.</p>
+    <div class="row">
+      <div><label for="sunDate">Дата установки</label><input id="sunDate" type="date"></div>
+      <div style="align-self:end"><button class="ghost" id="sunNow" type="button">Сегодня</button></div>
+    </div>
+    <div class="cell" style="border:1px solid var(--line);border-radius:10px">
+      <span class="k">Солнце будет в стороне спутника</span>
+      <span class="v" id="sunMatch">—</span>
+      <span class="s" id="sunMatchS"></span>
+    </div>
+    <div class="grid2">
+      <div style="display:grid;gap:12px;align-content:start">
+        <h2 style="font-size:15px">Что делать по шагам</h2>
+        <ol class="steps" id="sunSteps"></ol>
+        <p class="note">Не смотрите на солнце, в том числе сквозь тёмные стёкла: ориентируйтесь только по теням. Не оставляйте антенну надолго развёрнутой на солнце: зеркало собирает тепло на конверторе и может его перегреть. Если в эту минуту солнце за облаками, используйте способ по компасу или повторите на следующий день: время почти не меняется.</p>
+      </div>
+      <div class="fig" style="gap:6px">
+        <svg viewBox="0 0 320 250" width="320" role="img" aria-label="Вид сверху: правильно, когда тень штанги параллельна тени мачты">
+          <text x="80" y="18" font-size="13" font-weight="600" text-anchor="middle" fill="var(--ok)">Правильно</text>
+          <text x="240" y="18" font-size="13" font-weight="600" text-anchor="middle" fill="var(--warn)">Поверните антенну</text>
+          <g>
+            <circle cx="80" cy="44" r="11" fill="var(--sun)"/>
+            <text x="98" y="48" font-size="11" fill="var(--muted)">солнце</text>
+            <line x1="40" y1="130" x2="40" y2="232" stroke="var(--muted)" stroke-width="6" stroke-linecap="round" opacity=".45"/>
+            <circle cx="40" cy="130" r="5" fill="var(--ink)"/>
+            <text x="4" y="150" font-size="11" fill="var(--muted)">мачта</text>
+            <path d="M58 118 Q80 108 102 118" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+            <line x1="80" y1="114" x2="80" y2="78" stroke="var(--accent)" stroke-width="3"/>
+            <rect x="74" y="70" width="12" height="10" rx="2" fill="var(--accent)"/>
+            <line x1="80" y1="128" x2="80" y2="210" stroke="var(--muted)" stroke-width="3" stroke-dasharray="5 4" opacity=".7"/>
+            <text x="86" y="200" font-size="11" fill="var(--muted)">тень штанги</text>
+            <text x="46" y="222" font-size="11" fill="var(--muted)">тень</text>
+          </g>
+          <g>
+            <circle cx="240" cy="44" r="11" fill="var(--sun)"/>
+            <line x1="200" y1="130" x2="200" y2="232" stroke="var(--muted)" stroke-width="6" stroke-linecap="round" opacity=".45"/>
+            <circle cx="200" cy="130" r="5" fill="var(--ink)"/>
+            <g transform="rotate(28 240 118)">
+              <path d="M218 118 Q240 108 262 118" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
+              <line x1="240" y1="114" x2="240" y2="78" stroke="var(--accent)" stroke-width="3"/>
+              <rect x="234" y="70" width="12" height="10" rx="2" fill="var(--accent)"/>
+            </g>
+            <line x1="240" y1="128" x2="285" y2="205" stroke="var(--muted)" stroke-width="3" stroke-dasharray="5 4" opacity=".7"/>
+            <text x="240" y="232" font-size="11" text-anchor="middle" fill="var(--warn)">тени не параллельны</text>
+          </g>
+        </svg>
+        <p class="hint" style="text-align:center">Вид сверху</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPASS -->
+  <section class="panel" data-pane="compass" hidden>
+    <h2>Наведение по компасу</h2>
+    <div class="grid2">
+      <div style="display:grid;gap:12px;align-content:start">
+        <dl class="kv" id="cmpKv"></dl>
+        <ol class="steps">
+          <li>Отойдите с компасом на 3–5 м от мачты, машины и металлоконструкций, держите его горизонтально.</li>
+          <li>Совместите стрелку компаса с отметкой N (север).</li>
+          <li>Найдите на лимбе значение «азимут по компасу» и заметьте ориентир в этом направлении.</li>
+          <li>Разверните антенну на ориентир, выставьте угол места и доводите по сигналу.</li>
+        </ol>
+        <p class="note">Склонение посчитано по мировой магнитной модели WMM-2025 на текущую дату. Восточное склонение положительное. В районах магнитных аномалий компас может врать на несколько градусов, тогда надёжнее способ по солнцу.</p>
+      </div>
+      <div class="fig"><svg id="cmpSvg" viewBox="0 0 320 320" width="320" role="img" aria-label="Компасная роза с направлением на спутник"></svg></div>
+    </div>
+  </section>
+
+  <!-- ALL -->
+  <section class="panel" data-pane="all" hidden>
+    <h2>Все спутники из точки установки</h2>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Спутник</th><th>Позиция</th><th style="text-align:right">Азимут</th><th style="text-align:right">По компасу</th><th style="text-align:right">Угол места</th><th style="text-align:right">Конвертор</th></tr></thead>
+        <tbody id="allBody"></tbody>
+      </table>
+    </div>
+    <p class="hint">Серым показаны спутники ниже 5° над горизонтом: на практике их закроют рельеф и лес. Строка выбирает спутник.</p>
+  </section>
+
+  <!-- CLOCK -->
+  <section class="panel" data-pane="clock" hidden>
+    <h2>Проверка часов</h2>
+    <p class="hint">Для наведения по солнцу часы должны идти точно: ошибка в 4 минуты сдвигает азимут солнца примерно на 1°.</p>
+    <dl class="kv">
+      <dt>Время устройства</dt><dd id="clkDev">—</dd>
+      <dt>Время на точке</dt><dd id="clkSite">—</dd>
+      <dt>Расхождение с сервером</dt><dd id="clkOff">не проверено</dd>
+    </dl>
+    <div><button id="clkCheck" type="button">Сверить с сервером</button></div>
+    <p class="hint">Сверка идёт по времени веб-сервера, точность около 1 секунды. Если расхождение больше 30 секунд, поправьте часы устройства.</p>
+  </section>
+
+  <p class="note">Не перенесено из настольной программы: сканирование транспондеров и индикация уровня сигнала через DVB-карту SkyStar (браузер не работает с этим оборудованием), список транспондеров спутников, определение координат по IP. Для точной доводки используйте измеритель сигнала или модем.</p>
+</div>
+
+<script>(()=>{var M=(t,h)=>()=>{try{return h||t((h={exports:{}}).exports,h),h.exports}catch(a){throw h=0,a}};var Z=M((u0,I)=>{var R=D();I.exports=P;function P(t){this.x=t.x,this.y=t.y,this.z=t.z}P.prototype.toGeodetic=function(t){var h=this.z<0?-t.b:t.b,a=this.x,i=this.y,e=this.z,n=Math.sqr(a*a+i*i),r=(h*e-(t.a*t.a-h*h))/(t.a*n),d=(h*e+(t.a*t.a-h*h))/(t.a*n),s=4/3*(r*d+1),l=2*(r*r+d*d),_=s*s*s+l*l,o;_>0?o=Math.pow(Math.sqrt(_)-l,1/3)-Math.pow(Math.sqrt(_)+l,1/3):o=2*Math.sqrt(-s)*Math.cos(Math.acos(l/(s*Math.sqrt(-s)))/3),o*o<Math.abs(s)&&(o=-(o*o*o+2*l)/3*s);var c=(Math.sqrt(r*r+o)+r)/2,v=Math.sqrt(c*c+(d-o*c)/(2*c-r))-c,f=Math.atan(t.a*(1-v*v)/(2*h*v)),u=Math.atan2(i,a);u<0&&(u+=2*Math.PI);var p=(n-t.a*v)*Math.cos(f)+(e-h)*Math.sin(f),m=u*Math.PI/180;return m>180&&(m-=360),new R({lambda:m,phi:f*Math.PI/180,height_above_ellipsoid:p,ellipsoid:t})}});var S=M((g0,C)=>{C.exports=X;function X(t,h){var a=Math.sin(Math.PI/180*t.phig),i;h<=16||1-Math.abs(a)<1e-10?i=$(a,h):i=t0(a,h),this.pcup=i.pcup,this.dpcup=i.dpcup}function $(t,h){var a,i,e,n,r,d,s,l,_=[1],o=[1],c=[0];for(i=Math.sqrt((1-t)*(1+t)),l=(h+1)*(h+2)/2,e=1;e<=h;e++)for(n=0;n<=e;n++)r=e*(e+1)/2+n,e==n?(d=(e-1)*e/2+n-1,o[r]=i*o[d],c[r]=i*c[d]+t*o[d]):e==1&&n==0?(d=(e-1)*e/2+n,o[r]=t*o[d],c[r]=t*c[d]-i*o[d]):e>1&&e!=n&&(d=(e-2)*(e-1)/2+n,s=(e-1)*e/2+n,n>e-2?(o[r]=t*o[s],c[r]=t*c[s]-i*o[s]):(a=((e-1)*(e-1)-n*n)/((2*e-1)*(2*e-3)),o[r]=t*o[s]-a*o[d],c[r]=t*c[s]-i*o[s]-a*c[d]));for(e=1;e<=h;e++)for(r=e*(e+1)/2,d=(e-1)*e/2,_[r]=_[d]*(2*e-1)/e,n=1;n<=e;n++)r=e*(e+1)/2+n,d=e*(e+1)/2+n-1,_[r]=_[d]*Math.sqrt((e-n+1)*(n==1?2:1)/(e+n));for(e=1;e<=h;e++)for(n=0;n<=e;n++)r=e*(e+1)/2+n,o[r]*=_[r],c[r]*=-_[r];return{pcup:o,dpcup:c}}function t0(t,h){if(Math.abs(t)==1)throw new Error("Error in PcupHigh: derivative cannot be calculated at poles");var a,i,e,n=(h+1)*(h+2)/2,r=[],d=[],s=[],l=1e-280;for(a=0;a<=2*h+1;++a)s[a]=Math.sqrt(a);for(e=2,a=0;a<=h;a++){for(e++,r[e]=(2*a-1)/a,d[e]=(a-1)/a,i=1;i<=a-2;i++)e++,r[e]=(2*a-1)/s[a+i]/s[a-i],d[e]=s[a-i-1]*s[a+i-1]/s[a+i]/s[a-i];e+=2}var _=Math.sqrt((1-t)*(1+t)),o,c=t,v=1,f=[1,c],u=[0,_];if(h==0)throw new Error("Error in PcupHigh: n_max must be greater than 0");for(e=1,a=2;a<=h;a++)e=e+a,o=r[e]*t*c-d[e]*v,f[e]=o,u[e]=a*(c-t*o)/_,v=c,c=o;for(var p=s[2]*l,m=1/l,g=0,i=1;i<=h-1;++i)for(m*=_,g=g+i+1,p=p*s[2*i+1]/s[2*i],f[g]=p*m/s[2*i+1],u[g]=-(i*t*f[g]/_),v=p/s[2*i+1],e=g+i+1,c=t*s[2*i+1]*v,f[e]=c*m,u[e]=(v*m*s[2*i+1]-t*(i+1)*f[e])/_,a=i+2;a<=h;++a)e=e+a,o=t*r[e]*c-d[e]*v,f[e]=o*m,u[e]=(s[a+i]*s[a-i]*c*m-a*t*f[e])/_,v=c,c=o;return m=m*_,g=g+i+1,p=p/s[2*h],f[g]=p*m,u[g]=-h*t*f[g]/_,{pcup:f,dpcup:u}}});var G=M((M0,E)=>{var e0=Z(),a0=S();E.exports=z;function z(t){this.lambda=t.lambda,this.phig=t.phig,this.r=t.r}z.prototype.toCartesian=function(){var t=this.phig*Math.PI/180,h=this.lambda*Math.PI/180;return new e0({x:this.r*cos(t)*cos(h),y:this.r*cos(t)*sin(h),z:this.r*sin(t)})};z.prototype.toGeodetic=function(t){return this.toCartesian().toGeodetic(t)};z.prototype.getHarmonicVariables=function(t,h){var a,i,e=Math.cos(Math.PI/180*this.lambda),n=Math.sin(Math.PI/180*this.lambda),r=[1,e],d=[0,n],s=[t.re/this.r*(t.re/this.r)];for(i=1;i<=h;i++)s[i]=s[i-1]*(t.re/this.r);for(a=2;a<=h;a++)r[a]=r[a-1]*e-d[a-1]*n,d[a]=r[a-1]*n+d[a-1]*e;return{relative_radius_power:s,cos_mlambda:r,sin_mlambda:d}};z.prototype.getLegendreFunction=function(t){return new a0(this,t)}});var F=M((p0,V)=>{V.exports=r0;function r0(t){t=t||{a:6378.137,b:6356.7523142,fla:1/298.257223563,re:6371.2},this.a=t.a,this.b=t.b,this.fla=t.fla,this.re=t.re,this.eps=Math.sqrt(1-this.b*this.b/(this.a*this.a)),this.epssq=this.eps*this.eps}});var D=M((b0,H)=>{var i0=G(),h0=F();H.exports=q;function q(t){this.options=t,this.lambda=t.lambda||t.lon,this.phi=t.phi||t.lat,this.height_above_ellipsoid=t.height_above_ellipsoid||0,this.ellipsoid=t.ellipsoid||new h0}q.prototype.toSpherical=function(){var t=this.ellipsoid,h=Math.cos(this.phi*Math.PI/180),a=Math.sin(this.phi*Math.PI/180),i=t.a/Math.sqrt(1-t.epssq*a*a),e=(i+this.height_above_ellipsoid)*h,n=(i*(1-t.epssq)+this.height_above_ellipsoid)*a,r=Math.sqrt(e*e+n*n);return new i0({r,phig:180/Math.PI*Math.asin(n/r),lambda:this.lambda})};q.prototype.clone=function(){return new q(this.options)}});var O=M((y0,L)=>{L.exports=b;function b(t){this.x=t.x,this.y=t.y,this.z=t.z,this.h=t.h,this.f=t.f,this.incl=t.incl,this.decl=t.decl,this.gv=t.gv,this.xdot=t.xdot,this.ydot=t.ydot,this.zdot=t.zdot,this.hdot=t.hdot,this.fdot=t.fdot,this.incldot=t.incldot,this.decldot=t.decldot,this.gvdot=t.gvdot}b.prototype.clone=function(){return new b(this)};b.prototype.scale=function(t){return new b({x:this.x*t,y:this.y*t,z:this.z*t,h:this.h*t,f:this.f*t,incl:this.incl*t,decl:this.decl*t,gv:this.gv*t,xdot:this.xdot*t,ydot:this.ydot*t,zdot:this.zdot*t,hdot:this.hdot*t,fdot:this.fdot*t,incldot:this.incldot*t,decldot:this.decldot*t,gvdot:this.gvdot*t})};b.prototype.subtract=function(t){return new b({x:this.x-t.x,y:this.y-t.y,z:this.z-t.z,h:this.h-t.h,f:this.f-t.f,incl:this.incl-t.incl,decl:this.decl-t.decl,gv:this.gv-t.gv,xdot:this.xdot-t.xdot,ydot:this.ydot-t.ydot,zdot:this.zdot-t.zdot,hdot:this.hdot-t.hdot,fdot:this.fdot-t.fdot,incldot:this.incldot-t.incldot,decldot:this.decldot-t.decldot,gvdot:this.gvdot-t.gvdot})};b.fromGeoMagneticVector=function(t){var h=t.bx,a=t.by,i=t.bz,e=Math.sqrt(h*h+a*a);return new b({x:h,y:a,z:i,h:e,f:Math.sqrt(e*e+i*i),decl:180/Math.PI*Math.atan2(a,h),incl:180/Math.PI*Math.atan2(i,e)})};b.fromSecularVariationVector=function(t){var h=t.bx,a=t.by,i=t.bz;return new b({xdot:h,ydot:a,zdot:i,hdot:(this.x*h+this.y*a)/this.h,fdot:(this.x*h+this.y*a+this.z*i)/this.f,decldot:180/Math.PI*(this.x*this.ydot-this.y*this.xdot)/(this.h*this.h),incldot:180/Math.PI*(this.h*this.zdot-this.z*this.hdot)/(this.f*this.f),gvdot:this.decldot})}});var W=M((w0,k)=>{k.exports=T;function T(t){this.bx=t.bx,this.by=t.by,this.bz=t.bz}T.prototype.rotate=function(t,h){var a=Math.PI/180*(t.phig-h.phi);return new T({bz:this.bx*Math.sin(a)+this.bz*Math.cos(a),bx:this.bx*Math.cos(a)-this.bz*Math.sin(a),by:this.by})}});var U=M((z0,B)=>{var s0=D(),o0=O(),n0=W();B.exports=x;function x(t){this.epoch=t.epoch,this.start_date=new Date(t.start_date),this.end_date=new Date(t.end_date),this.name=t.name||"",this.main_field_coeff_g=t.main_field_coeff_g||[0],this.main_field_coeff_h=t.main_field_coeff_h||[0],this.secular_var_coeff_g=t.secular_var_coeff_g||[0],this.secular_var_coeff_h=t.secular_var_coeff_h||[0],this.n_max=t.n_max||0,this.n_max_sec_var=t.n_max_sec_var||0,this.num_terms=this.n_max*(this.n_max+1)/2+this.n_max}x.prototype.getTimedModel=function(t,h=!1){var a=t.getUTCFullYear(),i=(t.valueOf()-Date.UTC(a))/(1e3*3600*24*365),e=a+i,n=e-this.epoch;if(t<this.start_date||t>this.end_date)if(h)console.error("Model is only valid from "+this.start_date.toDateString()+" to "+this.end_date.toDateString());else throw new Error("Model is only valid from "+this.start_date.toDateString()+" to "+this.end_date.toDateString());for(var r=new x({epoch:this.epoch,n_max:this.n_max,n_max_sec_var:this.n_max_sec_var,name:this.name,start_date:this.start_date,end_date:this.end_date}),d=r.n_max_sec_var,s=d*(d+1)/2+d,l=1;l<=this.n_max;l++)for(var _=0;_<=l;_++){var o=l*(l+1)/2+_,c=this.main_field_coeff_h[o],v=this.main_field_coeff_g[o],f=this.secular_var_coeff_h[o],u=this.secular_var_coeff_g[o];o<=s?(r.main_field_coeff_h[o]=c+n*f,r.main_field_coeff_g[o]=v+n*u,r.secular_var_coeff_h[o]=f,r.secular_var_coeff_g[o]=u):(r.main_field_coeff_h[o]=c,r.main_field_coeff_g[o]=v)}return r};x.prototype.getSummation=function(t,h,a){var i=0,e=0,n=0,r,d,s,l,_=h.relative_radius_power,o=h.cos_mlambda,c=h.sin_mlambda,v=this.main_field_coeff_g,f=this.main_field_coeff_h;for(r=1;r<=this.n_max;r++)for(d=0;d<=r;d++)s=r*(r+1)/2+d,n-=_[r]*(v[s]*o[d]+f[s]*c[d])*(r+1)*t.pcup[s],e+=_[r]*(v[s]*c[d]-f[s]*o[d])*d*t.pcup[s],i-=_[r]*(v[s]*o[d]+f[s]*c[d])*t.dpcup[s];var u=Math.cos(Math.PI/180*a.phig);if(Math.abs(u)>1e-10)e=e/u;else{e=0;var p=1,m,g,w=[1],Q=Math.sin(Math.PI/180*a.phig);for(r=1;r<=this.n_max;r++)s=r*(r+1)/2+1,m=p*(2*r-1)/r,g=m*Math.sqrt(2*r/(r+1)),p=m,r==1?w[r]=w[r-1]:(l=((r-1)*(r-1)-1)/((2*r-1)*(2*r-3)),w[r]=Q*w[r-1]-l*w[r-2]),e+=_[r]*(v[s]*c[1]-f[s]*o[1])*w[r]*g}return new n0({bx:i,by:e,bz:n})};x.prototype.point=function(t){var h=t.length>2&&typeof t[2]=="number"?t[2]:0,a=new s0({lat:t[0],lon:t[1],height_above_ellipsoid:h}),i=a.toSpherical(),e=i.getLegendreFunction(this.n_max),n=i.getHarmonicVariables(a.ellipsoid,this.n_max),r=this.getSummation(e,n,i),d=r.rotate(i,a);return o0.fromGeoMagneticVector(d)}});var Y=M((x0,d0)=>{d0.exports={main_field_coeff_g:[0,-29351.8,-1410.8,-2556.6,2951.1,1649.3,1361,-2404.1,1243.8,453.6,895,799.5,55.7,-281.1,12.1,-233.2,368.9,187.2,-138.7,-142,20.9,64.4,63.8,76.9,-115.7,-40.9,14.9,-60.7,79.5,-77,-8.8,59.3,15.8,2.5,-11.1,14.2,23.2,10.8,-17.5,2,-21.7,16.9,15,-16.8,.9,4.6,7.8,3,-.2,-2.5,-13.1,2.4,8.6,-8.7,-12.9,-1.3,-6.4,.2,2,-1,-.6,-.9,1.5,.9,-2.7,-3.9,2.9,-1.5,-2.5,2.4,-.6,-.1,-.6,-.1,1.1,-1,-.2,2.6,-2,-.2,.3,1.2,-1.3,.6,.6,.5,-.1,-.4,-.2,-1.3,-.7],main_field_coeff_h:[0,0,4545.4,0,-3133.6,-815.1,0,-56.6,237.5,-549.5,0,278.6,-133.9,212,-375.6,0,45.4,220.2,-122.9,43,106.1,0,-18.4,16.8,48.8,-59.8,10.9,72.7,0,-48.9,-14.4,-1,23.4,-7.4,-25.1,-2.3,0,7.1,-12.6,11.4,-9.7,12.7,.7,-5.2,3.9,0,-24.8,12.2,8.3,-3.3,-5.2,7.2,-.6,.8,10,0,3.3,0,2.4,5.3,-9.1,.4,-4.2,-3.8,.9,-9.1,0,0,2.9,-.6,.2,.5,-.3,-1.2,-1.7,-2.9,-1.8,-2.3,0,-1.3,.7,1,-1.4,0,.6,-.1,.8,.1,-1,.1,.2],secular_var_coeff_g:[0,12,9.7,-11.6,-5.2,-8,-1.3,-4.2,.4,-15.6,-1.6,-2.4,-6,5.6,-7,.6,1.4,0,.6,2.2,.9,-.2,-.4,.9,1.2,-.9,.3,.9,0,-.1,-.1,.5,-.1,-.8,-.8,.8,-.1,.2,0,.5,-.1,.3,.2,0,.2,0,-.1,.1,.3,-.3,0,.3,-.1,.1,-.1,.1,0,.1,.1,0,-.3,0,-.1,-.1,0,0,0,0,0,0,0,-.1,0,0,-.1,-.1,-.1,-.1,0,0,0,0,0,0,.1,0,0,0,-.1,0,-.1],secular_var_coeff_h:[0,0,-21.5,0,-27.7,-12.1,0,4,-.3,-4.1,0,-1.1,4.1,1.6,-4.4,0,-.5,2.2,.4,1.7,1.9,0,.3,-1.6,-.4,.9,.7,.9,0,.6,.5,-.8,0,-1,.6,-.2,0,-.2,.5,-.4,.4,-.5,-.6,.3,.2,0,-.3,.3,-.3,.3,.2,-.1,-.2,.4,.1,0,0,0,-.2,.1,-.1,.1,0,-.1,.2,0,0,0,.1,0,.1,0,0,.1,0,0,0,0,0,0,0,-.1,.1,0,0,0,0,0,0,0,-.1],n_max:12,n_max_sec_var:12,epoch:2025,name:"WMM-2025",start_date:"2024-11-13T03:00:00.000Z",end_date:"2029-11-13T03:00:00.000Z"}});var j=M((q0,c0)=>{c0.exports={main_field_coeff_g:[0,-29404.5,-1450.7,-2500,2982,1676.8,1363.9,-2381,1236.2,525.7,903.1,809.4,86.2,-309.4,47.9,-234.4,363.1,187.8,-140.7,-151.2,13.7,65.9,65.6,73,-121.5,-36.2,13.5,-64.7,80.6,-76.8,-8.3,56.5,15.8,6.4,-7.2,9.8,23.6,9.8,-17.5,-.4,-21.1,15.3,13.7,-16.5,-.3,5,8.2,2.9,-1.4,-1.1,-13.3,1.1,8.9,-9.3,-11.9,-1.9,-6.2,-.1,1.7,-.9,.6,-.9,1.9,1.4,-2.4,-3.9,3,-1.4,-2.5,2.4,-.9,.3,-.7,-.1,1.4,-.6,.2,3.1,-2,-.1,.5,1.3,-1.2,.7,.3,.5,-.2,-.5,.1,-1.1,-.3],main_field_coeff_h:[0,0,4652.9,0,-2991.6,-734.8,0,-82.2,241.8,-542.9,0,282,-158.4,199.8,-350.1,0,47.7,208.4,-121.3,32.2,99.1,0,-19.1,25,52.7,-64.4,9,68.1,0,-51.4,-16.8,2.3,23.5,-2.2,-27.2,-1.9,0,8.4,-15.3,12.8,-11.8,14.9,3.6,-6.9,2.8,0,-23.3,11.1,9.8,-5.1,-6.2,7.8,.4,-1.5,9.7,0,3.4,-.2,3.5,4.8,-8.6,-.1,-4.2,-3.4,-.1,-8.8,0,0,2.6,-.5,-.4,.6,-.2,-1.7,-1.6,-3,-2,-2.6,0,-1.2,.5,1.3,-1.8,.1,.7,-.1,.6,.2,-.9,0,.5],secular_var_coeff_g:[0,6.7,7.7,-11.5,-7.1,-2.2,2.8,-6.2,3.4,-12.2,-1.1,-1.6,-6,5.4,-5.5,-.3,.6,-.7,.1,1.2,1,-.6,-.4,.5,1.4,-1.4,0,.8,-.1,-.3,-.1,.7,.2,-.5,-.8,1,-.1,.1,-.1,.5,-.1,.4,.5,0,.4,-.1,-.2,0,.4,-.3,0,.3,0,0,-.4,0,0,0,.2,-.1,-.2,0,-.1,-.2,-.1,0,0,-.1,0,0,0,-.1,0,0,-.1,-.1,-.1,-.1,0,0,0,0,0,0,0,0,0,0,0,0,-.1],secular_var_coeff_h:[0,0,-25.1,0,-30.2,-23.9,0,5.7,-1,1.1,0,.2,6.9,3.7,-5.6,0,.1,2.5,-.9,3,.5,0,.1,-1.8,-1.4,.9,.1,1,0,.5,.6,-.7,-.2,-1.2,.2,.3,0,-.3,.7,-.2,.5,-.3,-.5,.4,.1,0,-.3,.2,-.4,.4,.1,0,-.2,.5,.2,0,0,.1,-.3,.1,-.2,.1,0,-.1,.2,0,0,0,.1,0,.2,0,0,.1,0,-.1,0,0,0,0,0,-.1,.1,0,0,0,.1,0,0,0,-.1],n_max:12,n_max_sec_var:12,epoch:2020,name:"WMM-2020",start_date:"2019-12-10T08:00:00.000Z",end_date:"2024-12-10T08:00:00.000Z"}});var A=M((D0,_0)=>{_0.exports={main_field_coeff_g:[0,-29438.2,-1493.5,-2444.5,3014.7,1679,1351.8,-2351.6,1223.6,582.3,907.5,814.8,117.8,-335.6,69.7,-232.9,360.1,191.7,-141.3,-157.2,7.7,69.4,67.7,72.3,-129.1,-28.4,13.6,-70.3,81.7,-75.9,-7.1,52.2,15,9.1,-3,5.9,24.2,8.9,-16.9,-3.1,-20.7,13.3,11.6,-16.3,-2.1,5.5,8.8,3,-3.2,.6,-13.2,-.1,8.7,-9.1,-10.4,-2,-6.1,.2,.6,-.5,1.8,-.7,2.2,2.4,-1.8,-3.6,3,-1.4,-2.3,2.1,-.8,.6,-.7,.1,1.7,-.2,.4,3.5,-2,-.1,.5,1.2,-.9,.9,.1,.6,-.4,-.5,.2,-.9,0],main_field_coeff_h:[0,0,4796.3,0,-2842.4,-638.8,0,-113.7,246.5,-537.4,0,283.3,-188.6,180.7,-330,0,46.9,196.5,-119.9,16,100.6,0,-20.1,32.8,59.1,-67.1,8.1,61.9,0,-54.3,-19.5,6,24.5,3.5,-27.7,-2.9,0,10.1,-18.3,13.3,-14.5,16.2,6,-9.2,2.4,0,-21.8,10.7,11.8,-6.8,-6.9,7.9,1,-3.9,8.5,0,3.3,-.4,4.6,4.4,-7.9,-.6,-4.2,-2.9,-1.1,-8.8,0,0,2.1,-.6,-1.1,.7,-.2,-2.1,-1.5,-2.6,-2,-2.3,0,-1,.3,1.8,-2.2,.3,.7,-.1,.3,.2,-.9,-.2,.8],secular_var_coeff_g:[0,7,9,-11,-6.2,.3,2.4,-5.7,2,-11,-.8,-.9,-6.5,5.2,-4,-.3,.6,-.8,.1,1.2,1.4,-.8,-.5,-.1,1.6,-1.6,0,1.2,-.3,-.2,-.3,.9,.1,-.6,-.9,.7,-.1,.2,-.2,.5,-.1,.4,.4,-.1,.4,-.1,-.1,0,.4,-.4,0,.3,0,0,-.3,0,0,-.1,.2,-.1,-.2,0,-.1,-.2,-.1,0,0,0,0,0,0,-.1,0,0,0,-.1,0,-.1,0,0,0,0,-.1,0,0,0,0,0,0,0,-.1],secular_var_coeff_h:[0,0,-30.2,0,-29.6,-17.3,0,6.5,-.8,-2,0,-.4,5.8,3.8,-3.5,0,.2,2.3,0,3.3,-.6,0,.3,-1.5,-1.2,.4,.2,1.3,0,.6,.5,-.8,-.2,-1.1,.1,.2,0,-.4,.6,-.1,.6,-.2,-.5,.5,.1,0,-.3,.1,-.4,.3,.1,0,-.1,.5,.2,0,0,.1,-.2,.1,-.1,.1,0,-.1,.2,0,0,0,.1,0,.1,0,0,.1,0,-.1,0,-.1,0,0,0,-.1,.1,0,0,0,0,0,0,0,-.1],n_max:12,n_max_sec_var:12,epoch:2015,name:"WMM-2015v2",start_date:"2018-09-18T06:00:00.000Z",end_date:"2023-09-18T06:00:00.000Z"}});var J=M((T0,f0)=>{f0.exports={main_field_coeff_g:[0,-29438.5,-1501.1,-2445.3,3012.5,1676.6,1351.1,-2352.3,1225.6,581.9,907.2,813.7,120.3,-335,70.3,-232.6,360.1,192.4,-141,-157.4,4.3,69.5,67.4,72.8,-129.8,-29,13.2,-70.9,81.6,-76.1,-6.8,51.9,15,9.3,-2.8,6.7,24,8.6,-16.9,-3.2,-20.6,13.3,11.7,-16,-2,5.4,8.8,3.1,-3.1,.6,-13.3,-.1,8.7,-9.1,-10.5,-1.9,-6.5,.2,.6,-.6,1.7,-.7,2.1,2.3,-1.8,-3.6,3.1,-1.5,-2.3,2.1,-.9,.6,-.7,.2,1.7,-.2,.4,3.5,-2,-.3,.4,1.3,-.9,.9,.1,.5,-.4,-.4,.2,-.9,0],main_field_coeff_h:[0,0,4796.2,0,-2845.6,-642,0,-115.3,245,-538.3,0,283.4,-188.6,180.9,-329.5,0,47.4,196.9,-119.4,16.1,100.1,0,-20.7,33.2,58.8,-66.5,7.3,62.5,0,-54.1,-19.4,5.6,24.4,3.3,-27.5,-2.3,0,10.2,-18.1,13.2,-14.6,16.2,5.7,-9.1,2.2,0,-21.6,10.8,11.7,-6.8,-6.9,7.8,1,-3.9,8.5,0,3.3,-.3,4.6,4.4,-7.9,-.6,-4.1,-2.8,-1.1,-8.7,0,-.1,2.1,-.7,-1.1,.7,-.2,-2.1,-1.5,-2.5,-2,-2.3,0,-1,.5,1.8,-2.2,.3,.7,-.1,.3,.2,-.9,-.2,.7],secular_var_coeff_g:[0,10.7,17.9,-8.6,-3.3,2.4,3.1,-6.2,-.4,-10.4,-.4,.8,-9.2,4,-4.2,-.2,.1,-1.4,0,1.3,3.8,-.5,-.2,-.6,2.4,-1.1,.3,1.5,.2,-.2,-.4,1.3,.2,-.4,-.9,.3,0,.1,-.5,.5,-.2,.4,.2,-.4,.3,0,-.1,-.1,.4,-.5,-.2,.1,0,-.2,-.1,0,0,-.1,.3,-.1,-.1,-.1,0,-.2,-.1,-.2,0,0,-.1,.1,0,0,0,0,0,0,-.1,-.1,.1,0,0,.1,-.1,0,.1,0,0,0,0,0,0],secular_var_coeff_h:[0,0,-26.8,0,-27.1,-13.3,0,8.4,-.4,2.3,0,-.6,5.3,3,-5.3,0,.4,1.6,-1.1,3.3,.1,0,0,-2.2,-.7,.1,1,1.3,0,.7,.5,-.2,-.1,-.7,.1,.1,0,-.3,.3,.3,.6,-.1,-.2,.3,0,0,-.2,-.1,-.2,.1,.1,0,-.2,.4,.3,0,.1,-.1,0,0,-.2,.1,-.1,-.2,.1,-.1,0,0,.1,0,.1,0,0,.1,0,-.1,0,-.1,0,0,0,-.1,0,0,0,0,0,0,0,0,0],n_max:12,n_max_sec_var:12,epoch:2015,name:"WMM-2015",start_date:"2014-12-15T07:00:00.000Z",end_date:"2019-12-15T07:00:00.000Z"}});var N=M((P0,K)=>{var l0=U(),v0=K.exports={},y=[{file:Y(),startDate:new Date("2024-11-13T03:00:00.000Z"),endDate:new Date("2029-11-13T03:00:00.000Z")},{file:j(),startDate:new Date("2019-12-10T08:00:00.000Z"),endDate:new Date("2024-12-10T08:00:00.000Z")},{file:A(),startDate:new Date("2018-09-18T06:00:00.000Z"),endDate:new Date("2023-09-18T06:00:00.000Z")},{file:J(),startDate:new Date("2014-12-15T07:00:00.000Z"),endDate:new Date("2019-12-15T07:00:00.000Z")}];v0.model=function(t,h={}){t=t||new Date;let a=t.getTime(),i=h&&h.allowOutOfBoundsModel||!1,e=y.find(r=>a>=r.startDate.getTime()&&a<=r.endDate.getTime());return!e&&a<y[y.length-1].startDate.getTime()?e=y[y.length-1]:!e&&a>y[0].endDate.getTime()&&(e=y[0]),e||(e=y[0]),new l0(e.file).getTimedModel(t,i)}});window.geomag=N();})();
+</script>
+<script>
+(function(){
+"use strict";
+var D2R=Math.PI/180,R2D=180/Math.PI;
+var CITIES=[
+["Иркутск",52.2869,104.3050,8],["Ангарск",52.5448,103.8885,8],["Братск",56.1514,101.6340,8],["Усть-Илимск",58.0006,102.6619,8],["Усть-Кут",56.7940,105.7720,8],["Киренск",57.7756,108.1113,8],["Бодайбо",57.8506,114.1933,8],["Улан-Удэ",51.8335,107.5841,8],
+["Чита",52.0340,113.4994,9],["Якутск",62.0355,129.6755,9],["Мирный",62.5353,113.9611,9],["Ленск",60.7253,114.9278,9],["Нерюнгри",56.6587,124.7200,9],["Тикси",71.6872,128.8694,9],
+["Красноярск",56.0153,92.8932,7],["Норильск",69.3558,88.1893,7],["Новосибирск",55.0084,82.9357,7],["Томск",56.4846,84.9476,7],["Омск",54.9885,73.3242,6],
+["Тюмень",57.1530,65.5343,5],["Сургут",61.2540,73.3962,5],["Ханты-Мансийск",61.0042,69.0019,5],["Салехард",66.5299,66.6136,5],["Новый Уренгой",66.0833,76.6833,5],["Екатеринбург",56.8389,60.6057,5],
+["Москва",55.7558,37.6173,3],["Санкт-Петербург",59.9343,30.3351,3],
+["Хабаровск",48.4827,135.0838,10],["Владивосток",43.1155,131.8855,10],["Магадан",59.5638,150.8035,11],["Южно-Сахалинск",46.9591,142.7380,11],["Петропавловск-Камчатский",53.0452,158.6483,12],["Анадырь",64.7337,177.5089,12]
+];
+var SATS=[
+["Экспресс-АМУ7",145.0,1],["Экспресс-103",96.5,1],["Экспресс-АМ5",140.0,1],["Ямал-401",90.0,1],["Ямал-300К",-177.0,1],["Ямал-601",49.0,1],
+["Экспресс-АТ2",140.0,0],["Экспресс-АМУ3",103.0,0],["Экспресс-80",80.0,0],["Экспресс-АТ1",56.0,0],["Ямал-402",55.0,0],["Экспресс-АМ6",53.0,0],["Экспресс-АМ7",40.0,0],["Экспресс-АМУ1",36.0,0],["Экспресс-АМ8",-14.0,0],
+["ABS-2A",75.0,0],["AsiaSat 7",105.5,0],["Horizons 3e",169.0,0]
+];
+var $=function(id){return document.getElementById(id)};
+var S={lat:52.2869,lon:104.3050,tz:8,satLon:145.0,satName:"Экспресс-АМУ7",decl:0,declManual:false,offset:24,H:600,W:550,tab:"dish",sunDate:null,sunTime:null};
+try{var saved=JSON.parse(localStorage.getItem("installer-helper")||"null");if(saved)Object.assign(S,saved)}catch(e){}
+function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual}))}catch(e){}}
+
+/* ---------- geometry ---------- */
+function look(lat,lon,satLon){
+  var a=6378.137,e2=0.00669437999014,Rs=42164.17;
+  var p=lat*D2R,l=lon*D2R,sl=satLon*D2R;
+  var N=a/Math.sqrt(1-e2*Math.sin(p)*Math.sin(p));
+  var O=[N*Math.cos(p)*Math.cos(l),N*Math.cos(p)*Math.sin(l),N*(1-e2)*Math.sin(p)];
+  var Sv=[Rs*Math.cos(sl),Rs*Math.sin(sl),0];
+  var d=[Sv[0]-O[0],Sv[1]-O[1],Sv[2]-O[2]];
+  var E=-Math.sin(l)*d[0]+Math.cos(l)*d[1];
+  var Nn=-Math.sin(p)*Math.cos(l)*d[0]-Math.sin(p)*Math.sin(l)*d[1]+Math.cos(p)*d[2];
+  var U=Math.cos(p)*Math.cos(l)*d[0]+Math.cos(p)*Math.sin(l)*d[1]+Math.sin(p)*d[2];
+  var rng=Math.hypot(d[0],d[1],d[2]);
+  var az=(Math.atan2(E,Nn)*R2D+360)%360, el=Math.atan2(U,Math.hypot(E,Nn))*R2D;
+  // polarization skew: angle from local vertical to Earth-axis-parallel polarization, seen along line of sight
+  var dh=[d[0]/rng,d[1]/rng,d[2]/rng];
+  function proj(v){var k=v[0]*dh[0]+v[1]*dh[1]+v[2]*dh[2];return [v[0]-k*dh[0],v[1]-k*dh[1],v[2]-k*dh[2]]}
+  var up=proj([Math.cos(p)*Math.cos(l),Math.cos(p)*Math.sin(l),Math.sin(p)]),pz=proj([0,0,1]);
+  var cr=[up[1]*pz[2]-up[2]*pz[1],up[2]*pz[0]-up[0]*pz[2],up[0]*pz[1]-up[1]*pz[0]];
+  var sk=Math.atan2(cr[0]*dh[0]+cr[1]*dh[1]+cr[2]*dh[2],up[0]*pz[0]+up[1]*pz[1]+up[2]*pz[2])*R2D;
+  if(sk>90)sk-=180;if(sk<=-90)sk+=180;
+  return {az:az,el:el,skew:sk,range:rng};
+}
+/* NOAA solar position */
+function sun(date,lat,lon){
+  var jd=date.getTime()/86400000+2440587.5,T=(jd-2451545)/36525;
+  var L0=(280.46646+T*(36000.76983+T*0.0003032))%360;
+  var M=357.52911+T*(35999.05029-0.0001537*T);
+  var e=0.016708634-T*(0.000042037+0.0000001267*T);
+  var Mr=M*D2R;
+  var C=Math.sin(Mr)*(1.914602-T*(0.004817+0.000014*T))+Math.sin(2*Mr)*(0.019993-0.000101*T)+Math.sin(3*Mr)*0.000289;
+  var om=(125.04-1934.136*T)*D2R;
+  var lam=(L0+C-0.00569-0.00478*Math.sin(om))*D2R;
+  var eps0=23+(26+(21.448-T*(46.815+T*(0.00059-T*0.001813)))/60)/60;
+  var eps=(eps0+0.00256*Math.cos(om))*D2R;
+  var dec=Math.asin(Math.sin(eps)*Math.sin(lam));
+  var y=Math.pow(Math.tan(eps/2),2),L0r=L0*D2R;
+  var eot=4*R2D*(y*Math.sin(2*L0r)-2*e*Math.sin(Mr)+4*e*y*Math.sin(Mr)*Math.cos(2*L0r)-0.5*y*y*Math.sin(4*L0r)-1.25*e*e*Math.sin(2*Mr));
+  var mins=date.getUTCHours()*60+date.getUTCMinutes()+date.getUTCSeconds()/60;
+  var tst=((mins+eot+4*lon)%1440+1440)%1440;
+  var H=(tst/4-180)*D2R,ph=lat*D2R;
+  var cz=Math.sin(ph)*Math.sin(dec)+Math.cos(ph)*Math.cos(dec)*Math.cos(H);
+  cz=Math.max(-1,Math.min(1,cz));
+  var el=90-Math.acos(cz)*R2D;
+  var az=(Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(ph)-Math.tan(dec)*Math.cos(ph))*R2D+180+360)%360;
+  return {az:az,el:el};
+}
+function wrap180(x){x=((x%360)+360)%360;return x>180?x-360:x}
+function matchTimes(dayStartUTC,lat,lon,satAz){
+  var out=[],prev=null,pt=0;
+  for(var m=0;m<=1440;m+=2){
+    var t=dayStartUTC+m*60000,s=sun(new Date(t),lat,lon),df=wrap180(s.az-satAz);
+    if(prev!==null&&Math.sign(df)!==Math.sign(prev)&&Math.abs(df)<30&&Math.abs(prev)<30){
+      var a=pt,b=t;
+      for(var i=0;i<30;i++){var c=(a+b)/2,dc=wrap180(sun(new Date(c),lat,lon).az-satAz);if(Math.sign(dc)===Math.sign(prev))a=c;else b=c}
+      var tt=(a+b)/2;out.push({t:tt,el:sun(new Date(tt),lat,lon).el});
+    }
+    prev=df;pt=t;
+  }
+  return out;
+}
+
+/* ---------- parsing & formatting ---------- */
+function parseCoords(str){
+  str=str.trim().replace(/,(?=\d)/g,function(m,i){return /\d,\d/.test(str.substr(i-1,3))&&!/\s/.test(str)?".":m});
+  var s=str.toUpperCase().replace(/С\.?Ш\.?/g,"N").replace(/Ю\.?Ш\.?/g,"S").replace(/В\.?Д\.?/g,"E").replace(/З\.?Д\.?/g,"W")
+    .replace(/[СN]/g,"N").replace(/Ю/g,"S").replace(/В/g,"E").replace(/З/g,"W");
+  var parts;
+  if(/[NSEW]/.test(s)){parts=s.match(/[^NSEW]*[NSEW]/g)||[]}
+  else{
+    var nums=s.match(/-?\d+(?:[.,]\d+)?/g)||[];
+    if(nums.length===2)parts=[nums[0],nums[1]];
+    else if(nums.length===4)parts=[nums.slice(0,2).join(" "),nums.slice(2).join(" ")];
+    else if(nums.length===6)parts=[nums.slice(0,3).join(" "),nums.slice(3).join(" ")];
+    else return null;
+  }
+  if(parts.length!==2)return null;
+  var vals=parts.map(function(p){
+    var h=(p.match(/[NSEW]/)||[""])[0],n=(p.match(/-?\d+(?:[.,]\d+)?/g)||[]).map(function(x){return parseFloat(x.replace(",","."))});
+    if(!n.length)return null;
+    var sign=n[0]<0?-1:1,v=Math.abs(n[0])+(n[1]||0)/60+(n[2]||0)/3600;
+    if(h==="S"||h==="W")sign=-1;
+    return {v:sign*v,h:h};
+  });
+  if(!vals[0]||!vals[1])return null;
+  var lat=vals[0],lon=vals[1];
+  if(lat.h==="E"||lat.h==="W"){var t=lat;lat=lon;lon=t}
+  if(Math.abs(lat.v)>90||Math.abs(lon.v)>180)return null;
+  return {lat:lat.v,lon:lon.v};
+}
+function f1(x){return (Math.round(x*10)/10).toFixed(1).replace(".",",")}
+function deg(x){return f1(x)+"°"}
+function lonTxt(l){return f1(Math.abs(l))+"°"+(l>=0?" в.д.":" з.д.")}
+function pad(n){return String(n).padStart(2,"0")}
+function siteParts(t){var d=new Date(t+S.tz*3600000);return {y:d.getUTCFullYear(),m:d.getUTCMonth()+1,d:d.getUTCDate(),h:d.getUTCHours(),mi:d.getUTCMinutes(),s:d.getUTCSeconds()}}
+function hm(t){var p=siteParts(t);return pad(p.h)+":"+pad(p.mi)}
+function dirWord(az){var w=["С","ССВ","СВ","ВСВ","В","ВЮВ","ЮВ","ЮЮВ","Ю","ЮЮЗ","ЮЗ","ЗЮЗ","З","ЗСЗ","СЗ","ССЗ"];return w[Math.round(az/22.5)%16]}
+
+/* ---------- declination ---------- */
+var geoModel=null;
+try{geoModel=window.geomag.model(new Date())}catch(e){}
+function autoDecl(){
+  if(!geoModel)return null;
+  try{return geoModel.point([S.lat,S.lon]).decl}catch(e){return null}
+}
+
+/* ---------- UI setup ---------- */
+var citySel=$("city");
+citySel.innerHTML='<option value="">— свои координаты —</option>'+CITIES.map(function(c,i){return '<option value="'+i+'">'+c[0]+'</option>'}).join("");
+var satSel=$("sat");
+var own=SATS.filter(function(s){return s[2]}),oth=SATS.filter(function(s){return !s[2]});
+function opt(s){return '<option value="'+SATS.indexOf(s)+'">'+s[0]+' — '+lonTxt(s[1])+'</option>'}
+satSel.innerHTML='<optgroup label="Спутники в работе Да-Телеком">'+own.map(opt).join("")+'</optgroup><optgroup label="Другие">'+oth.map(opt).join("")+'</optgroup><option value="custom">Своя позиция</option>';
+
+function syncInputs(){
+  $("coords").value=S.lat.toFixed(4)+", "+S.lon.toFixed(4);
+  $("tz").value=S.tz;
+  var ci=CITIES.findIndex(function(c){return Math.abs(c[1]-S.lat)<1e-4&&Math.abs(c[2]-S.lon)<1e-4});
+  citySel.value=ci>=0?String(ci):"";
+  $("satlon").value=S.satLon;
+  var si=SATS.findIndex(function(s){return s[0]===S.satName&&Math.abs(s[1]-S.satLon)<1e-6});
+  satSel.value=si>=0?String(si):"custom";
+  $("offset").value=S.offset;$("dishH").value=S.H;$("dishW").value=S.W;
+}
+function refreshDecl(){
+  var a=autoDecl();
+  if(!S.declManual&&a!==null)S.decl=Math.round(a*10)/10;
+  $("decl").value=S.decl;
+  $("declHint").textContent=a===null?"Модель склонения недоступна, введите склонение вручную.":
+    (S.declManual?"Склонение введено вручную. По модели WMM для этой точки: "+deg(a)+". Очистите поле, чтобы вернуть расчёт.":"Склонение по модели WMM-2025: "+deg(a)+(a>=0?" (восточное)":" (западное)")+".");
+}
+
+citySel.addEventListener("change",function(){
+  if(citySel.value==="")return;
+  var c=CITIES[+citySel.value];S.lat=c[1];S.lon=c[2];S.tz=c[3];S.declManual=false;
+  $("coords").value=S.lat.toFixed(4)+", "+S.lon.toFixed(4);$("tz").value=S.tz;$("coordsErr").hidden=true;
+  refreshDecl();render();
+});
+$("coords").addEventListener("change",function(){
+  var r=parseCoords(this.value);
+  if(!r){$("coordsErr").textContent="Не удалось разобрать координаты. Пример: 52.2869, 104.305 или 52°17'13\" N 104°18'18\" E";$("coordsErr").hidden=false;return}
+  $("coordsErr").hidden=true;S.lat=r.lat;S.lon=r.lon;S.declManual=false;citySel.value="";
+  this.value=S.lat.toFixed(4)+", "+S.lon.toFixed(4);
+  refreshDecl();render();
+});
+$("tz").addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)){S.tz=v;render()}});
+$("decl").addEventListener("input",function(){
+  if(this.value.trim()===""){S.declManual=false;refreshDecl();render();return}
+  var v=parseFloat(this.value);if(!isNaN(v)){S.decl=v;S.declManual=true;
+    var a=autoDecl();$("declHint").textContent="Склонение введено вручную."+(a!==null?" По модели WMM: "+deg(a)+". Очистите поле, чтобы вернуть расчёт.":"");render()}
+});
+satSel.addEventListener("change",function(){
+  if(satSel.value==="custom"){S.satName="";$("satlon").focus();render();return}
+  var s=SATS[+satSel.value];S.satName=s[0];S.satLon=s[1];$("satlon").value=s[1];render();
+});
+$("satlon").addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)&&v>=-180&&v<=180){S.satLon=v;S.satName="";satSel.value="custom";render()}});
+["offset","dishH","dishW"].forEach(function(id){$(id).addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)){if(id==="offset")S.offset=v;if(id==="dishH")S.H=v;if(id==="dishW")S.W=v;render()}})});
+$("estOffset").addEventListener("click",function(){if(S.W>0&&S.H>0&&S.W<=S.H){S.offset=Math.round(Math.acos(S.W/S.H)*R2D*10)/10;$("offset").value=S.offset;render()}});
+
+document.querySelectorAll("nav button").forEach(function(b){b.addEventListener("click",function(){S.tab=b.dataset.tab;showTab();save()})});
+function showTab(){
+  document.querySelectorAll("nav button").forEach(function(b){b.setAttribute("aria-selected",String(b.dataset.tab===S.tab))});
+  document.querySelectorAll("[data-pane]").forEach(function(p){p.hidden=p.dataset.pane!==S.tab});
+}
+function setSunNow(){var p=siteParts(Date.now());$("sunDate").value=p.y+"-"+pad(p.m)+"-"+pad(p.d)}
+$("sunNow").addEventListener("click",function(){setSunNow();render()});
+$("sunDate").addEventListener("input",render);
+
+/* ---------- render ---------- */
+function render(){
+  save();
+  var L=look(S.lat,S.lon,S.satLon),vis=L.el>0;
+  var mag=((L.az-S.decl)%360+360)%360;
+  $("rAz").textContent=deg(L.az);
+  $("rMag").textContent=deg(mag);
+  $("rMagS").textContent="склонение "+(S.decl>=0?"+":"")+f1(S.decl)+"°";
+  $("rEl").textContent=deg(L.el);
+  $("rElS").innerHTML=vis?(L.el<5?'<span class="status bad">очень низко над горизонтом</span>':'над горизонтом, '+dirWord(L.az)):'<span class="status bad">спутник за горизонтом</span>';
+  $("rSkew").textContent=(L.skew>0?"+":"")+deg(L.skew);
+  $("rSkewS").textContent=Math.abs(L.skew)<0.5?"конвертор ставится ровно":(L.skew>0?"по часовой":"против часовой")+" стрелки, если смотреть из-за антенны на спутник";
+  renderDish(L);renderSun(L);renderCompass(L,mag);renderAll();renderClock();
+}
+
+function renderDish(L){
+  var b=L.el-S.offset; // plate tilt from vertical, + = face looks up
+  var d=S.H*Math.sin(Math.abs(b)*D2R);
+  $("dishKv").innerHTML=
+    "<dt>Угол места</dt><dd>"+deg(L.el)+"</dd>"+
+    "<dt>Угол офсетности</dt><dd>"+deg(S.offset)+"</dd>"+
+    "<dt>Наклон плоскости зеркала от вертикали</dt><dd>"+deg(Math.abs(b))+(Math.abs(b)<0.05?"":(b>0?" назад, зеркало смотрит вверх":" вперёд, зеркало смотрит вниз"))+"</dd>"+
+    "<dt>Отвес от верхнего края до нижнего</dt><dd>"+Math.round(d)+" мм</dd>";
+  var where=Math.abs(b)<0.05?"Нижний край должен касаться нити отвеса: зеркало стоит вертикально.":
+    (b>0?"Нижний край зеркала должен выступать вперёд, в сторону спутника, на "+Math.round(d)+" мм от нити отвеса.":"Нижний край зеркала должен уходить назад, к мачте, на "+Math.round(d)+" мм от нити отвеса.");
+  $("dishSteps").innerHTML="<li>Закрепите нить отвеса на верхнем крае зеркала, посередине.</li><li>Дождитесь, пока отвес успокоится.</li><li>Рулеткой измерьте по горизонтали расстояние от нити до нижнего края зеркала.</li><li>"+where+"</li><li>Если на кронштейне есть шкала угла места с учётом офсета, выставьте на ней "+deg(L.el)+".</li>";
+  // drawing: side view, satellite to the right
+  var cx=150,top=40,len=200,ang=b*D2R;
+  var bx=cx+len*Math.sin(ang),by=top+len*Math.cos(ang);
+  var mx=(cx+bx)/2,my=(top+by)/2;
+  var bx2=cx+bx-cx;
+  var svg='';
+  svg+='<line x1="'+cx+'" y1="'+top+'" x2="'+cx+'" y2="'+(top+len+20)+'" stroke="var(--muted)" stroke-dasharray="4 4" stroke-width="1.5"/>';
+  svg+='<circle cx="'+cx+'" cy="'+(top+len+24)+'" r="5" fill="var(--muted)"/>';
+  svg+='<text x="'+(cx-8)+'" y="'+(top+len+48)+'" font-size="12" text-anchor="end" fill="var(--muted)">отвес</text>';
+  // dish curved: quadratic
+  var qx=mx-24*Math.cos(ang),qy=my+24*Math.sin(ang);
+  svg+='<path d="M'+cx+' '+top+' Q'+qx.toFixed(1)+' '+qy.toFixed(1)+' '+bx.toFixed(1)+' '+by.toFixed(1)+'" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>';
+  svg+='<line x1="'+cx+'" y1="'+top+'" x2="'+bx.toFixed(1)+'" y2="'+by.toFixed(1)+'" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 3"/>';
+  if(Math.abs(bx-cx)>2){
+    svg+='<line x1="'+cx+'" y1="'+by.toFixed(1)+'" x2="'+bx.toFixed(1)+'" y2="'+by.toFixed(1)+'" stroke="var(--sun)" stroke-width="2"/>';
+    svg+='<text x="'+((cx+bx)/2).toFixed(1)+'" y="'+(by+18).toFixed(1)+'" font-size="13" font-weight="600" text-anchor="middle" fill="var(--sun)">'+Math.round(d)+' мм</text>';
+  }
+  svg+='<text x="310" y="'+(top+len/2)+'" font-size="12" text-anchor="end" fill="var(--muted)">к спутнику →</text>';
+  svg+='<text x="'+(cx-10)+'" y="'+(top-12)+'" font-size="12" text-anchor="end" fill="var(--muted)">верхний край</text>';
+  $("dishSvg").innerHTML=svg;
+}
+
+function renderSun(L){
+  if(!$("sunDate").value)setSunNow();
+  var a=$("sunDate").value.split("-").map(Number);
+  var dayStart=Date.UTC(a[0],a[1]-1,a[2])-S.tz*3600000;
+  var m=L.el>0?matchTimes(dayStart,S.lat,S.lon,L.az).filter(function(x){return x.el>3}):[];
+  var big=$("sunMatch"),sub=$("sunMatchS"),steps=[];
+  if(!m.length){
+    big.textContent="не получится";big.style.fontSize="22px";
+    sub.textContent=L.el<=0?"спутник за горизонтом":"в этот день солнце не проходит сторону спутника достаточно высоко над горизонтом. Используйте способ по компасу.";
+    $("sunSteps").innerHTML="";return;
+  }
+  var x=m[0],t=x.t;big.style.fontSize="";
+  big.textContent=hm(t);
+  var now=Date.now(),dm=Math.round((t-now)/60000),when="";
+  if(Math.abs(dm)<1440){
+    if(dm>0)when="через "+(dm>=60?Math.floor(dm/60)+" ч ":"")+(dm%60)+" мин";
+    else if(dm>-3)when="прямо сейчас";
+    else when="сегодня уже прошло, завтра примерно в это же время";
+  }
+  sub.textContent="по местному времени точки (UTC"+(S.tz>=0?"+":"")+S.tz+"), солнце будет "+(x.el<15?"низко, ":"")+"на высоте "+deg(x.el)+(when?" · "+when:"");
+  var t5=hm(t-5*60000),t2=hm(t+2*60000);
+  steps.push("<li><b>Заранее</b> соберите антенну на кронштейне, установите конвертор и выставьте угол места "+deg(L.el)+" (вкладка «Наклон антенны»).</li>");
+  steps.push("<li><b>Ослабьте болты поворота по азимуту</b>, чтобы антенна поворачивалась рукой с небольшим усилием. Болты угла места затяните.</li>");
+  steps.push("<li><b>Сверьте часы</b> на вкладке «Часы». Ошибка в 4 минуты даёт ошибку направления около 1°.</li>");
+  steps.push("<li><b>К "+t5+" будьте у антенны.</b> Найдите на земле тень от мачты. Если мачта стоит не строго вертикально, повесьте отвес и смотрите на его тень.</li>");
+  steps.push("<li><b>Ровно в "+hm(t)+"</b> поверните антенну «лицом» к солнцу так, чтобы тень от штанги конвертора на земле шла <b>параллельно тени мачты</b>, как на рисунке. Вверх-вниз антенну не трогайте: солнце выше или ниже спутника, это нормально.</li>");
+  steps.push("<li><b>Затяните болты азимута</b>, не сдвинув антенну. На всё у вас есть около 2 минут, до "+t2+": потом солнце уйдёт в сторону.</li>");
+  steps.push("<li><b>Включите модем или измеритель сигнала</b> и доведите антенну по сигналу: по чуть-чуть, на 1–2° влево-вправо и вверх-вниз.</li>");
+  $("sunSteps").innerHTML=steps.join("");
+}
+
+function renderCompass(L,mag){
+  $("cmpKv").innerHTML="<dt>Азимут по компасу</dt><dd>"+deg(mag)+"</dd><dt>Истинный азимут</dt><dd>"+deg(L.az)+"</dd><dt>Магнитное склонение</dt><dd>"+(S.decl>=0?"+":"")+f1(S.decl)+"° "+(S.decl>=0?"восточное":"западное")+"</dd><dt>Направление</dt><dd>"+dirWord(L.az)+"</dd>";
+  var c=160,R=120,svg='<circle cx="'+c+'" cy="'+c+'" r="'+R+'" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>';
+  for(var k=0;k<360;k+=5){var ar=k*D2R,r1=k%45?(k%15?R-5:R-9):R-14;svg+='<line x1="'+(c+R*Math.sin(ar)).toFixed(1)+'" y1="'+(c-R*Math.cos(ar)).toFixed(1)+'" x2="'+(c+r1*Math.sin(ar)).toFixed(1)+'" y2="'+(c-r1*Math.cos(ar)).toFixed(1)+'" stroke="var(--muted)" stroke-width="1"/>'}
+  var lbl={0:"N",90:"E",180:"S",270:"W"};
+  for(var q in lbl){var a2=q*D2R;svg+='<text x="'+(c+(R-28)*Math.sin(a2)).toFixed(1)+'" y="'+(c-(R-28)*Math.cos(a2)+5).toFixed(1)+'" font-size="15" font-weight="700" text-anchor="middle" fill="'+(q==0?"var(--warn)":"var(--ink)")+'">'+lbl[q]+'</text>'}
+  // true north marker
+  var tn=(S.decl)*D2R;
+  svg+='<line x1="'+(c+(R+4)*Math.sin(tn)).toFixed(1)+'" y1="'+(c-(R+4)*Math.cos(tn)).toFixed(1)+'" x2="'+(c+(R+16)*Math.sin(tn)).toFixed(1)+'" y2="'+(c-(R+16)*Math.cos(tn)).toFixed(1)+'" stroke="var(--ink)" stroke-width="2"/>';
+  svg+='<text x="'+(c+(R+20)*Math.sin(tn)+(S.decl>=0?4:-4)).toFixed(1)+'" y="'+(c-(R+22)*Math.cos(tn)).toFixed(1)+'" font-size="10" text-anchor="'+(S.decl>=0?"start":"end")+'" fill="var(--muted)">ист. север</text>';
+  var ma=mag*D2R;
+  svg+='<line x1="'+c+'" y1="'+c+'" x2="'+(c+(R-18)*Math.sin(ma)).toFixed(1)+'" y2="'+(c-(R-18)*Math.cos(ma)).toFixed(1)+'" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>';
+  svg+='<circle cx="'+(c+(R-18)*Math.sin(ma)).toFixed(1)+'" cy="'+(c-(R-18)*Math.cos(ma)).toFixed(1)+'" r="6" fill="var(--accent)"/>';
+  svg+='<circle cx="'+c+'" cy="'+c+'" r="5" fill="var(--ink)"/>';
+  svg+='<text x="'+c+'" y="'+(c+R*0.45)+'" font-size="18" font-weight="700" text-anchor="middle" fill="var(--accent)" style="font-family:var(--f-data)">'+deg(mag)+'</text>';
+  $("cmpSvg").setAttribute("viewBox","-20 -20 360 360");
+  $("cmpSvg").innerHTML=svg;
+}
+
+function renderAll(){
+  var rows=SATS.map(function(s,i){var L=look(S.lat,S.lon,s[1]);return {i:i,s:s,L:L}}).sort(function(a,b){return b.s[1]-a.s[1]});
+  $("allBody").innerHTML=rows.map(function(r){
+    var m=((r.L.az-S.decl)%360+360)%360,sel=r.s[0]===S.satName&&Math.abs(r.s[1]-S.satLon)<1e-6;
+    return '<tr data-i="'+r.i+'" class="'+(sel?"sel ":"")+(r.L.el<5?"dim":"")+'"><td>'+r.s[0]+(r.s[2]?'<span class="tag">в работе</span>':'')+'</td><td>'+lonTxt(r.s[1])+'</td><td class="n">'+deg(r.L.az)+'</td><td class="n">'+deg(m)+'</td><td class="n">'+(r.L.el>0?deg(r.L.el):"за горизонтом")+'</td><td class="n">'+(r.L.skew>0?"+":"")+deg(r.L.skew)+'</td></tr>';
+  }).join("");
+}
+$("allBody").addEventListener("click",function(e){var tr=e.target.closest("tr");if(!tr)return;var s=SATS[+tr.dataset.i];S.satName=s[0];S.satLon=s[1];syncInputs();render()});
+
+function fmtFull(t){var p=siteParts(t);return pad(p.d)+"."+pad(p.m)+"."+p.y+" "+pad(p.h)+":"+pad(p.mi)+":"+pad(p.s)}
+function renderClock(){
+  var n=new Date();
+  $("clkDev").textContent=n.toLocaleString("ru-RU");
+  $("clkSite").textContent=fmtFull(n.getTime())+" (UTC"+(S.tz>=0?"+":"")+S.tz+")";
+}
+setInterval(function(){if(S.tab==="clock")renderClock()},1000);
+$("clkCheck").addEventListener("click",function(){
+  var out=$("clkOff");out.textContent="проверяю…";
+  var t0=Date.now();
+  fetch(location.href.split("#")[0],{method:"HEAD",cache:"no-store"}).then(function(r){
+    var t1=Date.now(),h=r.headers.get("date");
+    if(!h)throw new Error("no date");
+    var srv=new Date(h).getTime()+500,local=(t0+t1)/2,diff=(local-srv)/1000;
+    out.textContent=Math.abs(diff)<1.5?"в пределах 1 с, часы точные":(diff>0?"спешат на ":"отстают на ")+Math.abs(Math.round(diff))+" с";
+  }).catch(function(){out.textContent="сервер не ответил, сверьте часы вручную по time.is или точному времени"});
+});
+
+syncInputs();refreshDecl();showTab();setSunNow();render();
+})();
+</script>
+
+</body>
+</html>
