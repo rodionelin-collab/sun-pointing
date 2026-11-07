@@ -117,7 +117,7 @@ html.only[data-only="vTop"] .sp-view:has(#vTop),html.only[data-only="vSide"] .sp
   </div>
 
   <div class="sp-views">
-    <div class="sp-view"><h2>ВИД СВЕРХУ</h2><svg id="vTop" viewBox="0 0 320 260" role="img" aria-label="Вид сверху"></svg><p>Сравниваем тень штанги конвертора с тенью шеста: в нужный момент они параллельны.</p></div>
+    <div class="sp-view"><h2>ВИД СВЕРХУ</h2><svg id="vTop" viewBox="0 0 320 260" role="img" aria-label="Вид сверху"></svg><p>Сравниваем тень штанги конвертора с тенью вешки: в нужный момент они параллельны.</p></div>
     <div class="sp-view"><h2>ВИД СБОКУ</h2><svg id="vSide" viewBox="0 0 320 260" role="img" aria-label="Вид сбоку"></svg><p>Солнце и спутник на разной высоте, поэтому по солнцу находим только азимут. Угол места доводим в конце по сигналу модема.</p></div>
     <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><div class="sp-meter in"><span>СИГНАЛ МОДЕМА</span><div class="sp-bars" id="bars"></div><b id="sigTxt">нет</b></div><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Когда сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум, скорее всего, пройден. Для уверенности сделайте ещё два прохода выше: если сигнал продолжает падать, опустите зеркало до прохода с самым сильным сигналом и по нему вернитесь в точку максимума.</p></div>
     <div class="sp-view"><h2>ВИД СЗАДИ ЗЕРКАЛА АНТЕННЫ</h2><svg id="vBack" viewBox="0 0 320 260" role="img" aria-label="Вид из-за антенны глазами установщика"></svg><p>Так видит установщик: солнце должно оказаться точно по центру за зеркалом.</p></div>
@@ -222,7 +222,7 @@ var STEPS=[
   ["Солнце идёт по небу","Утром солнце на востоке и смещается к югу. Направление на спутник не меняется. Угол места заранее выставлен примерно, по шкале кронштейна. Болты азимута ослаблены."],
   ["{TIME} — азимуты совпали","В эту минуту солнце стоит точно в той стороне, где спутник, только на другой высоте. Время заранее посчитал «Помощник установщика»."],
   ["Поворачиваем к солнцу","Встаём за зеркалом и плавно поворачиваем антенну, пока солнце не окажется точно по центру за ним. Вверх-вниз пока не наклоняем."],
-  ["Тени параллельны — фиксируем","Тень штанги конвертора легла параллельно тени шеста. Азимут найден, затягиваем болты."],
+  ["Тени параллельны — фиксируем","Тень штанги конвертора легла параллельно тени вешки. Азимут найден, затягиваем болты."],
   ["Донаводим «змейкой»","По солнцу азимут найден примерно, сигнал слабый. На каждом положении угла места медленно поводим антенну на 30° влево и 30° вправо от предполагаемого направления на спутник, затем меняем угол места на 0,5–1° и идём обратно. Нашли максимум — возвращаемся в лучшую точку и затягиваем все болты."]
 ];
 STEPS=STEPS.map(function(x){return [fmt(x[0]),fmt(x[1])]});
@@ -324,6 +324,7 @@ function buildView(svg,opts){
   e.frame=mk("path",{fill:"none",stroke:"#5d7a8e","stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"},svg);
   e.mast=mk("line",{stroke:"#4e6676","stroke-width":4,"stroke-linecap":"round"},svg);
   e.stick=mk("line",{stroke:"var(--ink)","stroke-width":2.5,"stroke-linecap":"round"},svg);
+  e.stickT=mk("text",{"font-size":10,fill:"var(--ink)","paint-order":"stroke",stroke:"var(--card)","stroke-width":3},svg);e.stickT.textContent="вешка";
   e.satRay=mk("line",{stroke:"var(--cyan)","stroke-width":1.4,"stroke-dasharray":"6 5"},svg);
   e.sunRay=mk("line",{stroke:"var(--amber)","stroke-width":1.4,"stroke-dasharray":"2 4"},svg);
   e.dish=mk("polygon",{fill:"#d5e1e8","fill-opacity":.95,stroke:"var(--cyan)","stroke-width":1.6},svg);
@@ -349,7 +350,7 @@ function drawView(v,S,g){
   var d="";TRI.legs.concat(TRI.braces).forEach(function(sg){var a=p2(sg[0]),b=p2(sg[1]);d+="M"+a[0].toFixed(1)+" "+a[1].toFixed(1)+"L"+b[0].toFixed(1)+" "+b[1].toFixed(1)});
   TRI.feet.forEach(function(f){d+="M"+f.map(function(q){var r=p2(q);return r[0].toFixed(1)+" "+r[1].toFixed(1)}).join("L")+"Z"});e.frame.setAttribute("d",d);
   var a=p2([0,0,0]),b=p2([0,0,MAST_H]);setA(e.mast,{x1:a[0],y1:a[1],x2:b[0],y2:b[1]});
-  var s0=p2([STICK[0],STICK[1],0]),s1=p2([STICK[0],STICK[1],STICK_H]);setA(e.stick,{x1:s0[0],y1:s0[1],x2:s1[0],y2:s1[1]});
+  var s0=p2([STICK[0],STICK[1],0]),s1=p2([STICK[0],STICK[1],STICK_H]);setA(e.stick,{x1:s0[0],y1:s0[1],x2:s1[0],y2:s1[1]});setA(e.stickT,{x:Math.min(s1[0],s0[0])+8,y:Math.min(s1[1],s0[1])+4});
   var ss=p2(shadowPt([STICK[0],STICK[1],STICK_H],S.sunAz));setA(e.stickSh,{x1:s0[0],y1:s0[1],x2:ss[0],y2:ss[1]});
   var r0=p2(g.root),l0=p2(g.lnb);setA(e.arm,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});var cc=p2(g.C),la=Math.atan2(l0[1]-cc[1],l0[0]-cc[0])/D,ls2=Math.max(0.55,Math.min(1,Math.hypot(l0[0]-cc[0],l0[1]-cc[1])/30));e.lnb.setAttribute("transform","translate("+l0[0].toFixed(1)+" "+l0[1].toFixed(1)+") rotate("+la.toFixed(1)+") scale("+ls2.toFixed(2)+" 1)");
   var rs=p2(shadowPt(g.root,S.sunAz)),ls=p2(shadowPt(g.lnb,S.sunAz));setA(e.armSh,{x1:rs[0],y1:rs[1],x2:ls[0],y2:ls[1]});
@@ -518,7 +519,7 @@ var G=null;
   /* stick / plumb */
   scene.add(rod(W(STICK[0],STICK[1],0),W(STICK[0],STICK[1],STICK_H),0.018,white));
   var stTop=new THREE.Mesh(new THREE.SphereGeometry(0.04,12,8),white);stTop.position.copy(W(STICK[0],STICK[1],STICK_H));scene.add(stTop);
-  var stLbl=label("шест","#111111",0.6,true);stLbl.position.copy(W(STICK[0],STICK[1],STICK_H+0.25));scene.add(stLbl);
+  var stLbl=label("вешка","#111111",0.6,true);stLbl.position.copy(W(STICK[0],STICK[1],STICK_H+0.25));scene.add(stLbl);
 
   /* rotating head: built at azimuth 0 (facing north), rotated about the mast */
   var head=new THREE.Group();scene.add(head);
