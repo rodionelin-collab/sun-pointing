@@ -145,10 +145,12 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 var D=Math.PI/180;
 /* ================= site parameters: point & satellite chosen in «Помощник установщика» ================= */
 var PRM=(function(){
-  var d={lat:52.2869,lon:104.305,tz:8,satLon:145,satName:"Экспресс-АМУ7",decl:-4.8,place:"Иркутск"};
+  var d={lat:52.2869,lon:104.305,tz:8,satLon:145,satName:"Экспресс-АМУ7",decl:-4.8,place:"Иркутск",date:""};
   try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null");if(s)for(var k in d)if(s[k]!==undefined&&s[k]!==null&&s[k]!=="")d[k]=s[k]}catch(e){}
   try{var q=new URLSearchParams(location.search);["lat","lon","tz","satLon","decl"].forEach(function(k){var v=parseFloat(q.get(k));if(!isNaN(v))d[k]=v});
     if(q.get("sat"))d.satName=q.get("sat");if(q.get("place"))d.place=q.get("place");if(/^\d{4}-\d{2}-\d{2}$/.test(q.get("date")||""))d.date=q.get("date")}catch(e){}
+  if(d.date&&!/^\d{4}-\d{2}-\d{2}$/.test(d.date))d.date="";
+  if(d.date&&!(location.search.indexOf("date=")>=0)){var nn=new Date(Date.now()+d.tz*3600000).toISOString().slice(0,10);if(d.date<nn)d.date=""}
   if(!d.satName)d.satName="позиция "+Math.abs(d.satLon)+"°"+(d.satLon>=0?" в.д.":" з.д.");
   return d;
 })();
@@ -204,7 +206,12 @@ fmtDom(document.getElementById("sp"));
 (function(){var di=document.getElementById("dateIn");if(!di)return;di.value=new Date(DAY0+PRM.tz*3600000).toISOString().slice(0,10);
   di.addEventListener("change",function(){if(!di.value)return;var q=new URLSearchParams(location.search);
     if(!q.get("lat")){q.set("lat",PRM.lat);q.set("lon",PRM.lon);q.set("tz",PRM.tz);q.set("satLon",PRM.satLon);q.set("decl",PRM.decl);q.set("sat",PRM.satName);q.set("place",PRM.place)}
-    q.set("date",di.value);location.replace(location.pathname+"?"+q.toString())})})();
+    q.set("date",di.value);setStoredDate(di.value);location.replace(location.pathname+"?"+q.toString())})
+  /* back/forward cache: if the date was changed on another page meanwhile, reload with it */
+  window.addEventListener("pageshow",function(e){if(!e.persisted)return;try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null");
+    if(s&&/^\d{4}-\d{2}-\d{2}$/.test(s.date||"")&&s.date!==di.value){var q=new URLSearchParams(location.search);q.set("date",s.date);location.replace(location.pathname+"?"+q.toString())}}catch(e){}});
+  if(/date=/.test(location.search))setStoredDate(di.value)})();
+function setStoredDate(v){try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null")||{};s.date=v;localStorage.setItem("installer-helper",JSON.stringify(s))}catch(e){}}
 (function(){var msg=DEMO||(typeof DEMO_SUN!=="undefined"?DEMO_SUN:"");if(msg){var e=document.getElementById("demo");e.textContent=msg;e.hidden=false}
   if(location.search)document.querySelectorAll(".sp-tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
 var SAT_AZ=AZ, SAT_EL=ELV, TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=47;

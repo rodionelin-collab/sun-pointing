@@ -298,9 +298,9 @@ var $=function(id){return document.getElementById(id)};
 var S={lat:52.2869,lon:104.3050,tz:8,satLon:145.0,satName:"Экспресс-АМУ7",decl:0,declManual:false,offset:24,H:600,W:550,tab:"dish",sunDate:null,sunTime:null};
 try{var saved=JSON.parse(localStorage.getItem("installer-helper")||"null");if(saved)Object.assign(S,saved)}catch(e){}
 function placeName(){var cs=document.getElementById("city");if(cs&&cs.value!=="")return CITIES[+cs.value][0];return S.lat.toFixed(4)+", "+S.lon.toFixed(4)}
-function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,place:placeName(),offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual}))}catch(e){}
+function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,place:placeName(),offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual,date:$("sunDate").value||null}))}catch(e){}
   /* pass the chosen point and satellite to the animation pages */
-  var q="?lat="+S.lat.toFixed(5)+"&lon="+S.lon.toFixed(5)+"&tz="+S.tz+"&satLon="+S.satLon+"&decl="+S.decl+"&sat="+encodeURIComponent(S.satName||"")+"&place="+encodeURIComponent(placeName());
+  var q="?lat="+S.lat.toFixed(5)+"&lon="+S.lon.toFixed(5)+"&tz="+S.tz+"&satLon="+S.satLon+"&decl="+S.decl+"&sat="+encodeURIComponent(S.satName||"")+"&place="+encodeURIComponent(placeName())+($("sunDate").value?"&date="+$("sunDate").value:"");
   document.querySelectorAll('a[href^="sun.html"],a[href^="compass.html"],a[href^="magnetic.html"]').forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+q)})}
 
 /* ---------- geometry ---------- */
@@ -474,7 +474,6 @@ $("sunPick").addEventListener("click",function(){var d=$("sunDate");d.focus();tr
 
 /* ---------- render ---------- */
 function render(){
-  save();
   var L=look(S.lat,S.lon,S.satLon),vis=L.el>0;
   var mag=((L.az-S.decl)%360+360)%360;
   $("rAz").textContent=deg(L.az);
@@ -485,6 +484,7 @@ function render(){
   $("rSkew").textContent=(L.skew>0?"+":"")+deg(L.skew);
   $("rSkewS").textContent=Math.abs(L.skew)<0.5?"конвертор ставится ровно":(L.skew>0?"по часовой":"против часовой")+" стрелки, если смотреть из-за антенны на спутник";
   renderDish(L);renderSun(L);renderCompass(L,mag);renderAll();renderClock();
+  save();
 }
 
 function renderDish(L){
@@ -613,7 +613,12 @@ $("clkCheck").addEventListener("click",function(){
   }).catch(function(){out.textContent="сервер не ответил, сверьте часы вручную по time.is или точному времени"});
 });
 
-syncInputs();refreshDecl();showTab();setSunNow();render();
+/* installation date is shared with the animation pages through localStorage; a stored date in the past falls back to today */
+function storedDate(){try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null");var d=s&&s.date;if(!/^\d{4}-\d{2}-\d{2}$/.test(d||""))return null;
+  var p=siteParts(Date.now()),today=p.y+"-"+pad(p.m)+"-"+pad(p.d);return d<today?null:d}catch(e){return null}}
+function applyStoredDate(){var d=storedDate();if(d)$("sunDate").value=d;else setSunNow()}
+syncInputs();refreshDecl();showTab();applyStoredDate();render();
+window.addEventListener("pageshow",function(e){if(!e.persisted)return;var d=storedDate();if(d&&d!==$("sunDate").value){$("sunDate").value=d;render()}});
 })();
 </script>
 
