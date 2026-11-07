@@ -112,7 +112,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
         <p class="hint" id="coordsInfo" style="margin:4px 0 0"></p>
       </div>
       <div class="row">
-        <div><label for="tz">Часовой пояс точки, UTC+</label><div style="position:relative"><input id="tz" type="number" step="0.5" min="-12" max="14"><span id="tzMsk" style="position:absolute;right:38px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none"></span></div><p class="hint" id="tzHint" style="margin:4px 0 0"></p></div>
+        <div><label for="tz">Часовой пояс</label><div style="position:relative"><input id="tz" type="text" inputmode="decimal" autocomplete="off"><span id="tzMsk" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none"></span></div><p class="hint" id="tzHint" style="margin:4px 0 0"></p></div>
         <div><label for="decl">Магн. склонение, °</label><input id="decl" type="text" readonly tabindex="-1" style="cursor:default" title="Считается автоматически по координатам"></div>
       </div>
       <p class="hint" id="declHint"></p>
@@ -428,7 +428,7 @@ function syncInputs(){
   var ci=CITIES.findIndex(function(c){return Math.abs(c[1]-S.lat)<1e-4&&Math.abs(c[2]-S.lon)<1e-4});
   if(ci>=0)S.city=CITIES[ci][0];else if(typeof S.city!=="string")S.city="";
   $("coords").value=S.city||(S.lat.toFixed(4)+", "+S.lon.toFixed(4));coordsInfo();
-  S.tz=tzFromCoords(S.lat,S.lon);$("tz").value=S.tz;tzHint();
+  S.tz=tzFromCoords(S.lat,S.lon);tzHint();
   $("satlon").value=S.satLon;
   var si=SATS.findIndex(function(s){return s[0]===S.satName&&Math.abs(s[1]-S.satLon)<1e-6});
   satSel.value=si>=0?String(si):"custom";
@@ -451,13 +451,16 @@ function tzFromCoords(lat,lon){var z=null;try{z=ruTz(lat,lon)||tzlookup(lat,lon)
     p=new Intl.DateTimeFormat("en-US",{timeZone:z,timeZoneName:"shortOffset"}).formatToParts(d).filter(function(x){return x.type==="timeZoneName"})[0].value,
     m=/GMT([+-]\d+)(?::(\d+))?/.exec(p);if(p==="GMT")return 0;if(m){var h=+m[1];return h+(h<0?-1:1)*(+m[2]||0)/60}}catch(e){}}
   return Math.round(lon/15)}
-function mskTxt(){var d=Math.round((S.tz-3)*100)/100;var n=Math.abs(d),w=n%1?"часа":(n%10===1&&n%100!==11?"час":(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?"часа":"часов");$("tzMsk").textContent=d===0?"МСК":"МСК "+(d>0?"+":"−")+String(n).replace(".",",")+" "+w}
-function tzHint(){mskTxt();var el=$("tzHint");if(el)el.textContent=S.tzName?"Определён по координатам: "+S.tzName+" (UTC"+(S.tz>=0?"+":"")+String(S.tz).replace(".",",")+")":"Определён по долготе — проверьте вручную."}
+/* the field shows the difference with Moscow ("МСК +5 часов"); UTC is the small hint inside it */
+function utcTxt(){return "UTC"+(S.tz>=0?"+":"−")+String(Math.abs(S.tz)).replace(".",",")}
+function mskVal(){var d=Math.round((S.tz-3)*100)/100,n=Math.abs(d),w=n%1?"часа":(n%10===1&&n%100!==11?"час":(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?"часа":"часов");return d===0?"МСК":"МСК "+(d>0?"+":"−")+String(n).replace(".",",")+" "+w}
+function mskTxt(){$("tzMsk").textContent=utcTxt();if(document.activeElement!==$("tz"))$("tz").value=mskVal()}
+function tzHint(){mskTxt();var el=$("tzHint");if(el)el.textContent=S.tzName?"Определён по координатам ("+S.tzName+")":"Определён по долготе — проверьте вручную."}
 function nearestCity(lat,lon){var b=null,bd=1e9;CITIES.forEach(function(c){var d=Math.hypot(c[1]-lat,(c[2]-lon)*Math.cos(lat*Math.PI/180))*111;if(d<bd){bd=d;b=c}});return {c:b,d:bd}}
 function setPoint(lat,lon,city,tz){
   S.lat=lat;S.lon=lon;S.city=city||"";if(!city)S.cityRegion="";S.declManual=false;
   S.tz=tzFromCoords(lat,lon);
-  $("tz").value=S.tz;tzHint();$("coordsErr").hidden=true;$("coords").value=S.city||(lat.toFixed(4)+", "+lon.toFixed(4));coordsInfo();
+  tzHint();$("coordsErr").hidden=true;$("coords").value=S.city||(lat.toFixed(4)+", "+lon.toFixed(4));coordsInfo();
   closeAc();refreshDecl();render()}
 var acItems=[],acSel=-1;
 function closeAc(){$("acList").hidden=true;$("coords").setAttribute("aria-expanded","false");acItems=[];acSel=-1}
@@ -501,7 +504,10 @@ $("coords").addEventListener("keydown",function(e){
 $("coords").addEventListener("change",function(){if($("acList").hidden)applyCoords()});
 $("coords").addEventListener("blur",function(){setTimeout(function(){if(!$("acList").hidden){closeAc();applyCoords()}},150)});
 $("acList").addEventListener("mousedown",function(e){var li=e.target.closest("li");if(li){e.preventDefault();pickAc(+li.dataset.i)}});
-$("tz").addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)){S.tz=v;mskTxt();$("tzHint").textContent="Введён вручную"+(S.tzName?"; по координатам: "+S.tzName:"")+".";render()}});
+$("tz").addEventListener("input",function(){var s=this.value.replace(/мск/i,"").replace(/[−–]/g,"-").replace(",",".").replace(/[^0-9.+-]/g,""),v=s===""&&/мск/i.test(this.value)?0:parseFloat(s);
+  if(!isNaN(v)&&Math.abs(v)<=15){S.tz=v+3;$("tzMsk").textContent=utcTxt();$("tzHint").textContent="Введён вручную"+(S.tzName?"; по координатам: "+S.tzName:"")+".";render()}});
+$("tz").addEventListener("focus",function(){var d=Math.round((S.tz-3)*100)/100;this.value=(d>0?"+":"")+String(d).replace(".",",");this.select()});
+$("tz").addEventListener("blur",function(){this.value=mskVal()});
 $("decl").addEventListener("input",function(){
   if(this.value.trim()===""){S.declManual=false;refreshDecl();render();return}
   var v=parseFloat(this.value);if(!isNaN(v)){S.decl=v;S.declManual=true;
@@ -609,7 +615,7 @@ function renderSun(L){
     $("sunPastT").textContent=(isToday?"Сегодня это время уже прошло.":"Эта дата уже прошла.")+" Выберите завтрашний или более поздний день"+(mt.length?" — завтра солнце будет в стороне спутника в "+hm(mt[0].t)+".":".");
     $("sunTomorrow").textContent=mt.length?"На завтра, "+hm(mt[0].t):"На завтра";
   }
-  sub.textContent="по местному времени точки (UTC"+(S.tz>=0?"+":"")+S.tz+"), солнце будет "+(x.el<15?"низко, ":"")+"на высоте "+deg(x.el)+(when?" · "+when:"");
+  sub.textContent="по местному времени точки ("+mskVal()+", "+utcTxt()+"), солнце будет "+(x.el<15?"низко, ":"")+"на высоте "+deg(x.el)+(when?" · "+when:"");
   var t5=hm(t-5*60000),t2=hm(t+2*60000);
   steps.push("<li><b>Заранее</b> соберите антенну на кронштейне, установите конвертор и выставьте угол места "+deg(L.el)+" (вкладка «Угол места»).</li>");
   steps.push("<li><b>Ослабьте болты поворота по азимуту</b>, чтобы антенна поворачивалась рукой с небольшим усилием. Болты угла места затяните.</li>");
@@ -658,7 +664,7 @@ function fmtFull(t){var p=siteParts(t);return pad(p.d)+"."+pad(p.m)+"."+p.y+", "
 function renderClock(){
   var n=new Date();
   $("clkDev").textContent=n.toLocaleString("ru-RU");
-  $("clkSite").textContent=fmtFull(n.getTime())+" (UTC"+(S.tz>=0?"+":"")+S.tz+")";
+  $("clkSite").textContent=fmtFull(n.getTime())+" ("+mskVal()+", "+utcTxt()+")";
 }
 setInterval(function(){if(S.tab==="clock")renderClock()},1000);
 $("clkCheck").addEventListener("click",function(){
