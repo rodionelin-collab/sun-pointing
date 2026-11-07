@@ -599,7 +599,7 @@ var G=null;
   function camBack(o,w,h){w=w||320;h=h||260;var c=new THREE.PerspectiveCamera(2*Math.atan(o.cy/o.f)*180/Math.PI,o.cx/o.cy,0.05,200);c.setViewOffset(2*o.cx,2*o.cy,0,0,w,h);
     var e=W(o.eye[0],o.eye[1],o.eye[2]);c.position.copy(e);c.up.copy(W(o.up[0],o.up[1],o.up[2]));c.lookAt(e.clone().add(W(o.fw[0],o.fw[1],o.fw[2])));c.updateProjectionMatrix();return c}
   function addPanel(cv,cam,obs){if(!PR||!cv)return;obs=obs||{};var p={cv:cv,ctx:cv.getContext("2d"),cam:cam,vis:true,scale:obs.scale||1,shadows:!!obs.shadows};
-    if(window.IntersectionObserver&&!REC){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}
+    if(window.IntersectionObserver&&!REC){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}window.__spPanels=PANELS;
   var ANTSET=new Set();
   function markAntenna(list){list.forEach(function(o){if(!o.isSprite)ANTSET.add(o)})}
   var CATCH=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.ShadowMaterial({opacity:0.22}));CATCH.rotation.x=-Math.PI/2;CATCH.position.y=0.002;CATCH.receiveShadow=true;CATCH.visible=false;scene.add(CATCH);
@@ -667,7 +667,7 @@ $("btnRestart").addEventListener("click",function(){jump(0);playing=true;$("btnP
 $("btnPlay").textContent=playing?"Пауза":"Играть";
 var LASTS=null;
 window.__spRec={dur:T_END,steps:STEPS.map(function(s){return s[0]}),texts:STEPS.map(function(s){return s[1]}),views:["vComp","vComp","vTop","vBack","vSnake"],tok:TOK,
-  set:function(t){T=t;frame(t);return LASTS},head:function(){return {label:"НА ЭКРАНЕ ТЕЛЕФОНА",value:$("readout").textContent,ok:false,note:""}},gl:$("gl")};
+  set:function(t){T=t;frame(t);return LASTS},only:function(id){(window.__spPanels||[]).forEach(function(p){var s=p.cv.closest("svg");p.vis=!!s&&s.id===id})},head:function(){return {label:"НА ЭКРАНЕ ТЕЛЕФОНА",value:$("readout").textContent,ok:false,note:""}},gl:$("gl")};
 frame(T);if(!REC)requestAnimationFrame(loop);
 })();
 </script>

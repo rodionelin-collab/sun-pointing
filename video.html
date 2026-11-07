@@ -120,7 +120,7 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
 (function(){
 "use strict";
 var $=function(id){return document.getElementById(id)};
-var W=720,H=1280,FPS=25,GH=420;
+var W=720,H=1280,FPS=25,GH=420,BR=1.5e6;   /* flat schematic graphics: 1.5 Mbit/s is plenty for 720×1280 */
 var TEST=/[?&]test=1(&|$)/.test(location.search),TT=parseFloat(new URLSearchParams(location.search).get("tt"));if(isNaN(TT))TT=-1;   /* short clips for checking the pipeline */
 var METHODS={sun:{page:"sun.html",name:"По солнцу",lead:"Ловим момент, когда солнце стоит точно в стороне спутника, и разворачиваем антенну «лицом» к солнцу."},
   compass:{page:"compass.html",name:"Компас в телефоне",lead:"Находим направление на спутник по компасу в телефоне, ставим вешку и разворачиваем на неё антенну."},
@@ -278,18 +278,18 @@ function methodFrame(ctx,w,k,i,n,S,prog){
 function pickCodec(){var list=["avc1.640028","avc1.4d0028","avc1.42002a","avc1.42001f"];
   if(!window.VideoEncoder||!window.Mp4Muxer)return Promise.resolve(null);
   return list.reduce(function(p,c){return p.then(function(found){if(found)return found;
-    return VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:4e6,framerate:FPS}).then(function(r){return r.supported?c:null}).catch(function(){return null})})},Promise.resolve(null))}
+    return VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:BR,framerate:FPS}).then(function(r){return r.supported?c:null}).catch(function(){return null})})},Promise.resolve(null))}
 function makeSink(cv){return pickCodec().then(function(codec){
   if(codec){var muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:"avc",width:W,height:H,frameRate:FPS},fastStart:"in-memory"}),err=null;
     var enc=new VideoEncoder({output:function(ch,meta){muxer.addVideoChunk(ch,meta)},error:function(e){err=e}});
-    enc.configure({codec:codec,width:W,height:H,bitrate:4e6,framerate:FPS,latencyMode:"quality"});var n=0;
-    return {kind:"mp4",add:function(){if(err)return Promise.reject(err);var f=new VideoFrame(cv,{timestamp:Math.round(n*1e6/FPS),duration:Math.round(1e6/FPS)});enc.encode(f,{keyFrame:n%(FPS*2)===0});f.close();n++;
+    enc.configure({codec:codec,width:W,height:H,bitrate:BR,bitrateMode:"variable",framerate:FPS,latencyMode:"quality"});var n=0;
+    return {kind:"mp4",add:function(){if(err)return Promise.reject(err);var f=new VideoFrame(cv,{timestamp:Math.round(n*1e6/FPS),duration:Math.round(1e6/FPS)});enc.encode(f,{keyFrame:n%(FPS*5)===0});f.close();n++;
         return enc.encodeQueueSize>6?new Promise(function(r){(function w(){if(enc.encodeQueueSize<=2)r();else setTimeout(w,5)})()}):Promise.resolve()},
       done:function(){return enc.flush().then(function(){muxer.finalize();enc.close();return new Blob([muxer.target.buffer],{type:"video/mp4"})})},cancel:function(){try{enc.close()}catch(e){}}}}
   /* fallback */
   var mt=["video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9","video/webm"].filter(function(t){return window.MediaRecorder&&MediaRecorder.isTypeSupported(t)})[0];
   if(!mt)return null;
-  var stream=cv.captureStream(0),track=stream.getVideoTracks()[0],rec=new MediaRecorder(stream,{mimeType:mt,videoBitsPerSecond:4e6}),parts=[],t0=performance.now(),n=0;
+  var stream=cv.captureStream(0),track=stream.getVideoTracks()[0],rec=new MediaRecorder(stream,{mimeType:mt,videoBitsPerSecond:BR}),parts=[],t0=performance.now(),n=0;
   rec.ondataavailable=function(e){if(e.data.size)parts.push(e.data)};rec.start(1000);
   return {kind:mt.indexOf("mp4")>=0?"mp4":"webm",add:function(){if(track.requestFrame)track.requestFrame();n++;var due=t0+n*1000/FPS,wait=due-performance.now();return new Promise(function(r){setTimeout(r,Math.max(0,wait))})},
     done:function(){return new Promise(function(r){rec.onstop=function(){r(new Blob(parts,{type:mt.split(";")[0]}))};rec.stop()})},cancel:function(){try{rec.stop()}catch(e){}}}})}
@@ -320,7 +320,8 @@ function build(){
       return still(function(c){methodCard(c,k,i,list.length)},k==="sun"?6:MI,METHODS[k].name)
       .then(function(){return loadPage(METHODS[k].page)})
       .then(function(w){if(!TEST){total+=w.__spRec.dur-durs[k];durs[k]=w.__spRec.dur}var n=Math.round(durs[k]*FPS),f=0,R=w.__spRec,st=TEST?(TT>=0?TT:R.dur-3):0;
-        return (function next(){if(f>=n)return Promise.resolve();var t=st+f/FPS*(TEST?1:1);var S=R.set(t);
+        var vid=null;
+        return (function next(){if(f>=n)return Promise.resolve();var t=st+f/FPS;if(vid===null){vid=R.views[0];if(R.only)R.only(vid)}var S=R.set(t);if(R.views[S.step]!==vid){vid=R.views[S.step];if(R.only)R.only(vid);S=R.set(t)}   /* only the 2D view shown in the video gets its 3D panel rendered */
           return methodFrame(ctx,w,k,i,list.length,S,f/n).then(function(){f++;if(f%5===0)setProg(METHODS[k].name+" — кадр "+f+" из "+n);return emit()}).then(next)})()})})},Promise.resolve())})
   .then(function(){return still(function(c){outroCard(c,list)},OUT+(list.indexOf("sun")>=0?3:0),"Финальная заставка")})
   .then(function(){return still(supportCard,SUPP,"Контакты техподдержки")})
