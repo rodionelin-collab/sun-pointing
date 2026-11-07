@@ -46,6 +46,10 @@ button.ghost{background:transparent;color:var(--accent);border:1px solid var(--a
 .cell .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .cell .v{font-family:var(--f-data);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
 .cell .s{font-size:13px;color:var(--muted)}
+.past{margin-top:10px;border:1px solid var(--warn);border-radius:10px;padding:12px 14px;display:grid;gap:10px}
+.past p{margin:0;color:var(--warn);font-size:14px;font-weight:600}
+.past-btns{display:flex;gap:8px;flex-wrap:wrap}
+.cell .v.gone{color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px}
 .status{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);justify-self:start}
 .status.bad{color:var(--warn);background:transparent;border:1px solid var(--warn)}
 nav{display:flex;flex-wrap:wrap;gap:6px}
@@ -174,6 +178,10 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
       <span class="k">Солнце будет в стороне спутника</span>
       <span class="v" id="sunMatch">—</span>
       <span class="s" id="sunMatchS"></span>
+      <div class="past" id="sunPast" hidden>
+        <p id="sunPastT"></p>
+        <div class="past-btns"><button type="button" id="sunTomorrow">На завтра</button><button type="button" class="ghost" id="sunPick">Выбрать другую дату</button></div>
+      </div>
     </div>
     <div class="grid2">
       <div style="display:grid;gap:12px;align-content:start">
@@ -457,6 +465,8 @@ function showTab(){
 function setSunNow(){var p=siteParts(Date.now());$("sunDate").value=p.y+"-"+pad(p.m)+"-"+pad(p.d)}
 $("sunNow").addEventListener("click",function(){setSunNow();render()});
 $("sunDate").addEventListener("input",render);
+$("sunTomorrow").addEventListener("click",function(){var p=siteParts(Date.now()+86400000);$("sunDate").value=p.y+"-"+pad(p.m)+"-"+pad(p.d);render()});
+$("sunPick").addEventListener("click",function(){var d=$("sunDate");d.focus();try{d.showPicker()}catch(e){}});
 
 /* ---------- render ---------- */
 function render(){
@@ -528,15 +538,22 @@ function renderSun(L){
   }
   var x=m[0],t=x.t;big.style.fontSize="";
   big.textContent=hm(t);
-  var now=Date.now(),dm=Math.round((t-now)/60000),when="";
+  var now=Date.now(),dm=Math.round((t-now)/60000),when="",past=dm<=-3;
   if(Math.abs(dm)<1440){
     if(dm>0)when="через "+(dm>=60?Math.floor(dm/60)+" ч ":"")+(dm%60)+" мин";
     else if(dm>-3)when="прямо сейчас";
-    else when="сегодня уже прошло, завтра примерно в это же время";
+  }
+  big.classList.toggle("gone",past);
+  $("sunPast").hidden=!past;
+  if(past){
+    var tp=siteParts(now),todayStart=Date.UTC(tp.y,tp.m-1,tp.d)-S.tz*3600000,isToday=dayStart===todayStart;
+    var mt=matchTimes(todayStart+86400000,S.lat,S.lon,L.az).filter(function(z){return z.el>3});
+    $("sunPastT").textContent=(isToday?"Сегодня это время уже прошло.":"Эта дата уже прошла.")+" Выберите завтрашний или более поздний день"+(mt.length?" — завтра солнце будет в стороне спутника в "+hm(mt[0].t)+".":".");
+    $("sunTomorrow").textContent=mt.length?"На завтра, "+hm(mt[0].t):"На завтра";
   }
   sub.textContent="по местному времени точки (UTC"+(S.tz>=0?"+":"")+S.tz+"), солнце будет "+(x.el<15?"низко, ":"")+"на высоте "+deg(x.el)+(when?" · "+when:"");
   var t5=hm(t-5*60000),t2=hm(t+2*60000);
-  steps.push("<li><b>Заранее</b> соберите антенну на кронштейне, установите конвертор и выставьте угол места "+deg(L.el)+" (вкладка «Наклон антенны»).</li>");
+  steps.push("<li><b>Заранее</b> соберите антенну на кронштейне, установите конвертор и выставьте угол места "+deg(L.el)+" (вкладка «Угол места»).</li>");
   steps.push("<li><b>Ослабьте болты поворота по азимуту</b>, чтобы антенна поворачивалась рукой с небольшим усилием. Болты угла места затяните.</li>");
   steps.push("<li><b>Сверьте часы</b> на вкладке «Часы». Ошибка в 4 минуты даёт ошибку направления около 1°.</li>");
   steps.push("<li><b>К "+t5+" будьте у антенны.</b> Найдите на земле тень от мачты. Если мачта стоит не строго вертикально, повесьте отвес и смотрите на его тень.</li>");
