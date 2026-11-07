@@ -458,12 +458,14 @@ var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
   var hidTxt=mk("text",{"font-size":9.5,fill:"var(--muted)",display:"none"},svg);hidTxt.textContent="";
   svg.appendChild(v.e.cross);
   /* fading trail of the converter during the snake, as seen from behind the dish */
-  var BT_N=240,BT_DT=40,BT_GAP=3.5,btl=[];
+  var BT_N=160,BT_LEN=150,BT_GAP=3.5,btl=[];
   for(var bi=0;bi<BT_N;bi++)btl.push(mk("line",{stroke:"#e0650b","stroke-width":1.6,"stroke-linecap":"round",opacity:0},svg));
-  function backTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),prev=null;
-    for(var i=0;i<=BT_N;i++){var tt=S.t-BT_DT*i/BT_N,p=null;
-      if(on&&tt>=SN_T0){var sn=snakeAt(tt);p=BACK.pt(dishGeom(SAT_AZ+sn.az,SN_PTS[0][1]).lnb);p=[p[0],p[1]-(sn.el-SN_PTS[0][1])/0.5*BT_GAP]}   /* anchored: the first pass stays put, each next 0,5° pass is drawn BT_GAP px above it */
-      if(i>0){var ln=btl[i-1];if(p&&prev)setA(ln,{x1:prev[0],y1:prev[1],x2:p[0],y2:p[1],opacity:(0.9*(1-0.75*i/BT_N)*fade).toFixed(3)});else setA(ln,{opacity:0})}
+  /* like a contrail: the trail is measured along the snake path (about two passes long, 60° = one pass) and fades out towards its tail */
+  function snPtAt(L){var i=1;while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k]}
+  function backTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),prev=null,L0=snCostToLen(clamp((S.t-SN_T0)/(SN_T1-SN_T0)));
+    for(var i=0;i<=BT_N;i++){var L=L0-BT_LEN*i/BT_N,p=null;
+      if(on&&L>=0){var q=snPtAt(L);p=BACK.pt(dishGeom(SAT_AZ+q[0],SN_PTS[0][1]).lnb);p=[p[0],p[1]-(q[1]-SN_PTS[0][1])/0.5*BT_GAP]}   /* anchored: the first pass stays put, each next 0,5° pass is drawn BT_GAP px above it */
+      if(i>0){var ln=btl[i-1],k=1-i/BT_N;if(p&&prev)setA(ln,{x1:prev[0],y1:prev[1],x2:p[0],y2:p[1],opacity:(0.95*k*k*fade).toFixed(3)});else setA(ln,{opacity:0})}
       prev=p}}
   v.update=function(S,g){
     setA(v.e.cross,{opacity:S.par});backTrail(S);
