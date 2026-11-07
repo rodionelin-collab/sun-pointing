@@ -120,7 +120,7 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
 (function(){
 "use strict";
 var $=function(id){return document.getElementById(id)};
-var W=720,H=1280,FPS=25,GH=420,BR=1.5e6;   /* flat schematic graphics: 1.5 Mbit/s is plenty for 720×1280 */
+var W=720,H=1280,FPS=25,GH=420,BR=1.5e6;(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));if(/[?&]test=1/.test(location.search)&&b>0)BR=b})();   /* flat schematic graphics: 1.5 Mbit/s is plenty for 720×1280 */
 var TEST=/[?&]test=1(&|$)/.test(location.search),TT=parseFloat(new URLSearchParams(location.search).get("tt"));if(isNaN(TT))TT=-1;   /* short clips for checking the pipeline */
 var METHODS={sun:{page:"sun.html",name:"По солнцу",lead:"Ловим момент, когда солнце стоит точно в стороне спутника, и разворачиваем антенну «лицом» к солнцу."},
   compass:{page:"compass.html",name:"Компас в телефоне",lead:"Находим направление на спутник по компасу в телефоне, ставим вешку и разворачиваем на неё антенну."},
@@ -199,6 +199,7 @@ function drawSupport(ctx,y){ /* centred block, returns bottom */
   ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="600 26px "+FB;ctx.fillText("Техподдержка",W/2,y);y+=44;
   ctx.font="400 28px "+FB;SUPPORT.forEach(function(s){ctx.fillStyle=C.ink;ctx.fillText(s,W/2,y);y+=40});ctx.textAlign="left";return y}
 
+var TD=parseFloat(new URLSearchParams(location.search).get("td"))||3;
 if(TEST)window.__vdraw=function(n){var c=$("preview").getContext("2d");$("prevCard").hidden=false;var L=["sun","compass","magnetic"];if(n==="intro")introCard(c,L);else if(n==="support")supportCard(c);else if(n==="method")methodCard(c,"sun",0,3);else outroCard(c,L)};
 /* ---------- drawing helpers ---------- */
 var C={bg:"#f2f5f7",card:"#ffffff",line:"#cdd8e0",ink:"#14232d",muted:"#5f7380",cyan:"#0a8fb3",green:"#1f9d63",warn:"#e0650b",grid:"#e4ebf0"};
@@ -312,7 +313,7 @@ function build(){
     return (function next(){if(k>=n)return Promise.resolve();k++;if(k%10===0)setProg(label);return emit().then(next)})()}
   return (document.fonts?document.fonts.ready:Promise.resolve()).then(function(){return Promise.all([imgReady(LOGO),imgReady(LOGOSQ)])}).then(function(){return makeSink(cv)}).then(function(s){
     if(!s)throw new Error("этот браузер не умеет записывать видео. Откройте страницу в Chrome, Edge или Safari.");sink=s;
-    list.forEach(function(k){durs[k]=TEST?3:(k==="sun"?46:49)});   /* estimate; the real length is taken when each page loads */
+    list.forEach(function(k){durs[k]=TEST?TD:(k==="sun"?46:49)});   /* estimate; the real length is taken when each page loads */
     if(TOK)return;return loadPage(METHODS[list[0]].page).then(function(w){TOK=w.__spRec.tok})})
   .then(function(){showCtx();total=INTRO+OUT+SUPP+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:MI)+durs[k]},0);
     return still(function(c){introCard(c,list)},INTRO,"Заставка")})
