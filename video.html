@@ -240,7 +240,7 @@ function methodCard(ctx,k,i,n){
   card(ctx,[{t:"СПОСОБ "+(i+1)+" ИЗ "+n,f:"600 26px "+FM,c:C.cyan,lh:76},{t:METHODS[k].name,f:"700 54px "+FB,lh:90},
     {t:METHODS[k].lead,f:"400 30px "+FB,c:C.muted,wrap:true,lh:42,gap:40}].concat(k==="sun"?[
     {t:SUNNOTE(),f:"600 27px "+FB,c:C.warn,wrap:true,lh:38}]:[]),k==="sun"?400:480);drawSq(ctx)}
-function SUNNOTE(){return "Время совпадения направления на солнце и на спутник рассчитано на "+fmtDate(date)+". Если антенну будут устанавливать в другой день, способ по солнцу может не сработать: время совпадения для другой даты нужно уточнить заново в Помощнике установщика."}
+function SUNNOTE(){return "Время совпадения направления на солнце и на спутник рассчитано на "+fmtDate(date)+". Если антенну будут устанавливать в другой день, способ по солнцу может не сработать: время совпадения для другой даты нужно рассчитать заново в сервисе «Помощник установщика антенны — satfinder.da-tele.com» или уточнить у технической поддержки компании «Да-Телеком»."}
 function supportCard(ctx){
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
   var lh=drawLogo(ctx,W/2,150,380);ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="400 28px "+FB;ctx.fillText(SITE,W/2,150+lh+44);
