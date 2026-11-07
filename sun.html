@@ -373,8 +373,16 @@ var vTop=buildView($("vTop"),{proj:TOP,clip:function(cp){mk("circle",{cx:TOP.cx,
   mk("circle",{cx:TOP.cx,cy:TOP.cy,r:94,fill:"none",stroke:"var(--line)","stroke-width":1.2},svg);
   for(var a=0;a<360;a+=10){var r1=a%30?90:86;mk("line",{x1:TOP.cx+94*Math.sin(a*D),y1:TOP.cy-94*Math.cos(a*D),x2:TOP.cx+r1*Math.sin(a*D),y2:TOP.cy-r1*Math.cos(a*D),stroke:"var(--line)"},svg)}
   [["С",0],["В",90],["Ю",180],["З",270]].forEach(function(q){mk("text",{x:TOP.cx+106*Math.sin(q[1]*D),y:TOP.cy-106*Math.cos(q[1]*D)+4,"font-size":12,"font-weight":300,"font-family":"var(--f-body)","text-anchor":"middle",fill:"#111111"},svg).textContent=q[0]});
+  /* satellite azimuth value outside the ring, next to the sun/satellite direction, clear of the cardinal letters */
+  (function(){var a=((SAT_AZ%360)+360)%360,r=112,x=TOP.cx+r*Math.sin(a*D),y=TOP.cy-r*Math.cos(a*D),s=Math.sin(a*D),c=Math.cos(a*D),anc,near=null;
+    [0,90,180,270,360].forEach(function(q){if(Math.abs(a-q)<14)near=q%360});
+    if(near===0||near===180){anc=s<0||(s===0&&near===180)?"end":"start";x+=anc==="end"?-12:12}
+    else if(near===90||near===270){anc="middle";y+=c>=0?-16:16}
+    else anc=Math.abs(s)<0.3?"middle":(s>0?"start":"end");
+    var o={x:x,"font-size":10,"font-weight":600,"text-anchor":anc,fill:"var(--cyan)","paint-order":"stroke",stroke:"var(--card)","stroke-width":3};
+    var t1=mk("text",Object.assign({y:y-2},o),svg);t1.textContent="азимут";var t2=mk("text",Object.assign({y:y+10},o),svg);t2.textContent=F1(SAT_AZ)+"°"})();
 },extra:function(v){
-  v.labelAt=function(){return {x:12,y:250,"text-anchor":"start"}}}});
+  v.labelAt=function(){return {x:12,y:18,"text-anchor":"start"}}}});
 var vSide=buildView($("vSide"),{proj:SIDE,bg:function(svg){
   mk("line",{x1:0,y1:SIDE.cy,x2:320,y2:SIDE.cy,stroke:"var(--line)","stroke-width":1.5},svg);
   for(var x=8;x<320;x+=14)mk("line",{x1:x,y1:SIDE.cy+1,x2:x-8,y2:SIDE.cy+9,stroke:"var(--grid)","stroke-width":1.2},svg);
