@@ -124,7 +124,7 @@ function pad(n){return String(n).padStart(2,"0")}
 function dirv(az,el){return [Math.sin(az*D)*Math.cos(el*D),Math.cos(az*D)*Math.cos(el*D),Math.sin(el*D)]}
 /* fine pointing "snake": sweep azimuth left-right at each elevation step */
 var SN_T0=14.8,SN_T1=21.4;
-var SN_PTS=[[0,-3],[-1.6,-3],[1.6,-3],[1.6,-2],[-1.6,-2],[-1.6,-1],[1.6,-1],[1.6,0],[-1.6,0],[-1.6,1],[1.6,1],[0.6,0.4],[0,0]];
+var SN_PTS=[[0,-3],[-1.6,-3],[1.6,-3],[1.6,-2],[-1.6,-2],[-1.6,-1],[1.6,-1],[1.6,0],[-1.6,0],[-1.6,1],[1.6,1],[1.6,0],[0,0]];
 var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],SN_PTS[q][1]-SN_PTS[q-1][1]));
 function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*0.95*0.95)-(dEl*dEl)/(2*1.15*1.15))}
 function snakeAt(t){

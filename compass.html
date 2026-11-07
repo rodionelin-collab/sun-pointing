@@ -151,7 +151,7 @@ var COMP0=[-0.9*bw[0]+0.75*bp[0],-0.9*bw[1]+0.75*bp[1]],COMP1=[-4.2*bw[0],-4.2*b
 var STAKE=[7*bw[0],7*bw[1]],STAKE_H=3;
 /* snake around the final error */
 var SN_T0=17.3,SN_T1=23.6;
-var SN_PTS=[[ERR,-2],[-1.6,-2],[1.6,-2],[1.6,-1],[-1.6,-1],[-1.6,0],[1.6,0],[1.6,1],[-1.6,1],[0.5,0.3],[0,0]];
+var SN_PTS=[[ERR,-2],[-1.6,-2],[1.6,-2],[1.6,-1],[-1.6,-1],[-1.6,0],[1.6,0],[1.6,1],[-1.6,1],[-1.6,0],[0,0]];
 var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],SN_PTS[q][1]-SN_PTS[q-1][1]));
 function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*0.95*0.95)-(dEl*dEl)/(2*1.15*1.15))}
 function snakeAt(t){
