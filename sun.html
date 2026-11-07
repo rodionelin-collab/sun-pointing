@@ -457,8 +457,16 @@ var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
   var lnbI=mk("circle",{r:7,fill:"none",stroke:"#3a444b","stroke-width":1.4,"stroke-dasharray":"3 2.5"},gIn);
   var hidTxt=mk("text",{"font-size":9.5,fill:"var(--muted)",display:"none"},svg);hidTxt.textContent="";
   svg.appendChild(v.e.cross);
+  /* fading trail of the converter during the snake, as seen from behind the dish */
+  var BT_N=140,BT_DT=14,BT_K=16,btl=[];   /* BT_K: px per degree of elevation, spreads the 0,5° passes apart so the snake reads */
+  for(var bi=0;bi<BT_N;bi++)btl.push(mk("line",{stroke:"#e0650b","stroke-width":2.2,"stroke-linecap":"round",opacity:0},svg));
+  function backTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),prev=null,el0=snakeAt(S.t).el;
+    for(var i=0;i<=BT_N;i++){var tt=S.t-BT_DT*i/BT_N,p=null;
+      if(on&&tt>=SN_T0){var sn=snakeAt(tt);p=BACK.pt(dishGeom(SAT_AZ+sn.az,sn.el).lnb);p=[p[0],p[1]-(sn.el-el0)*BT_K]}
+      if(i>0){var ln=btl[i-1];if(p&&prev)setA(ln,{x1:prev[0],y1:prev[1],x2:p[0],y2:p[1],opacity:(0.9*(1-i/BT_N)*fade).toFixed(3)});else setA(ln,{opacity:0})}
+      prev=p}}
   v.update=function(S,g){
-    setA(v.e.cross,{opacity:S.par});
+    setA(v.e.cross,{opacity:S.par});backTrail(S);
     var pts=e.dish.getAttribute("points");pIn.setAttribute("points",pts);pOut.setAttribute("points",pts);
     var r0=BACK.pt(g.root),l0=BACK.pt(g.lnb),dx=l0[0]-r0[0],dy=l0[1]-r0[1],L=Math.hypot(dx,dy)||1,nx=-dy/L*3.6,ny=dx/L*3.6;
     setA(armO,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});setA(lnbO,{cx:l0[0],cy:l0[1]});
