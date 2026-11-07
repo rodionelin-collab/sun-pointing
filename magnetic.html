@@ -103,7 +103,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 
   <div class="sp-head">
     <h1>Наведение антенны по магнитному компасу</h1>
-    <div class="sp-read"><small>НА КОЛЬЦЕ КОМПАСА</small><span id="readout">0°</span><span class="sp-corr">{CORR}</span></div>
+    <div class="sp-read"><small>НА ШКАЛЕ КОМПАСА</small><span id="readout">0°</span><span class="sp-corr">{CORR}</span></div>
     <button id="btnPlay" type="button">Пауза</button>
     <button id="btnRestart" type="button">С начала</button>
   </div>
@@ -130,8 +130,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
           <p class="mx-text" id="mxText"></p>
           <ul class="mx-legend">
             <li><i style="background:var(--red)"></i>красная стрелка — всегда смотрит на север, сама</li>
-            <li><i style="background:#90a4b1"></i>кольцо с градусами — его крутим пальцами</li>
-            <li><i style="background:var(--cyan)"></i>указатель на корпусе — куда смотрит компас</li>
+            <li><i style="background:#90a4b1"></i>шкала с градусами — поворачивается вместе с компасом</li>
+            <li><i style="background:var(--cyan)"></i>отметка {MAG}° на шкале — направление на спутник</li>
             <li><i style="background:var(--warn)"></i>вешка или визуальный ориентир по направлению на спутник</li>
           </ul>
         </div>
@@ -147,10 +147,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
       <li><b>Узнайте азимут и угол места.</b> Откройте «<a href="index.html">Помощник установщика</a>», выберите точку и спутник. Запишите азимут (для выбранной точки — {AZ}°), склонение ({DECLS}) и угол места ({EL}°).</li>
       <li><b>Посчитайте число для компаса.</b> Стрелка магнитного компаса всегда показывает на магнитный север, поэтому вычтите склонение из азимута. Для выбранной точки: {AZ} − ({DECLS}) = <b>{MAG}°</b>. Это же число показано в «Помощнике» как «азимут по компасу».</li>
       <li><b>Подготовьте антенну.</b> Соберите её на треноге, выставьте угол места по шкале кронштейна, затяните болты угла места. Болты поворота по азимуту ослабьте, чтобы антенна поворачивалась рукой.</li>
-      <li><b>Поставьте число на кольце.</b> Поверните кольцо с градусами (лимб), пока нужное число ({MAG}) не встанет напротив указателя на корпусе — стрелки или риски, куда смотрит компас.</li>
+      <li><b>Найдите число на шкале.</b> Найдите на шкале компаса число {MAG} — это направление на спутник. Если на компасе есть поворотное кольцо, поставьте его так, чтобы буква С была напротив указателя на корпусе, и больше не трогайте.</li>
       <li><b>Отойдите от металла.</b> Встаньте в 3–5 шагах позади антенны, со стороны, противоположной спутнику, подальше от треноги, машины и вагончиков. Уберите от компаса телефон, ключи и нож. Держите компас ровно, на ладони.</li>
-      <li><b>Совместите стрелку с буквой С.</b> Кольцо больше не трогайте. Медленно поворачивайтесь всем телом, пока красный (северный) конец стрелки не ляжет точно на букву С на кольце — внутрь нарисованной на дне компаса метки. Теперь указатель на корпусе смотрит на спутник.</li>
-      <li><b>Поставьте вешку.</b> Посмотрите вдоль указателя и попросите помощника поставить вешку в 10–20 м за антенной на этой линии. Можно выбрать и дальний ориентир: дерево, столб.</li>
+      <li><b>Совместите стрелку с буквой С.</b> Медленно поворачивайте компас вместе с собой, пока красный (северный) конец стрелки не ляжет точно на букву С шкалы. Теперь число {MAG} на шкале показывает на спутник.</li>
+      <li><b>Поставьте вешку.</b> Посмотрите от центра компаса через число {MAG} и попросите помощника поставить вешку в 10–20 м за антенной на этой линии. Можно выбрать и дальний ориентир: дерево, столб.</li>
       <li><b>Разверните антенну и донаведите.</b> Встаньте за зеркалом и поворачивайте антенну, пока верх вешки не окажется точно над центром зеркала. Затяните болты азимута. Затем включите модем и донаведите «змейкой»: на каждом положении угла места поводите антенну на 30° влево и 30° вправо от предполагаемого направления на спутник, меняйте угол места на 0,5–1°. Найдя максимум сигнала, затяните все болты.</li>
     </ol>
     <p class="sp-note">Рядом с большими металлическими конструкциями — вышками, ёмкостями, вагончиками — компас может ошибаться на 5–10°. В солнечный день надёжнее <a href="sun.html">наведение по солнцу</a>.</p>
@@ -245,9 +245,9 @@ var ERR=1.2;                 /* typical compass error, degrees */
 var LINE_AZ=SAT_AZ+ERR;      /* true direction of the sight line actually laid out */
 var STARTS=[0,4.5,9,12.5,17];
 var STEPS=[
-  ["Ставим {MAG}° на кольце","Азимут — это угол на спутник, отсчитанный от севера по часовой стрелке. «Помощник установщика» дал {AZ}°. Но стрелка компаса показывает не на настоящий север, а на магнитный, а {DECLNOTE}. Поэтому по компасу нужно {CALC}°. На компасе есть поворотное кольцо с градусами (его ещё называют лимб): крутим его, пока число {MAG} не встанет напротив указателя на корпусе."],
+  ["Находим {MAG}° на шкале","Азимут — это угол на спутник, отсчитанный от севера по часовой стрелке. «Помощник установщика» дал {AZ}°. Но стрелка компаса показывает не на настоящий север, а на магнитный, а {DECLNOTE}. Поэтому по компасу нужно {CALC}°. Находим это число на шкале компаса — синяя отметка на рисунке. Это направление на спутник."],
   ["Отходим от металла","Железо рядом сбивает стрелку компаса: антенна, тренога, машина. Отходим на 3–5 шагов за антенну, держим компас ровно и ждём, пока стрелка перестанет качаться."],
-  ["Стрелка на букву С — ставим вешку","Кольцо больше не трогаем. Поворачиваемся вместе с компасом, пока красный конец стрелки не ляжет точно на букву С на кольце. Теперь указатель на корпусе смотрит на спутник. В этом направлении, за антенной, ставим вешку или замечаем дальний ориентир: дерево, столб."],
+  ["Стрелка на букву С — ставим вешку","Поворачиваем компас вместе с собой, пока красный конец стрелки не ляжет точно на букву С шкалы. Стрелка стоит на месте — поворачивается шкала. Теперь отметка {MAG}° на шкале показывает прямо на спутник. В этом направлении, за антенной, ставим вешку или замечаем дальний ориентир: дерево, столб."],
   ["Поворачиваем антенну на вешку","Встаём за зеркалом и разворачиваем антенну, пока верх вешки не окажется точно над центром зеркала, а штанга конвертора не будет смотреть прямо на неё. Затягиваем болты азимута."],
   ["Донаводим «змейкой»","Компас даёт лишь примерное направление, а угол места выставлен по шкале. На каждом положении угла места медленно поводим антенну на 30° влево и 30° вправо от предполагаемого направления на спутник, меняем угол места на 0,5–1° и идём обратно. Нашли максимум — затягиваем все болты."]
 ];
@@ -286,7 +286,7 @@ function snakeAt(t){
 }
 function state(t){
   var step=0;for(var i=0;i<STARTS.length;i++)if(t>=STARTS[i])step=i;
-  var reading=MAG_AZ*ease((t-1)/2.6);
+  var reading=MAG_AZ;   /* the satellite mark sits at MAG_AZ on the scale; the scale turns with the compass */
   var mv=ease((t-4.8)/3.2),cp=[COMP0[0]+(COMP1[0]-COMP0[0])*mv,COMP0[1]+(COMP1[1]-COMP0[1])*mv];
   var defl=28*(1-mv)+(t>4.8&&t<9.5?Math.sin((t-4.8)*6)*7*Math.exp(-(t-4.8)*0.9)*(mv<1?1:0.6):0);
   var heading=100+(LINE_AZ-100)*ease((t-9.2)/2.2);
@@ -367,28 +367,34 @@ var MERGE=(function(){
   var body=mk("g",{},who);
   mk("ellipse",{cx:0,cy:CR+30,rx:30,ry:13,fill:"#c9d5dd"},body);mk("circle",{cx:0,cy:CR+30,r:10,fill:"#9fb0bc"},body);
   mk("path",{d:"M-22 "+(CR+24)+"L-16 "+(CR+4)+"M22 "+(CR+24)+"L16 "+(CR+4),stroke:"#c9d5dd","stroke-width":7,"stroke-linecap":"round"},body);
-  mk("rect",{x:-32,y:-CR-20,width:64,height:2*CR+40,rx:9,fill:"#eef4f7",stroke:"#90a4b1","stroke-width":1.3},body);
-  mk("path",{d:"M0 "+(-CR-30)+"l-8 13h16z",fill:"var(--cyan)"},body);
-  mk("line",{x1:0,y1:-CR-17,x2:0,y2:-CR+6,stroke:"var(--ink)","stroke-width":2.2},body);
+
   var bez=mk("g",{},who);
   mk("circle",{r:CR,fill:"#fff",stroke:"#90a4b1","stroke-width":1.8},bez);
   for(var a=0;a<360;a+=10){var r1=a%30===0?CR-7:CR-4;mk("line",{x1:CR*Math.sin(a*D),y1:-CR*Math.cos(a*D),x2:r1*Math.sin(a*D),y2:-r1*Math.cos(a*D),stroke:"#5f7380","stroke-width":a%30===0?1.2:.6},bez)}
   [["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){mk("text",{x:(CR-15)*Math.sin(q[1]*D),y:-(CR-15)*Math.cos(q[1]*D)+4,"font-size":11,"font-weight":600,"text-anchor":"middle",fill:q[2]},bez).textContent=q[0]});
   mk("circle",{r:CR+15,fill:"none",stroke:"#cfd9e0","stroke-width":13,opacity:.55},bez);
   for(var b=0;b<360;b+=30){var x=(CR+15)*Math.sin(b*D),y=-(CR+15)*Math.cos(b*D);mk("text",{x:x,y:y+3,"font-size":8.5,"font-weight":600,"text-anchor":"middle",fill:"#14232d",transform:"rotate("+b+" "+x.toFixed(1)+" "+y.toFixed(1)+")"},bez).textContent=b}
+  /* satellite mark on the scale at MAGR: tick, triangle and a dashed ray (they turn with the scale) */
+  (function(){var a=MAGR*D,s=Math.sin(a),c=-Math.cos(a);
+    mk("line",{x1:10*s,y1:10*c,x2:(CR+46)*s,y2:(CR+46)*c,stroke:"var(--cyan)","stroke-width":2,"stroke-dasharray":"5 4"},bez);
+    mk("line",{x1:(CR-8)*s,y1:(CR-8)*c,x2:(CR+22)*s,y2:(CR+22)*c,stroke:"var(--cyan)","stroke-width":3.2},bez);
+    var tip=[(CR+24)*s,(CR+24)*c],l=[(CR+15)*s+5*Math.cos(a),(CR+15)*c+5*Math.sin(a)],r=[(CR+15)*s-5*Math.cos(a),(CR+15)*c-5*Math.sin(a)];
+    mk("path",{d:"M"+tip[0].toFixed(1)+" "+tip[1].toFixed(1)+"L"+l[0].toFixed(1)+" "+l[1].toFixed(1)+"L"+r[0].toFixed(1)+" "+r[1].toFixed(1)+"Z",fill:"var(--cyan)"},bez)})();
   var house=mk("path",{d:"M0 "+(-CR+20)+"L-7 "+(-CR+30)+"L-7 10L7 10L7 "+(-CR+30)+"Z",fill:"none",stroke:"var(--red)","stroke-width":1.4,"stroke-dasharray":"3 2"},bez);
   var needle=mk("g",{},svg);mk("path",{d:"M0 -34L4.5 0L-4.5 0Z",fill:"var(--red)"},needle);mk("path",{d:"M0 34L4.5 0L-4.5 0Z",fill:"#ffffff",stroke:"#90a4b1","stroke-width":.8},needle);mk("circle",{r:3,fill:"#14232d"},needle);
+  var markT=mk("text",{"font-size":10.5,"font-weight":700,fill:"var(--cyan)","text-anchor":"middle","paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);mk("tspan",{x:0,dy:0},markT).textContent="на спутник";mk("tspan",{x:0,dy:12},markT).textContent=F1(MAGR)+"°";
   var arc=mk("path",{fill:"none",stroke:"var(--green)","stroke-width":2.2},svg),arcT=mk("text",{"font-size":13,"font-weight":600,fill:"var(--green)","text-anchor":"middle","paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
   var lab=mk("text",{x:8,y:372,"font-size":12,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
   var TXT=[
-    [0,"НАЧАЛО","Компас лежит на ладони. Красная стрелка <b>всегда</b> смотрит на север — её мы никогда не крутим, она поворачивается сама."],
-    [1,"ШАГ 1 · КРУТИМ КОЛЬЦО","Стоим на месте и пальцами крутим <b>только кольцо с градусами</b>, пока число "+F1(MAGR)+" не встанет напротив указателя на корпусе."],
+    [0,"НАЧАЛО","Компас лежит на ладони, ровно. Красная стрелка <b>всегда</b> смотрит на север — её мы никогда не крутим, она поворачивается сама."],
+    [1,"ШАГ 1 · ИЩЕМ ЧИСЛО НА ШКАЛЕ","Находим на шкале компаса число <b>"+F1(MAGR)+"°</b> — синяя отметка. Это направление на спутник по компасу."],
     [4.5,"ШАГ 2 · ОТХОДИМ ОТ ЖЕЛЕЗА","Рядом с антенной стрелку уводит в сторону. Отходим на 3–5 шагов назад и ждём, пока стрелка успокоится и снова покажет на север."],
-    [9,"ШАГ 3 · ПОВОРАЧИВАЕМСЯ САМИ","Кольцо больше не трогаем. Поворачиваемся <b>всем телом вместе с компасом</b>. Стрелка стоит на месте, а под ней поворачиваются кольцо и корпус. Ждём, когда буква С на кольце подъедет под красную стрелку."],
-    [11,"ГОТОВО","Красная стрелка легла на букву С. Значит, от севера до указателя ровно <b>"+F1(MAGR)+"°</b> — те самые, что мы выставили на кольце. Указатель смотрит через антенну на спутник: на этой линии ставим вешку."],
+    [9,"ШАГ 3 · СТРЕЛКА НА БУКВУ С","Поворачиваем компас <b>вместе с собой</b>. Стрелка стоит на месте, а под ней поворачивается шкала. Ждём, когда красный конец стрелки ляжет на букву С."],
+    [11,"ГОТОВО","Стрелка на букве С — шкала повёрнута правильно. Теперь отметка <b>"+F1(MAGR)+"°</b> показывает прямо на спутник: от севера до неё ровно "+F1(MAGR)+"°. В этом направлении, за антенной, ставим вешку."],
     [12.5,"ШАГ 4 · АНТЕННА НА ВЕШКУ","Компас больше не нужен. Встаём за зеркалом и разворачиваем антенну, пока она не будет смотреть точно на вешку."],
-    [17,"ШАГ 5 · ДОНАВОДИМ","Компас даёт лишь примерное направление, поэтому точное положение находим по сигналу модема «змейкой»: на каждом положении угла места ведём антенну на 30° влево и 30° вправо от предполагаемого направления на спутник."]
+    [17,"ШАГ 5 · ДОНАВОДИМ","Компас даёт лишь примерное направление, поэтому точное положение находим по сигналу модема «змейкой»: на каждом положении угла места ведём антенну на 30° влево и 30° вправо от предполагаемого направления на спутник, меняя угол места на 0,5–1°."]
   ];
+
   var lastT=-1;
   function arcPath(c,r,a0,a1){var x0=c[0]+r*Math.sin(a0*D),y0=c[1]-r*Math.cos(a0*D),x1=c[0]+r*Math.sin(a1*D),y1=c[1]-r*Math.cos(a1*D),large=((a1-a0+360)%360)>180?1:0;return "M"+x0.toFixed(1)+" "+y0.toFixed(1)+"A"+r+" "+r+" 0 "+large+" 1 "+x1.toFixed(1)+" "+y1.toFixed(1)}
   return {cv:cv,camArgs:[ox-cen[0]*k,oy+cen[1]*k,k,380,380],AS:AS,hide:[frame,dish,arm,lnb,mast],draw:function(S,g){
@@ -397,6 +403,7 @@ var MERGE=(function(){
     setA(body,{transform:"rotate("+S.heading.toFixed(1)+")"});
     setA(bez,{transform:"rotate("+(S.heading-S.reading).toFixed(1)+")"});
     setA(needle,{transform:tr(c[0],c[1],S.needle)});
+    (function(){var a=S.heading*D,R=CR+62,x=c[0]+R*Math.sin(a),y=c[1]-R*Math.cos(a)-4;x=Math.max(40,Math.min(340,x));y=Math.max(14,Math.min(360,y));markT.setAttribute("transform","translate("+x.toFixed(1)+" "+y.toFixed(1)+")");setA(markT,{opacity:S.t>=11&&S.t<17?0:1})})();
     setA(house,{stroke:S.inN?"var(--green)":"var(--red)","stroke-dasharray":S.inN?"none":"3 2"});
     var showArc=S.t>=11&&S.t<17;
     if(showArc){arc.setAttribute("d",arcPath(c,CR+28,S.needle,S.heading));var mid=S.needle+((S.heading-S.needle+360)%360)/2;setA(arcT,{x:c[0]+(CR+42)*Math.sin(mid*D),y:c[1]-(CR+42)*Math.cos(mid*D)+4});arcT.textContent=F1(S.reading)+"°"}
@@ -554,7 +561,7 @@ var G=null;
   var comp=new THREE.Group();scene.add(comp);
   var RD=0.32,TOPY=1.0;
   comp.add(rod(W(0,0,0),W(0,0,TOPY-0.03),0.014,new THREE.MeshStandardMaterial({color:0x8b6a45,roughness:.9})));
-  var plateG=new THREE.Group();comp.add(plateG);
+  var plateG=new THREE.Group();comp.add(plateG);plateG.visible=false;   /* plain compass: no baseplate / index — the satellite mark is on the scale */
   var plate=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.014,0.92),new THREE.MeshStandardMaterial({color:0xdbe9ef,transparent:true,opacity:.9,roughness:.3}));plate.position.set(0,TOPY-0.012,-0.04);plate.castShadow=true;plateG.add(plate);
   function flatArrow(len,wid,thick,color){var sh=new THREE.Shape();sh.moveTo(0,len/2);sh.lineTo(-wid/2,-len/2);sh.lineTo(wid/2,-len/2);sh.lineTo(0,len/2);
     var g=new THREE.ExtrudeGeometry(sh,{depth:thick,bevelEnabled:false});var m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:color,roughness:.5}));m.rotation.x=-Math.PI/2;m.castShadow=true;return m}
@@ -575,12 +582,18 @@ var G=null;
     for(var b=0;b<360;b+=30){x.save();x.translate(o+445*Math.sin(b*D),o-445*Math.cos(b*D));x.rotate(b*D);x.fillText(String(b),0,0);x.restore()}
     x.font="700 100px 'Golos Text', sans-serif";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.save();x.translate(o+255*Math.sin(q[1]*D),o-255*Math.cos(q[1]*D));x.rotate(q[1]*D);x.fillStyle=q[2];x.fillText(q[0],0,0);x.restore()});
     /* the value the installer has to set: green mark on the ring at MAG_AZ (it comes to the index when the ring is set) */
-    x.save();x.strokeStyle="#1f9d63";x.lineWidth=12;x.beginPath();x.moveTo(o+505*Math.sin(MAG_AZ*D),o-505*Math.cos(MAG_AZ*D));x.lineTo(o+320*Math.sin(MAG_AZ*D),o-320*Math.cos(MAG_AZ*D));x.stroke();x.restore();
+    x.save();x.strokeStyle="#0a8fb3";x.lineWidth=14;x.beginPath();x.moveTo(o+505*Math.sin(MAG_AZ*D),o-505*Math.cos(MAG_AZ*D));x.lineTo(o+320*Math.sin(MAG_AZ*D),o-320*Math.cos(MAG_AZ*D));x.stroke();x.restore();
     x.strokeStyle="#d23b2f";x.lineWidth=8;x.setLineDash([22,14]);x.beginPath();x.moveTo(o,o-300);x.lineTo(o-45,o-235);x.lineTo(o-45,o+40);x.lineTo(o+45,o+40);x.lineTo(o+45,o-235);x.closePath();x.stroke();
     var t=new THREE.CanvasTexture(c);t.anisotropy=8;if(THREE.sRGBEncoding)t.encoding=THREE.sRGBEncoding;return t}
   var dialG=new THREE.Group();comp.add(dialG);
   var dialSide=new THREE.Mesh(new THREE.CylinderGeometry(RD,RD,0.03,64),new THREE.MeshStandardMaterial({color:0x90a4b1}));dialSide.position.y=TOPY;dialSide.castShadow=true;dialG.add(dialSide);
   var dialFace=new THREE.Mesh(new THREE.CircleGeometry(RD,64),new THREE.MeshBasicMaterial({map:dialTex()}));dialFace.rotation.x=-Math.PI/2;dialFace.position.y=TOPY+0.016;dialG.add(dialFace);
+  /* satellite direction from the mark on the scale: arrow + label, turning with the scale */
+  var markA=flatArrow(0.14,0.12,0.012,0x0a8fb3),markG=new THREE.Group();markA.position.set(0,TOPY+0.01,-(RD+0.1));markG.add(markA);markG.rotation.y=-MAG_AZ*D;dialG.add(markG);
+  var markL=(function(){var c=document.createElement("canvas");c.width=320;c.height=140;var x=c.getContext("2d");x.fillStyle="rgba(255,255,255,.92)";x.fillRect(6,6,308,128);x.fillStyle="#0a8fb3";x.textAlign="center";x.textBaseline="middle";
+    x.font="600 34px 'Golos Text', sans-serif";x.fillText("на спутник",160,44);x.font="700 54px 'JetBrains Mono', monospace";x.fillText(F1(MAG_AZ)+"°",160,100);
+    var tx=new THREE.CanvasTexture(c);if(THREE.sRGBEncoding)tx.encoding=THREE.sRGBEncoding;var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:false,toneMapped:false}));sp.scale.set(0.5,0.22,1);return sp})();
+  markL.position.set(Math.sin(MAG_AZ*D)*(RD+0.36),TOPY+0.1,-Math.cos(MAG_AZ*D)*(RD+0.36));dialG.add(markL);
   var ndl=new THREE.Group();ndl.position.y=TOPY+0.03;comp.add(ndl);
   var nR=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.2,4),new THREE.MeshBasicMaterial({color:0xd23b2f}));nR.rotation.x=-Math.PI/2;nR.position.z=-0.1;nR.scale.set(1,1,0.35);ndl.add(nR);
   var nW=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.2,4),new THREE.MeshBasicMaterial({color:0x6f8290}));nW.rotation.x=Math.PI/2;nW.position.z=0.1;nW.scale.set(1,1,0.35);ndl.add(nW);
@@ -645,7 +658,7 @@ var G=null;
   G={render:function(S){
     head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
     comp.position.copy(W(S.cp[0],S.cp[1],0));
-    plateG.rotation.y=-S.heading*D;dialG.rotation.y=-(S.heading-S.reading)*D;setIdxLbl(S.reading,Math.abs(S.reading-MAG_AZ)<0.05);ndl.rotation.y=-S.needle*D;
+    plateG.rotation.y=-S.heading*D;dialG.rotation.y=-(S.heading-S.reading)*D;ndl.rotation.y=-S.needle*D;
     compLbl.visible=(ease((S.t-0.6)/1.4)-ease((S.t-12.3)/1.5))<0.3;
     var showArc=S.t>=11&&S.t<17&&S.inN,cpos=W(S.cp[0],S.cp[1],TOPY+0.04);
     if(showArc){var a0=S.needle,a1=S.heading,key=a0.toFixed(1)+"_"+a1.toFixed(1)+"_"+S.cp[0].toFixed(2);
@@ -702,7 +715,7 @@ $("btnRestart").addEventListener("click",function(){jump(0);playing=true;$("btnP
 $("btnPlay").textContent=playing?"Пауза":"Играть";
 var LASTS=null;
 window.__spRec={dur:T_END,steps:STEPS.map(function(s){return s[0]}),texts:STEPS.map(function(s){return s[1]}),views:["vMerge","vMerge","vMerge","vBack","vSnake"],tok:TOK,
-  set:function(t){T=t;frame(t);return LASTS},head:function(){return {label:"НА КОЛЬЦЕ КОМПАСА",value:$("readout").textContent,ok:false,note:""}},gl:$("gl")};
+  set:function(t){T=t;frame(t);return LASTS},head:function(){return {label:"НА ШКАЛЕ КОМПАСА",value:$("readout").textContent,ok:false,note:""}},gl:$("gl")};
 frame(T);if(!REC)requestAnimationFrame(loop);
 })();
 </script>

@@ -113,7 +113,7 @@ var W=720,H=1280,FPS=25,GH=420;
 var TEST=/[?&]test=1(&|$)/.test(location.search),TT=parseFloat(new URLSearchParams(location.search).get("tt"));if(isNaN(TT))TT=-1;   /* short clips for checking the pipeline */
 var METHODS={sun:{page:"sun.html",name:"По солнцу",lead:"Ловим момент, когда солнце стоит точно в стороне спутника, и разворачиваем антенну «лицом» к солнцу."},
   compass:{page:"compass.html",name:"Компас в телефоне",lead:"Находим направление на спутник по компасу в телефоне, ставим вешку и разворачиваем на неё антенну."},
-  magnetic:{page:"magnetic.html",name:"Магнитный компас",lead:"Выставляем число на кольце компаса, ставим вешку по стрелке и разворачиваем на неё антенну."}};
+  magnetic:{page:"magnetic.html",name:"Магнитный компас",lead:"Находим число на шкале компаса, поворачиваем компас, пока стрелка не ляжет на букву С, и ставим вешку в сторону этого числа."}};
 var ORDER=["sun","compass","magnetic"];
 
 /* ---------- shared parameters (same storage as the helper and the animation pages) ---------- */
