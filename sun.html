@@ -30,7 +30,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-clock .sp-date{display:block;font:600 14px var(--f-body);color:var(--ink);margin:1px 0 2px}
 .sp-clock #clock{display:block;transition:color .3s}
 .sp-clock #clock.is-match{color:var(--green);font-weight:800}
-.sp-match{display:block;font:600 12.5px var(--f-body);color:var(--green);max-width:34ch;line-height:1.35;margin-top:3px}
+.sp-match{position:absolute;left:14px;top:36px;z-index:2;font:600 14px var(--f-body);color:var(--green);max-width:min(46ch,calc(100% - 28px));line-height:1.4;background:rgba(255,255,255,.88);border:1px solid #bfe3d1;border-radius:8px;padding:8px 12px;pointer-events:none}
 .sp button{font:600 14px var(--f-body);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:9px 14px;min-height:44px;cursor:pointer}
 .sp button:hover{background:#f1f3f7}
 .sp button:hover{border-color:var(--ui);color:var(--ui)}
@@ -110,7 +110,7 @@ html.only[data-only="vTop"] .sp-view:has(#vTop),html.only[data-only="vSide"] .sp
 
   <div class="sp-head">
     <h1>Наведение антенны по солнцу</h1>
-    <div class="sp-clock"><small>ДАТА И ВРЕМЯ НА ТОЧКЕ</small><span class="sp-date">{DATE}</span><span id="clock">--:--:--</span><span class="sp-match" id="matchMsg" hidden></span></div>
+    <div class="sp-clock"><small>ДАТА И ВРЕМЯ НА ТОЧКЕ</small><span class="sp-date">{DATE}</span><span id="clock">--:--:--</span></div>
     <button id="btnPlay" type="button">Пауза</button>
     <button id="btnRestart" type="button">С начала</button>
   </div>
@@ -118,6 +118,7 @@ html.only[data-only="vTop"] .sp-view:has(#vTop),html.only[data-only="vSide"] .sp
   <div class="sp-stage" id="stage">
     <canvas id="gl" aria-label="Трёхмерная анимация наведения антенны"></canvas>
     <span class="sp-tag">3D · ВИД СБОКУ</span>
+    <span class="sp-match" id="matchMsg" hidden></span>
     <span class="sp-hint" id="glHint">Зажмите левую кнопку мыши и ведите — сцена повернётся. Колёсико мыши — ближе / дальше.</span>
     <button class="sp-reset" id="camReset" type="button" hidden>Вернуть вид</button>
   </div>
