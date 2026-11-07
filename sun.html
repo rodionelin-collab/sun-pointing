@@ -644,13 +644,21 @@ var G=null;
     pose(S);CATCH.visible=false;scene.background=bg;scene.fog=fog;saved.forEach(function(s){s[0].visible=s[1]});
   }
   markAntenna(scene.children.slice(ANT0,ANT1));
+  /* fading trail of the converter during the snake (main 3D view only: not part of ANTSET, so the panels don't draw it) */
+  var EL_EX=6,TRAIL=[],TR_N=260,TR_DT=14,   /* EL_EX: the 0,5° elevation steps are drawn 6× larger in the main 3D view so the snake is visible */
+    trGeo=new THREE.SphereGeometry(0.014,8,6);
+  for(var ti=0;ti<TR_N;ti++){var tm=new THREE.Mesh(trGeo,new THREE.MeshBasicMaterial({color:0xe0650b,transparent:true,depthWrite:false}));tm.visible=false;scene.add(tm);TRAIL.push(tm)}
+  function drawTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8);
+    TRAIL.forEach(function(m,i){var tt=S.t-TR_DT*i/(TR_N-1);if(!on||tt<SN_T0){m.visible=false;return}
+      var sn=snakeAt(tt),g=dishGeom(SAT_AZ+sn.az,sn.el*EL_EX),q=W(g.lnb[0],g.lnb[1],g.lnb[2]),k=1-i/TR_N;
+      m.position.copy(q);m.scale.setScalar(0.6+0.4*k);m.material.opacity=0.85*k*fade;m.visible=true})}
   addPanel(vTop.cv,camTop(TOP.cx,TOP.cy,TOP.k),{shadows:true,frozen:true});   /* top and side views stop once the azimuth is found; the snake shows only in the snake panel and the back view */
   addPanel(vSide.cv,camSide(bh,SIDE.cx,SIDE.cy,SIDE.k),{shadows:true,frozen:true});
   addPanel(vBack.cv,camBack(BACK.cam),{shadows:true});
   if(PR){[vTop,vSide,vBack].forEach(function(v){["dishSh","armSh","stickSh","frame","mast","stick","dish","arm","lnb"].forEach(function(k){if(v.e[k])v.e[k].style.display="none"})});if(vBack.e.gOut)vBack.e.gOut.style.display="none"}
   G={render:function(S,SF){
-    var g=dishGeom(S.dishAz,S.dEl);
-    head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
+    var exE=S.t>SN_T0?S.dEl*EL_EX:S.dEl,g=dishGeom(S.dishAz,exE);
+    head.rotation.y=-S.dishAz*D;tiltP.rotation.x=exE*D;
     var sd=dirv(S.sunAz,S.sunEl),sv=W(sd[0],sd[1],sd[2]);
     sunL.position.copy(sv.clone().multiplyScalar(18));sunL.target.position.set(0,0,0);
     var sp=W(sd[0]*7,sd[1]*7,0.6+sd[2]*7);sunMesh.position.copy(sp);glow.position.copy(sp);sunLbl.position.copy(sp).add(new THREE.Vector3(0,0.6,0));
@@ -671,6 +679,7 @@ var G=null;
     if(!userCam){var up=ease((S.t-8.4)/1.8)-ease((S.t-14.8)/2),ca=(SAT_AZ+130+10*Math.sin(S.t/T_END*2*Math.PI))*D,R=7.6-1.6*up;
       camera.position.copy(W(R*Math.sin(ca),R*Math.cos(ca),2.4+3.6*up));var tg=target.clone().lerp(W(-0.9,0.3,0),up);camera.lookAt(tg);if(controls)controls.target.copy(target)}
     if(controls&&userCam)controls.update();
+    drawTrail(S);
     renderer.render(scene,camera);
     renderPanels(S,SF||S);
   }};
