@@ -120,7 +120,7 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
 (function(){
 "use strict";
 var $=function(id){return document.getElementById(id)};
-var W=720,H=1280,FPS=25,GH=420,BR=1.5e6;(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));if(/[?&]test=1/.test(location.search)&&b>0)BR=b})();   /* flat schematic graphics: 1.5 Mbit/s is plenty for 720×1280 */
+var W=720,H=1280,FPS=25,GH=420,BR=0.5e6;(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));if(/[?&]test=1/.test(location.search)&&b>0)BR=b})();   /* flat schematic graphics: a 0.5 Mbit/s target looks the same as 1.5 frame by frame and the file is ~30% smaller */
 var TEST=/[?&]test=1(&|$)/.test(location.search),TT=parseFloat(new URLSearchParams(location.search).get("tt"));if(isNaN(TT))TT=-1;   /* short clips for checking the pipeline */
 var METHODS={sun:{page:"sun.html",name:"По солнцу",lead:"Ловим момент, когда солнце стоит точно в стороне спутника, и разворачиваем антенну «лицом» к солнцу."},
   compass:{page:"compass.html",name:"Компас в телефоне",lead:"Находим направление на спутник по компасу в телефоне, ставим вешку и разворачиваем на неё антенну."},
@@ -257,7 +257,7 @@ function methodFrame(ctx,w,k,i,n,S,prog){
   var hd=R.head();ctx.font="600 15px "+FM;var bw=Math.max(ctx.measureText(hd.label).width,0)+28;ctx.font="700 34px "+FM;bw=Math.max(bw,ctx.measureText(hd.value).width+28);
   rr(ctx,gx+gw-bw-12,gy+12,bw,78,12,"rgba(255,255,255,.92)",C.line);ctx.fillStyle=C.muted;ctx.font="600 15px "+FM;ctx.fillText(hd.label,gx+gw-bw,gy+36);
   ctx.fillStyle=hd.ok?C.green:C.ink;ctx.font="700 34px "+FM;ctx.fillText(hd.value,gx+gw-bw,gy+76);
-  if(hd.note){ctx.font="600 17px "+FB;rr(ctx,gx+12,gy+gh-66,gw-24,54,10,"rgba(255,255,255,.92)");ctx.fillStyle=C.green;wrap(ctx,hd.note,gx+24,gy+gh-44,gw-48,21,2)}
+  if(hd.note){ctx.font="600 17px "+FB;rr(ctx,gx+12,gy+gh-76,gw-24,64,10,"rgba(255,255,255,.92)");ctx.fillStyle=C.green;wrap(ctx,hd.note,gx+24,gy+gh-52,gw-48,21,3)}
   ctx.restore();
   /* caption */
   var cy=574;rr(ctx,16,cy,W-32,202,14,C.card,C.line);ctx.fillStyle=C.cyan;ctx.font="700 22px "+FM;ctx.fillText((S.step+1)+"/5",34,cy+36);
