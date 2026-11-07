@@ -390,13 +390,10 @@ function drawView(v,S,g){
     [-3,3].forEach(function(o){d+="M"+(mx-nx+ux*o).toFixed(1)+" "+(my-ny+uy*o).toFixed(1)+"L"+(mx+nx+ux*o).toFixed(1)+" "+(my+ny+uy*o).toFixed(1)});setA(el,{d:d,opacity:S.par})}
   if(!v.noPar){
     var ok=S.par>0.5,col=ok?"var(--green)":"var(--warn)";
-    /* stick shadow: starts just past the top of the stick so the stick stays visible; arm shadow: starts level with the converter (LNB) */
+    /* stick shadow: starts just past the top of the stick so the stick stays visible */
     var ua=[ss[0]-s0[0],ss[1]-s0[1]],La=Math.hypot(ua[0],ua[1])||1;ua=[ua[0]/La,ua[1]/La];
-    var ub=[ls[0]-rs[0],ls[1]-rs[1]],Lb=Math.hypot(ub[0],ub[1])||1;ub=[ub[0]/Lb,ub[1]/Lb];if(ub[0]*ua[0]+ub[1]*ua[1]<0)ub=[-ub[0],-ub[1]];   /* point away from the sun, like the stick shadow */
-    var lp=p2(g.lnb),kb=(lp[0]-rs[0])*ub[0]+(lp[1]-rs[1])*ub[1],bs=[rs[0]+ub[0]*kb,rs[1]+ub[1]*kb];
-    var far=((ls[0]-rs[0])*ub[0]+(ls[1]-rs[1])*ub[1])>0?ls:rs;
     setA(e.gA,{x1:s0[0]+ua[0]*7,y1:s0[1]+ua[1]*7,x2:ss[0]+ua[0]*40,y2:ss[1]+ua[1]*40,stroke:col,opacity:S.gv});
-    setA(e.gB,{x1:bs[0],y1:bs[1],x2:far[0]+ub[0]*40,y2:far[1]+ub[1]*40,stroke:col,opacity:S.gv});tick(e.parA,s0,ss);tick(e.parB,rs,ls);
+    ext(e.gB,rs,ls,col);tick(e.parA,s0,ss);tick(e.parB,rs,ls);
     e.label.textContent=ok?"✓ тени параллельны":"угол между тенями "+Math.max(1,Math.round(S.dAz))+"°";
     if(v.labelAt)setA(e.label,Object.assign(v.labelAt(s0,ss),{fill:col,opacity:S.gv}));
   }
