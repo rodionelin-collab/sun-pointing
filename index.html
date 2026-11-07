@@ -112,7 +112,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
         <p class="hint" id="coordsInfo" style="margin:4px 0 0"></p>
       </div>
       <div class="row">
-        <div><label for="tz">Часовой пояс точки, UTC+</label><input id="tz" type="number" step="0.5" min="-12" max="14"><p class="hint" id="tzHint" style="margin:4px 0 0"></p></div>
+        <div><label for="tz">Часовой пояс точки, UTC+</label><div style="position:relative"><input id="tz" type="number" step="0.5" min="-12" max="14"><span id="tzMsk" style="position:absolute;right:38px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);pointer-events:none"></span></div><p class="hint" id="tzHint" style="margin:4px 0 0"></p></div>
         <div><label for="decl">Магн. склонение, °</label><input id="decl" type="text" readonly tabindex="-1" style="cursor:default" title="Считается автоматически по координатам"></div>
       </div>
       <p class="hint" id="declHint"></p>
@@ -451,7 +451,8 @@ function tzFromCoords(lat,lon){var z=null;try{z=ruTz(lat,lon)||tzlookup(lat,lon)
     p=new Intl.DateTimeFormat("en-US",{timeZone:z,timeZoneName:"shortOffset"}).formatToParts(d).filter(function(x){return x.type==="timeZoneName"})[0].value,
     m=/GMT([+-]\d+)(?::(\d+))?/.exec(p);if(p==="GMT")return 0;if(m){var h=+m[1];return h+(h<0?-1:1)*(+m[2]||0)/60}}catch(e){}}
   return Math.round(lon/15)}
-function tzHint(){var el=$("tzHint");if(el)el.textContent=S.tzName?"Определён по координатам: "+S.tzName+" (UTC"+(S.tz>=0?"+":"")+String(S.tz).replace(".",",")+")":"Определён по долготе — проверьте вручную."}
+function mskTxt(){var d=Math.round((S.tz-3)*100)/100;var n=Math.abs(d),w=n%1?"часа":(n%10===1&&n%100!==11?"час":(n%10>=2&&n%10<=4&&(n%100<12||n%100>14))?"часа":"часов");$("tzMsk").textContent=d===0?"МСК":"МСК "+(d>0?"+":"−")+String(n).replace(".",",")+" "+w}
+function tzHint(){mskTxt();var el=$("tzHint");if(el)el.textContent=S.tzName?"Определён по координатам: "+S.tzName+" (UTC"+(S.tz>=0?"+":"")+String(S.tz).replace(".",",")+")":"Определён по долготе — проверьте вручную."}
 function nearestCity(lat,lon){var b=null,bd=1e9;CITIES.forEach(function(c){var d=Math.hypot(c[1]-lat,(c[2]-lon)*Math.cos(lat*Math.PI/180))*111;if(d<bd){bd=d;b=c}});return {c:b,d:bd}}
 function setPoint(lat,lon,city,tz){
   S.lat=lat;S.lon=lon;S.city=city||"";if(!city)S.cityRegion="";S.declManual=false;
@@ -500,7 +501,7 @@ $("coords").addEventListener("keydown",function(e){
 $("coords").addEventListener("change",function(){if($("acList").hidden)applyCoords()});
 $("coords").addEventListener("blur",function(){setTimeout(function(){if(!$("acList").hidden){closeAc();applyCoords()}},150)});
 $("acList").addEventListener("mousedown",function(e){var li=e.target.closest("li");if(li){e.preventDefault();pickAc(+li.dataset.i)}});
-$("tz").addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)){S.tz=v;$("tzHint").textContent="Введён вручную"+(S.tzName?"; по координатам: "+S.tzName:"")+".";render()}});
+$("tz").addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)){S.tz=v;mskTxt();$("tzHint").textContent="Введён вручную"+(S.tzName?"; по координатам: "+S.tzName:"")+".";render()}});
 $("decl").addEventListener("input",function(){
   if(this.value.trim()===""){S.declManual=false;refreshDecl();render();return}
   var v=parseFloat(this.value);if(!isNaN(v)){S.decl=v;S.declManual=true;
