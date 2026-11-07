@@ -229,7 +229,7 @@ var SUNM=(function(){
   return null;
 })();
 function hhmm(ms,sec){var d=new Date(ms+PRM.tz*3600000),p=function(n){return String(n).padStart(2,"0")};return p(d.getUTCHours())+":"+p(d.getUTCMinutes())+(sec?":"+p(d.getUTCSeconds()):"")}
-var TOK={AZ:F1(AZ),MAG:F1(MAGR),EL:F1(ELV),D:F1(Math.abs(DECLR)),SAT:PRM.satName,PLACE:PRM.place,
+var TOK={AZ:F1(AZ),MAG:F1(MAGR),EL:F1(ELV),D:F1(Math.abs(DECLR)),SAT:PRM.satName,PLACE:PRM.place,LAT:PRM.lat,LON:PRM.lon,SATLON:PRM.satLon,
   DECLS:(DECLR>0?"+":DECLR<0?"−":"")+F1(Math.abs(DECLR))+"°",
   SIDE:DECLR<0?"левее":"правее",
   CALC:DECLR===0?F1(AZ):DECLR<0?F1(AZ)+" + "+F1(Math.abs(DECLR))+" = "+F1(MAGR):F1(AZ)+" − "+F1(Math.abs(DECLR))+" = "+F1(MAGR),

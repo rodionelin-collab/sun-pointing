@@ -202,7 +202,7 @@ function drawSvg(ctx,w,id,x,y,s){
 var LOGO=new Image(),LOGOSQ=new Image();LOGO.src="img/dtk-logo.png";LOGOSQ.src="img/dtk-logo-sq.png";
 function imgReady(im){return im.complete&&im.naturalWidth?Promise.resolve():new Promise(function(r){im.onload=im.onerror=function(){r()}})}
 var SITE="www.da-tele.com";
-var SUPPORT=["Телефон: +7 (3952) 79-87-86, доб. 2","e-mail: support@da-tele.com","Мессенджеры MAX и Телеграм: +79397939714"];
+var SUPPORT=["Телефон: +7 (3952) 79-87-86, доб. 2","E-mail: support@da-tele.com","Мессенджеры MAX и Телеграм: +7 939 793-97-14"];
 function drawLogo(ctx,cx,y,w){if(!LOGO.naturalWidth)return 0;var h=w*LOGO.naturalHeight/LOGO.naturalWidth;ctx.drawImage(LOGO,cx-w/2,y,w,h);return h}
 function drawSq(ctx){if(!LOGOSQ.naturalWidth)return;var w=74,h=w*LOGOSQ.naturalHeight/LOGOSQ.naturalWidth;ctx.save();ctx.globalAlpha=.75;ctx.drawImage(LOGOSQ,W-w-24,18,w,h);ctx.restore()}
 function drawSupport(ctx,y){ /* centred block, returns bottom */
@@ -225,23 +225,49 @@ function header(ctx,kicker,title){
   ctx.fillStyle=C.muted;ctx.font="400 19px "+FB;ctx.fillText(TOK.PLACE+" · "+TOK.SAT+" · азимут "+TOK.AZ+"° · угол места "+TOK.EL+"°",28,122);
   drawSq(ctx);
 }
-function card(ctx,lines,y0){ /* full-screen text card */
+function card(ctx,lines,y0,left){ /* full-screen text card; left=true: everything flush left at the 70px margin */
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
-  var y=y0||360;lines.forEach(function(l){ctx.fillStyle=l.c||C.ink;ctx.font=l.f;ctx.textAlign="center";
-    if(l.wrap){ctx.textAlign="left";var n=wrap(ctx,l.t,70,y,W-140,l.lh||34);y+=n*(l.lh||34)+(l.gap||18)}else{ctx.fillText(l.t,W/2,y);y+=(l.lh||40)+(l.gap||0)}});
+  var y=y0||360;lines.forEach(function(l){ctx.fillStyle=l.c||C.ink;ctx.font=l.f;ctx.textAlign=left?"left":"center";
+    if(l.wrap){ctx.textAlign="left";var n=wrap(ctx,l.t,70,y,W-140,l.lh||34);y+=n*(l.lh||34)+(l.gap||18)}else{ctx.fillText(l.t,left?70:W/2,y);y+=(l.lh||40)+(l.gap||0)}});
   ctx.textAlign="left"}
+/* point, coordinates and polarisation skew for the opening card */
+function fmtCoord(v,pos,neg){return F4(Math.abs(v))+"° "+(v>=0?pos:neg)}
+function F4(x){return (+x).toFixed(4).replace(".",",")}
+function F1v(x){return (Math.round(x*10)/10).toFixed(1).replace(".",",").replace("-","−")}
+function skewOf(lat,lon,satLon){var D=Math.PI/180,a=6378.137,e2=0.00669437999014,Rs=42164.17,p=lat*D,l=lon*D,sl=satLon*D;
+  var N=a/Math.sqrt(1-e2*Math.sin(p)*Math.sin(p)),O=[N*Math.cos(p)*Math.cos(l),N*Math.cos(p)*Math.sin(l),N*(1-e2)*Math.sin(p)];
+  var d=[Rs*Math.cos(sl)-O[0],Rs*Math.sin(sl)-O[1],-O[2]],r=Math.hypot(d[0],d[1],d[2]),h=[d[0]/r,d[1]/r,d[2]/r];
+  function pr(v){var k=v[0]*h[0]+v[1]*h[1]+v[2]*h[2];return [v[0]-k*h[0],v[1]-k*h[1],v[2]-k*h[2]]}
+  var up=pr([Math.cos(p)*Math.cos(l),Math.cos(p)*Math.sin(l),Math.sin(p)]),pz=pr([0,0,1]);
+  var cr=[up[1]*pz[2]-up[2]*pz[1],up[2]*pz[0]-up[0]*pz[2],up[0]*pz[1]-up[1]*pz[0]];
+  var sk=Math.atan2(cr[0]*h[0]+cr[1]*h[1]+cr[2]*h[2],up[0]*pz[0]+up[1]*pz[1]+up[2]*pz[2])/D;if(sk>90)sk-=180;if(sk<=-90)sk+=180;return sk}
+function valCard(ctx,x,y,w,h,label,val,sub){
+  rr(ctx,x,y,w,h,14,C.card,C.line);ctx.textAlign="left";
+  ctx.fillStyle=C.ink;ctx.font="500 20px "+FB;ctx.fillText(label,x+20,y+36);
+  ctx.font="600 46px "+FB;ctx.fillText(val,x+20,y+86);
+  ctx.font="400 18px "+FB;wrap(ctx,sub,x+20,y+116,w-40,21,3)}
 function introCard(ctx,list){
-  card(ctx,[{t:"НАВЕДЕНИЕ СПУТНИКОВОЙ АНТЕННЫ",f:"600 24px "+FM,c:C.cyan,lh:70},
-    {t:TOK.SAT,f:"700 52px "+FB,lh:66},{t:TOK.PLACE,f:"400 32px "+FB,c:C.muted,lh:90},
-    {t:"Азимут  "+TOK.AZ+"°",f:"600 40px "+FM,lh:58},{t:"Угол места  "+TOK.EL+"°",f:"600 40px "+FM,lh:58},
-    {t:"Планируемая дата установки: "+fmtDate(date),f:"400 28px "+FB,c:C.muted,lh:110},
-    {t:"Способы наведения в ролике:",f:"600 26px "+FB,lh:44}].concat(list.map(function(k,i){return {t:(i+1)+". "+METHODS[k].name,f:"400 28px "+FB,lh:42}})),330);
-  var lh=drawLogo(ctx,W/2,54,330);ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="400 28px "+FB;ctx.fillText(SITE,W/2,54+lh+40);ctx.textAlign="left";
-  ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,1040);ctx.lineTo(W-70,1040);ctx.stroke();drawSupport(ctx,1088)}
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  var lh=drawLogo(ctx,W/2,48,300);ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="400 26px "+FB;ctx.fillText(SITE,W/2,48+lh+36);
+  ctx.fillStyle=C.cyan;ctx.font="600 22px "+FB;ctx.fillText("НАВЕДЕНИЕ СПУТНИКОВОЙ АНТЕННЫ",W/2,262);
+  ctx.fillStyle=C.ink;ctx.font="700 50px "+FB;ctx.fillText(TOK.SAT,W/2,322);
+  var coords=fmtCoord(TOK.LAT,"с.ш.","ю.ш.")+", "+fmtCoord(TOK.LON,"в.д.","з.д."),pl=String(TOK.PLACE||"").trim(),named=pl&&!/^[-−\d.,\s°]+$/.test(pl);
+  ctx.font="400 27px "+FB;ctx.fillText("Место установки: "+(named?pl:coords),W/2,378);
+  if(named){ctx.font="400 23px "+FB;ctx.fillText(coords,W/2,414)}
+  var gx=48,gy=448,gap=16,cw=(W-2*gx-gap)/2,ch=172,sk=skewOf(TOK.LAT,TOK.LON,TOK.SATLON);
+  valCard(ctx,gx,gy,cw,ch,"Азимут истинный",TOK.AZ+"°","от географического севера");
+  valCard(ctx,gx+cw+gap,gy,cw,ch,"Азимут по компасу",TOK.MAG+"°","магнитное склонение "+TOK.DECLS);
+  valCard(ctx,gx,gy+ch+gap,cw,ch,"Угол места",TOK.EL+"°","над горизонтом");
+  valCard(ctx,gx+cw+gap,gy+ch+gap,cw,ch,"Поворот конвертора",(sk>0.05?"+":"")+F1v(sk)+"°",Math.abs(sk)<0.5?"конвертор ставится ровно":(sk>0?"по":"против")+" часовой стрелки, если смотреть из-за антенны на спутник");
+  ctx.textAlign="center";ctx.fillStyle=C.ink;
+  var y=gy+2*ch+gap+62;ctx.font="400 26px "+FB;ctx.fillText("Планируемая дата установки: "+fmtDate(date),W/2,y);
+  y+=56;ctx.font="600 24px "+FB;ctx.fillText("Способы наведения в ролике:",W/2,y);
+  ctx.font="400 24px "+FB;y+=36;ctx.fillText(list.map(function(k,i){return METHODS[k].name}).join("  ·  "),W/2,y);
+  ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,y+62);ctx.lineTo(W-70,y+62);ctx.stroke();drawSupport(ctx,y+108);ctx.textAlign="left"}
 function methodCard(ctx,k,i,n){
-  card(ctx,[{t:"СПОСОБ "+(i+1)+" ИЗ "+n,f:"600 26px "+FM,c:C.cyan,lh:76},{t:METHODS[k].name,f:"700 54px "+FB,lh:90},
+  card(ctx,[{t:"СПОСОБ "+(i+1)+" ИЗ "+n,f:"600 24px "+FB,c:C.cyan,lh:72},{t:METHODS[k].name,f:"700 54px "+FB,lh:84},
     {t:METHODS[k].lead,f:"400 30px "+FB,c:C.muted,wrap:true,lh:42,gap:40}].concat(k==="sun"?[
-    {t:SUNNOTE(),f:"600 27px "+FB,c:C.warn,wrap:true,lh:38}]:[]),k==="sun"?400:480);drawSq(ctx)}
+    {t:SUNNOTE(),f:"600 27px "+FB,c:C.warn,wrap:true,lh:38}]:[]),k==="sun"?380:480,true);drawSq(ctx)}
 function SUNNOTE(){return "Время совпадения направления на солнце и на спутник рассчитано на "+fmtDate(date)+". Если антенну будут устанавливать в другой день, способ по солнцу может не сработать: время совпадения для другой даты нужно рассчитать заново в сервисе «Помощник установщика антенны — satfinder.da-tele.com» или уточнить у технической поддержки компании «Да-Телеком»."}
 function supportCard(ctx){
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
@@ -253,9 +279,9 @@ function supportCard(ctx){
   ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,y+20);ctx.lineTo(W-70,y+20);ctx.stroke();
   drawSupport(ctx,y+90);ctx.textAlign="left"}
 function outroCard(ctx,list){
-  card(ctx,[{t:"ВАЖНО",f:"600 28px "+FM,c:C.warn,lh:70}].concat(list.indexOf("sun")>=0?[{t:SUNNOTE(),f:"400 28px "+FB,wrap:true,lh:40,gap:30}]:[]).concat([
+  card(ctx,[{t:"ВАЖНО",f:"700 26px "+FB,c:C.warn,lh:64}].concat(list.indexOf("sun")>=0?[{t:SUNNOTE(),f:"400 28px "+FB,wrap:true,lh:40,gap:30}]:[]).concat([
     {t:"Для разных спутников используются разные комплекты антенн: зеркало, кронштейн, конвертор и шкалы на них отличаются. Перед установкой внимательно прочитайте инструкцию к вашему комплекту.",f:"400 30px "+FB,wrap:true,lh:44,gap:30},
-    {t:"Этот ролик даёт только общее представление о базовых принципах наведения антенны на спутник.",f:"400 30px "+FB,c:C.muted,wrap:true,lh:44}]),list.indexOf("sun")>=0?260:420)}
+    {t:"Этот ролик даёт только общее представление о базовых принципах наведения антенны на спутник.",f:"400 30px "+FB,c:C.muted,wrap:true,lh:44}]),list.indexOf("sun")>=0?260:420,true)}
 
 /* one frame of a method: header, 3D view with readout, step caption, the 2D view for this step, signal meter */
 function methodFrame(ctx,w,k,i,n,S,prog){
