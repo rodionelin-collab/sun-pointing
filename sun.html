@@ -46,6 +46,12 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-chips button.done{color:var(--green);border-color:#bfe3d1}
 .sp-track{height:3px;background:var(--grid);border-radius:2px;overflow:hidden}
 .sp-track i{display:block;height:100%;width:0;background:var(--cyan)}
+html.only body{background:transparent}
+html.only .sp-wrap{padding:0;max-width:none}
+html.only .sp-wrap>*:not(.sp-views){position:absolute!important;left:-30000px;top:0;width:900px}
+html.only .sp-views{display:block}
+html.only .sp-view{display:none;border:0;border-radius:0}
+html.only[data-only="vTop"] .sp-view:has(#vTop),html.only[data-only="vSide"] .sp-view:has(#vSide),html.only[data-only="vBack"] .sp-view:has(#vBack),html.only[data-only="vSnake"] .sp-view:has(#vSnake){display:block}
 .sp-views{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px}
 .sp-view{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
 .sp-view h2{margin:0;padding:10px 14px 0;font:600 12px var(--f-mono);letter-spacing:.12em;color:var(--muted)}
@@ -78,6 +84,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 </style>
 </head>
 <body style="margin:0">
+<script>/* ?only=<svg id>: show just that view (embedded in the helper) */(function(){var m=/[?&]only=(v[A-Za-z]+)/.exec(location.search);if(!m)return;document.documentElement.classList.add("only");document.documentElement.setAttribute("data-only",m[1])})();</script>
 
 
 <div class="sp-wrap sp" id="sp">

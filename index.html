@@ -191,37 +191,9 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
         <ol class="steps" id="sunSteps"></ol>
         <p class="note">Не смотрите на солнце, в том числе сквозь тёмные стёкла: ориентируйтесь только по теням. Не оставляйте антенну надолго развёрнутой на солнце: зеркало собирает тепло на конверторе и может его перегреть. Если в эту минуту солнце за облаками, используйте способ по компасу или повторите на следующий день: время почти не меняется.</p>
       </div>
-      <div class="fig" style="gap:6px">
-        <svg viewBox="0 0 320 250" width="320" role="img" aria-label="Вид сверху: правильно, когда тень штанги параллельна тени мачты">
-          <text x="80" y="18" font-size="13" font-weight="600" text-anchor="middle" fill="var(--ok)">Правильно</text>
-          <text x="240" y="18" font-size="13" font-weight="600" text-anchor="middle" fill="var(--warn)">Поверните антенну</text>
-          <g>
-            <circle cx="80" cy="44" r="11" fill="var(--sun)"/>
-            <text x="98" y="48" font-size="11" fill="var(--muted)">солнце</text>
-            <line x1="40" y1="130" x2="40" y2="232" stroke="var(--muted)" stroke-width="6" stroke-linecap="round" opacity=".45"/>
-            <circle cx="40" cy="130" r="5" fill="var(--ink)"/>
-            <text x="4" y="150" font-size="11" fill="var(--muted)">мачта</text>
-            <path d="M58 118 Q80 108 102 118" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
-            <line x1="80" y1="114" x2="80" y2="78" stroke="var(--accent)" stroke-width="3"/>
-            <rect x="74" y="70" width="12" height="10" rx="2" fill="var(--accent)"/>
-            <line x1="80" y1="128" x2="80" y2="210" stroke="var(--muted)" stroke-width="3" stroke-dasharray="5 4" opacity=".7"/>
-            <text x="86" y="200" font-size="11" fill="var(--muted)">тень штанги</text>
-            <text x="46" y="222" font-size="11" fill="var(--muted)">тень</text>
-          </g>
-          <g>
-            <circle cx="240" cy="44" r="11" fill="var(--sun)"/>
-            <line x1="200" y1="130" x2="200" y2="232" stroke="var(--muted)" stroke-width="6" stroke-linecap="round" opacity=".45"/>
-            <circle cx="200" cy="130" r="5" fill="var(--ink)"/>
-            <g transform="rotate(28 240 118)">
-              <path d="M218 118 Q240 108 262 118" fill="none" stroke="var(--accent)" stroke-width="5" stroke-linecap="round"/>
-              <line x1="240" y1="114" x2="240" y2="78" stroke="var(--accent)" stroke-width="3"/>
-              <rect x="234" y="70" width="12" height="10" rx="2" fill="var(--accent)"/>
-            </g>
-            <line x1="240" y1="128" x2="285" y2="205" stroke="var(--muted)" stroke-width="3" stroke-dasharray="5 4" opacity=".7"/>
-            <text x="240" y="232" font-size="11" text-anchor="middle" fill="var(--warn)">тени не параллельны</text>
-          </g>
-        </svg>
-        <p class="hint" style="text-align:center">Вид сверху</p>
+      <div class="fig" style="gap:6px;padding:8px;align-content:start">
+        <iframe id="sunTopFrame" src="sun.html?only=vTop" title="Вид сверху: анимация наведения по солнцу" loading="lazy" style="width:100%;max-width:420px;height:440px;border:0;border-radius:10px;background:#fff;display:block;margin:0 auto"></iframe>
+        <p class="hint" style="text-align:center;margin:0">Нажмите на картинку — пауза / продолжить · <a href="sun.html" style="color:var(--accent);font-weight:600">вся анимация →</a></p>
       </div>
     </div>
     <div class="kitnote"><b>Важно.</b> Для разных спутников используются разные комплекты антенн: зеркало, кронштейн, конвертор и шкалы на них отличаются. Перед установкой внимательно прочитайте инструкцию к вашему комплекту. Этот сервис даёт только общее представление о базовых принципах наведения антенны на спутник.</div>
@@ -301,7 +273,8 @@ function placeName(){var cs=document.getElementById("city");if(cs&&cs.value!==""
 function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,place:placeName(),offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual,date:$("sunDate").value||null}))}catch(e){}
   /* pass the chosen point and satellite to the animation pages */
   var q="?lat="+S.lat.toFixed(5)+"&lon="+S.lon.toFixed(5)+"&tz="+S.tz+"&satLon="+S.satLon+"&decl="+S.decl+"&sat="+encodeURIComponent(S.satName||"")+"&place="+encodeURIComponent(placeName())+($("sunDate").value?"&date="+$("sunDate").value:"");
-  document.querySelectorAll('a[href^="sun.html"],a[href^="compass.html"],a[href^="magnetic.html"],a[href^="video.html"]').forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+q)})}
+  document.querySelectorAll('a[href^="sun.html"],a[href^="compass.html"],a[href^="magnetic.html"],a[href^="video.html"]').forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+q)});
+  var tf=$("sunTopFrame");if(tf){var src="sun.html"+q+"&only=vTop";if(tf.getAttribute("src")!==src)tf.setAttribute("src",src)}}
 
 /* ---------- geometry ---------- */
 function look(lat,lon,satLon){
