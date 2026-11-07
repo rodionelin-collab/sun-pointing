@@ -267,7 +267,7 @@ var TOPV=(function(){
   var lnb=mk("circle",{r:4,fill:"#3a444b"},svg);
   var mast=mk("circle",{r:3,fill:"#4e6676"},svg);
   var stakeG=mk("g",{},svg);mk("circle",{r:5,fill:"var(--warn)"},stakeG);mk("circle",{r:2,fill:"#fff"},stakeG);
-  var stakeT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);stakeT.textContent="ориентир (на спутник)";
+  var stakeT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);mk("tspan",{x:0,dy:0},stakeT).textContent="вешка или визуальный ориентир";mk("tspan",{x:0,dy:12},stakeT).textContent="по направлению на спутник";
   var comp=mk("g",{},svg);mk("rect",{x:-5,y:-9,width:10,height:18,rx:2,fill:"#1d262c"},comp);mk("path",{d:"M0 -15l-3 5h6z",fill:"var(--cyan)"},comp);var cn=mk("g",{},svg);
   var compT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);compT.textContent="телефон";
   var tN=mk("line",{stroke:"var(--ink)","stroke-width":1.4},svg),mN=mk("line",{stroke:"var(--red)","stroke-width":1.4,"stroke-dasharray":"3 2"},svg);
@@ -281,7 +281,7 @@ var TOPV=(function(){
     var mx=c[0]+24*Math.sin(DECL*D),my=c[1]-24*Math.cos(DECL*D);setA(mN,{x1:c[0]+10*Math.sin(DECL*D),y1:c[1]-10*Math.cos(DECL*D),x2:mx,y2:my});setA(mNT,{x:mx-3,y:my-2});
     var st=P(STAKE),c1=P(COMP1);
     var lx=c1[0]+(st[0]-c1[0])*S.line,ly=c1[1]+(st[1]-c1[1])*S.line;setA(sight,{x1:c1[0],y1:c1[1],x2:lx,y2:ly,opacity:S.line>0?1:0});
-    setA(stakeG,{transform:tr(st[0],st[1]),opacity:S.stake});setA(stakeT,{x:st[0]-9,y:st[1]+4,"text-anchor":"end",opacity:S.stake});
+    setA(stakeG,{transform:tr(st[0],st[1]),opacity:S.stake});setA(stakeT,{x:st[0]-9,y:st[1]-2,"text-anchor":"end",opacity:S.stake});stakeT.querySelectorAll("tspan").forEach(function(t){t.setAttribute("x",(st[0]-9).toFixed(1))});
     var d="";TRI.legs.concat(TRI.braces).forEach(function(sg){var a=PA(sg[0]),b=PA(sg[1]);d+="M"+a[0].toFixed(1)+" "+a[1].toFixed(1)+"L"+b[0].toFixed(1)+" "+b[1].toFixed(1)});frame.setAttribute("d",d);
     dish.setAttribute("points",ptsStr(g.rim.map(PA)));
     var r0=PA(g.root),l0=PA(g.lnb);setA(arm,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});setA(lnb,{cx:l0[0],cy:l0[1]});
@@ -441,7 +441,8 @@ var G=null;
   var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,STAKE_H,10),new THREE.MeshStandardMaterial({color:0xe0650b}));pole.position.y=STAKE_H/2;pole.castShadow=true;stake.add(pole);
   var flagGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,STAKE_H,0),new THREE.Vector3(0.32,STAKE_H-0.1,0),new THREE.Vector3(0,STAKE_H-0.2,0)]);
   var flag=new THREE.Mesh(flagGeo,new THREE.MeshBasicMaterial({color:0xe0650b,side:THREE.DoubleSide}));stake.add(flag);
-  var stLbl=label("ориентир","#111111",0.7);stLbl.position.y=STAKE_H+0.35;stake.add(stLbl);
+  var stLbl=(function(){var c=document.createElement("canvas");c.width=1024;c.height=200;var x=c.getContext("2d");x.font="300 46px 'Golos Text', system-ui, sans-serif";x.fillStyle="#111111";x.textAlign="center";x.textBaseline="middle";x.fillText("вешка или визуальный ориентир",512,60);x.fillText("по направлению на спутник",512,140);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sp.scale.set(3.6,0.7,1);return sp})();stLbl.position.y=STAKE_H+0.5;stake.add(stLbl);
   /* ground ribbons: sight line and antenna direction */
   function ribbonGeo(w){var g=new THREE.PlaneGeometry(1,w);g.rotateX(-Math.PI/2);return g}
   function placeRibbon(m,a,b,y){var dx=b.x-a.x,dz=b.z-a.z,Ln=Math.hypot(dx,dz)||1e-6;m.position.set((a.x+b.x)/2,y,(a.z+b.z)/2);m.rotation.y=Math.atan2(-dz,dx);m.scale.x=Ln}

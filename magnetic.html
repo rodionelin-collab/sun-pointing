@@ -117,7 +117,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
             <li><i style="background:var(--red)"></i>красная стрелка — всегда смотрит на север, сама</li>
             <li><i style="background:#90a4b1"></i>кольцо с градусами — его крутим пальцами</li>
             <li><i style="background:var(--cyan)"></i>указатель на корпусе — куда смотрит компас</li>
-            <li><i style="background:var(--warn)"></i>вешка — метка направления на спутник</li>
+            <li><i style="background:var(--warn)"></i>вешка или визуальный ориентир по направлению на спутник</li>
           </ul>
         </div>
       </div>
@@ -251,7 +251,7 @@ var MERGE=(function(){
   var mast=mk("circle",{r:3,fill:"#4e6676"},svg);
   var antT=mk("text",{"font-size":10,fill:"var(--muted)"},svg);antT.textContent="антенна";
   var stakeG=mk("g",{},svg);mk("circle",{r:6,fill:"var(--warn)"},stakeG);mk("circle",{r:2.2,fill:"#fff"},stakeG);
-  var stakeT=mk("text",{"font-size":10,fill:"var(--ink)","text-anchor":"end"},svg);stakeT.textContent="вешка";
+  var stakeT=mk("text",{"font-size":10,fill:"var(--ink)","text-anchor":"end"},svg);mk("tspan",{x:0,dy:0},stakeT).textContent="вешка или визуальный ориентир";mk("tspan",{x:0,dy:12},stakeT).textContent="по направлению на спутник";
   /* installer + compass (rotate together with heading) */
   var who=mk("g",{},svg);
   var body=mk("g",{},who);
@@ -293,7 +293,7 @@ var MERGE=(function(){
     setA(arc,{opacity:showArc?1:0});setA(arcT,{opacity:showArc?1:0});
     var st=P(STAKE),c1=P(COMP1);
     setA(sight,{x1:c1[0],y1:c1[1],x2:c1[0]+(st[0]-c1[0])*S.line,y2:c1[1]+(st[1]-c1[1])*S.line,opacity:S.line>0?1:0});
-    setA(stakeG,{transform:tr(st[0],st[1]),opacity:S.stake});setA(stakeT,{x:st[0]-10,y:st[1]+4,opacity:S.stake});
+    setA(stakeG,{transform:tr(st[0],st[1]),opacity:S.stake});setA(stakeT,{x:st[0]-10,y:st[1]-2,opacity:S.stake});stakeT.querySelectorAll("tspan").forEach(function(t){t.setAttribute("x",(st[0]-10).toFixed(1))});
     var d="";TRI.legs.concat(TRI.braces).forEach(function(sg){var a=PA(sg[0]),b=PA(sg[1]);d+="M"+a[0].toFixed(1)+" "+a[1].toFixed(1)+"L"+b[0].toFixed(1)+" "+b[1].toFixed(1)});frame.setAttribute("d",d);
     dish.setAttribute("points",ptsStr(g.rim.map(PA)));
     var r0=PA(g.root),l0=PA(g.lnb);setA(arm,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});setA(lnb,{cx:l0[0],cy:l0[1]});
@@ -458,7 +458,8 @@ var G=null;
   var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,STAKE_H,10),new THREE.MeshStandardMaterial({color:0xe0650b}));pole.position.y=STAKE_H/2;pole.castShadow=true;stake.add(pole);
   var flagGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,STAKE_H,0),new THREE.Vector3(0.32,STAKE_H-0.1,0),new THREE.Vector3(0,STAKE_H-0.2,0)]);
   var flag=new THREE.Mesh(flagGeo,new THREE.MeshBasicMaterial({color:0xe0650b,side:THREE.DoubleSide}));stake.add(flag);
-  var stLbl=label("ориентир","#111111",0.7);stLbl.position.y=STAKE_H+0.35;stake.add(stLbl);
+  var stLbl=(function(){var c=document.createElement("canvas");c.width=1024;c.height=200;var x=c.getContext("2d");x.font="300 46px 'Golos Text', system-ui, sans-serif";x.fillStyle="#111111";x.textAlign="center";x.textBaseline="middle";x.fillText("вешка или визуальный ориентир",512,60);x.fillText("по направлению на спутник",512,140);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sp.scale.set(3.6,0.7,1);return sp})();stLbl.position.y=STAKE_H+0.5;stake.add(stLbl);
   /* ground ribbons: sight line and antenna direction */
   function ribbonGeo(w){var g=new THREE.PlaneGeometry(1,w);g.rotateX(-Math.PI/2);return g}
   function placeRibbon(m,a,b,y){var dx=b.x-a.x,dz=b.z-a.z,Ln=Math.hypot(dx,dz)||1e-6;m.position.set((a.x+b.x)/2,y,(a.z+b.z)/2);m.rotation.y=Math.atan2(-dz,dx);m.scale.x=Ln}
