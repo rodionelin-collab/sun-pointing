@@ -188,6 +188,18 @@ function drawSvg(ctx,w,id,x,y,s){
     var fx=+fo.getAttribute("x")||0,fy=+fo.getAttribute("y")||0,fw=+fo.getAttribute("width")||vb.width,fh=+fo.getAttribute("height")||vb.height;
     ctx.drawImage(cv,x+fx*s,y+fy*s,fw*s,fh*s);ctx.drawImage(ims[1],x,y,vb.width*s,vb.height*s)})}
 
+/* ---------- Да-Телеком branding: logos and tech-support contacts ---------- */
+var LOGO=new Image(),LOGOSQ=new Image();LOGO.src="img/dtk-logo.png";LOGOSQ.src="img/dtk-logo-sq.png";
+function imgReady(im){return im.complete&&im.naturalWidth?Promise.resolve():new Promise(function(r){im.onload=im.onerror=function(){r()}})}
+var SITE="www.da-tele.com";
+var SUPPORT=["Телефон: +7 (3952) 79-87-86, доб. 2","e-mail: support@da-tele.com","Мессенджеры MAX и Телеграм: +79397939714"];
+function drawLogo(ctx,cx,y,w){if(!LOGO.naturalWidth)return 0;var h=w*LOGO.naturalHeight/LOGO.naturalWidth;ctx.drawImage(LOGO,cx-w/2,y,w,h);return h}
+function drawSq(ctx){if(!LOGOSQ.naturalWidth)return;var w=74,h=w*LOGOSQ.naturalHeight/LOGOSQ.naturalWidth;ctx.save();ctx.globalAlpha=.75;ctx.drawImage(LOGOSQ,W-w-24,18,w,h);ctx.restore()}
+function drawSupport(ctx,y){ /* centred block, returns bottom */
+  ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="700 28px "+FB;ctx.fillText("Техподдержка",W/2,y);y+=42;
+  ctx.font="400 25px "+FB;SUPPORT.forEach(function(s){ctx.fillStyle=C.ink;ctx.fillText(s,W/2,y);y+=36});ctx.textAlign="left";return y}
+
+if(TEST)window.__vdraw=function(n){var c=$("preview").getContext("2d");$("prevCard").hidden=false;var L=["sun","compass","magnetic"];if(n==="intro")introCard(c,L);else if(n==="support")supportCard(c);else if(n==="method")methodCard(c,"sun",0,3);else outroCard(c,L)};
 /* ---------- drawing helpers ---------- */
 var C={bg:"#f2f5f7",card:"#ffffff",line:"#cdd8e0",ink:"#14232d",muted:"#5f7380",cyan:"#0a8fb3",green:"#1f9d63",warn:"#e0650b",grid:"#e4ebf0"};
 var FB="Raleway,system-ui,sans-serif",FM="Raleway,ui-monospace,monospace";
@@ -200,6 +212,7 @@ function header(ctx,kicker,title){
   ctx.fillStyle=C.cyan;ctx.font="600 20px "+FM;ctx.textAlign="left";ctx.textBaseline="alphabetic";ctx.fillText(kicker,28,48);
   ctx.fillStyle=C.ink;ctx.font="700 34px "+FB;ctx.fillText(title,28,90);
   ctx.fillStyle=C.muted;ctx.font="400 19px "+FB;ctx.fillText(TOK.PLACE+" · "+TOK.SAT+" · азимут "+TOK.AZ+"° · угол места "+TOK.EL+"°",28,122);
+  drawSq(ctx);
 }
 function card(ctx,lines,y0){ /* full-screen text card */
   ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
@@ -211,12 +224,23 @@ function introCard(ctx,list){
     {t:TOK.SAT,f:"700 52px "+FB,lh:66},{t:TOK.PLACE,f:"400 32px "+FB,c:C.muted,lh:90},
     {t:"Азимут  "+TOK.AZ+"°",f:"600 40px "+FM,lh:58},{t:"Угол места  "+TOK.EL+"°",f:"600 40px "+FM,lh:58},
     {t:"Планируемая дата установки: "+fmtDate(date),f:"400 28px "+FB,c:C.muted,lh:110},
-    {t:"Способы наведения в ролике:",f:"600 26px "+FB,lh:44}].concat(list.map(function(k,i){return {t:(i+1)+". "+METHODS[k].name,f:"400 28px "+FB,lh:42}})),300)}
+    {t:"Способы наведения в ролике:",f:"600 26px "+FB,lh:44}].concat(list.map(function(k,i){return {t:(i+1)+". "+METHODS[k].name,f:"400 28px "+FB,lh:42}})),330);
+  var lh=drawLogo(ctx,W/2,54,330);ctx.textAlign="center";ctx.fillStyle=C.muted;ctx.font="500 24px "+FB;ctx.fillText(SITE,W/2,54+lh+38);ctx.textAlign="left";
+  ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,1068);ctx.lineTo(W-70,1068);ctx.stroke();drawSupport(ctx,1118)}
 function methodCard(ctx,k,i,n){
   card(ctx,[{t:"СПОСОБ "+(i+1)+" ИЗ "+n,f:"600 26px "+FM,c:C.cyan,lh:76},{t:METHODS[k].name,f:"700 54px "+FB,lh:90},
     {t:METHODS[k].lead,f:"400 30px "+FB,c:C.muted,wrap:true,lh:42,gap:40}].concat(k==="sun"?[
-    {t:SUNNOTE(),f:"600 27px "+FB,c:C.warn,wrap:true,lh:38}]:[]),k==="sun"?400:480)}
+    {t:SUNNOTE(),f:"600 27px "+FB,c:C.warn,wrap:true,lh:38}]:[]),k==="sun"?400:480);drawSq(ctx)}
 function SUNNOTE(){return "Время совпадения направления на солнце и на спутник рассчитано на "+fmtDate(date)+". Если антенну будут устанавливать в другой день, способ по солнцу может не сработать: время совпадения для другой даты нужно уточнить заново в Помощнике установщика."}
+function supportCard(ctx){
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  var lh=drawLogo(ctx,W/2,150,380);ctx.textAlign="center";ctx.fillStyle=C.muted;ctx.font="500 26px "+FB;ctx.fillText(SITE,W/2,150+lh+42);
+  ctx.fillStyle=C.ink;ctx.font="600 32px "+FB;ctx.textAlign="left";
+  ctx.textAlign="center";
+  var lines=["Если у вас сложности с наведением","спутникового комплекта, обратитесь","в нашу службу технической поддержки."];
+  var y=560;lines.forEach(function(s){ctx.fillText(s,W/2,y);y+=46});
+  ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,y+20);ctx.lineTo(W-70,y+20);ctx.stroke();
+  drawSupport(ctx,y+90);ctx.textAlign="left"}
 function outroCard(ctx,list){
   card(ctx,[{t:"ВАЖНО",f:"600 28px "+FM,c:C.warn,lh:70}].concat(list.indexOf("sun")>=0?[{t:SUNNOTE(),f:"400 28px "+FB,wrap:true,lh:40,gap:30}]:[]).concat([
     {t:"Для разных спутников используются разные комплекты антенн: зеркало, кронштейн, конвертор и шкалы на них отличаются. Перед установкой внимательно прочитайте инструкцию к вашему комплекту.",f:"400 30px "+FB,wrap:true,lh:44,gap:30},
@@ -281,16 +305,16 @@ function build(){
   if(!list.length){alert("Отметьте хотя бы один способ наведения.");return Promise.resolve()}
   busy=true;cancelled=false;$("go").disabled=true;$("stop").hidden=false;$("progWrap").hidden=false;$("out").hidden=true;$("prevCard").hidden=false;
   var cv=document.createElement("canvas");cv.width=W;cv.height=H;var ctx=cv.getContext("2d",{alpha:false}),pv=$("preview").getContext("2d");
-  var INTRO=3.5,MI=2.5,OUT=5,durs={},total=0,doneSec=0,sink;
+  var INTRO=5,MI=2.5,OUT=5,SUPP=6,durs={},total=0,doneSec=0,sink;
   function setProg(txt){var p=Math.min(1,doneSec/Math.max(1,total));$("prog").style.width=(p*100).toFixed(1)+"%";$("progTxt").textContent=txt+" · "+Math.round(p*100)+"%"}
   function emit(){pv.drawImage(cv,0,0);return sink.add().then(function(){doneSec+=1/FPS;if(cancelled)throw new Error("остановлено")})}
   function still(drawFn,sec,label){var n=Math.round(sec*FPS),k=0;drawFn(ctx);
     return (function next(){if(k>=n)return Promise.resolve();k++;if(k%10===0)setProg(label);return emit().then(next)})()}
-  return (document.fonts?document.fonts.ready:Promise.resolve()).then(function(){return makeSink(cv)}).then(function(s){
+  return (document.fonts?document.fonts.ready:Promise.resolve()).then(function(){return Promise.all([imgReady(LOGO),imgReady(LOGOSQ)])}).then(function(){return makeSink(cv)}).then(function(s){
     if(!s)throw new Error("этот браузер не умеет записывать видео. Откройте страницу в Chrome, Edge или Safari.");sink=s;
     list.forEach(function(k){durs[k]=TEST?3:(k==="sun"?46:49)});   /* estimate; the real length is taken when each page loads */
     if(TOK)return;return loadPage(METHODS[list[0]].page).then(function(w){TOK=w.__spRec.tok})})
-  .then(function(){showCtx();total=INTRO+OUT+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:MI)+durs[k]},0);
+  .then(function(){showCtx();total=INTRO+OUT+SUPP+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:MI)+durs[k]},0);
     return still(function(c){introCard(c,list)},INTRO,"Заставка")})
   .then(function(){return list.reduce(function(p,k,i){return p.then(function(){
       return still(function(c){methodCard(c,k,i,list.length)},k==="sun"?6:MI,METHODS[k].name)
@@ -299,6 +323,7 @@ function build(){
         return (function next(){if(f>=n)return Promise.resolve();var t=st+f/FPS*(TEST?1:1);var S=R.set(t);
           return methodFrame(ctx,w,k,i,list.length,S,f/n).then(function(){f++;if(f%5===0)setProg(METHODS[k].name+" — кадр "+f+" из "+n);return emit()}).then(next)})()})})},Promise.resolve())})
   .then(function(){return still(function(c){outroCard(c,list)},OUT+(list.indexOf("sun")>=0?3:0),"Финальная заставка")})
+  .then(function(){return still(supportCard,SUPP,"Контакты техподдержки")})
   .then(function(){setProg("Сохраняем файл");return sink.done()})
   .then(function(blob){dropFrame();busy=false;$("go").disabled=false;$("stop").hidden=true;$("prog").style.width="100%";
     var ext=sink.kind==="mp4"?"mp4":"webm",name=("Наведение_"+TOK.SAT+"_"+TOK.PLACE+"_"+date).replace(/[\\/:*?"<>|\s]+/g,"_")+"."+ext,url=URL.createObjectURL(blob);
