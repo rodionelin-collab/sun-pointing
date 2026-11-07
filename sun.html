@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Наведение по солнцу</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="dtk.css">
 <style>
 /* Layout: header (title, clock, controls) → 3D stage → caption + step chips → three synchronized 2D projections → signal meter. Single deliberate light technical-schematic look. */
 :root{
-  --bg:#f2f5f7; --card:#ffffff; --grid:#e4ebf0; --line:#cdd8e0; --ink:#14232d; --muted:#5f7380;
-  --cyan:#0a8fb3; --amber:#d98a00; --warn:#e0650b; --green:#1f9d63; --shd:#8597a3;
-  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --bg:#f4f5f8; --card:#ffffff; --grid:#e8ebf2; --line:#dce1e9; --ink:#202737; --muted:#606b7e;
+  --cyan:#0a8fb3; --ui:#3732b5; --ui-soft:#eeedfc; --amber:#d98a00; --warn:#e0650b; --green:#1f9d63; --shd:#8597a3;
+  --f-body:Raleway,Arial,sans-serif;
+  --f-mono:Raleway,Arial,sans-serif;
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -21,16 +24,17 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-wrap{max-width:1100px;margin:0 auto;padding-block:18px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
 .sp-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
 .sp-head h1{font-size:20px;margin:0;font-weight:600;flex:1 1 260px;text-wrap:balance}
-.sp-link{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none;border-bottom:1px solid currentColor}
+.sp-link{font:600 13px var(--f-body);color:var(--ui);text-decoration:none;border-bottom:1px solid currentColor}
 .sp-clock{font-family:var(--f-mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
 .sp-clock small{display:block;font-size:11px;color:var(--muted);font-weight:400;letter-spacing:.12em}
 .sp-clock .sp-date{display:block;font:600 14px var(--f-body);color:var(--ink);margin:1px 0 2px}
 .sp-clock #clock{display:block;transition:color .3s}
 .sp-clock #clock.is-match{color:var(--green);font-weight:800}
 .sp-match{display:block;font:600 12.5px var(--f-body);color:var(--green);max-width:34ch;line-height:1.35;margin-top:3px}
-.sp button{font:600 13px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
-.sp button:hover{border-color:var(--cyan);color:var(--cyan)}
-.sp button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.sp button{font:600 14px var(--f-body);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:9px 14px;min-height:44px;cursor:pointer}
+.sp button:hover{background:#f1f3f7}
+.sp button:hover{border-color:var(--ui);color:var(--ui)}
+.sp button:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
 .sp-stage{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#eef3f6;aspect-ratio:16/8;max-width:100%}
 .sp-stage canvas{display:block;width:100%;height:100%;touch-action:none}
 .sp-tag{position:absolute;left:14px;top:12px;font:12px var(--f-mono);color:var(--muted);letter-spacing:.12em;pointer-events:none}
@@ -39,13 +43,13 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-nogl{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;padding:20px;text-align:center}
 .sp-cap{display:grid;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .sp-cap p{margin:0;font-size:15.5px;line-height:1.5;max-width:75ch;min-height:2.9em}
-.sp-cap p b{color:var(--cyan);font-family:var(--f-mono);margin-right:8px}
+.sp-cap p b{color:var(--ui);font-family:var(--f-mono);margin-right:8px}
 .sp-chips{display:flex;flex-wrap:wrap;gap:6px}
 .sp-chips button{font-weight:500;color:var(--muted)}
-.sp-chips button[aria-current="step"]{background:var(--cyan);border-color:var(--cyan);color:var(--card);font-weight:600}
+.sp-chips button[aria-current="step"]{background:var(--ui);border-color:var(--ui);color:var(--card);font-weight:600}
 .sp-chips button.done{color:var(--green);border-color:#bfe3d1}
 .sp-track{height:3px;background:var(--grid);border-radius:2px;overflow:hidden}
-.sp-track i{display:block;height:100%;width:0;background:var(--cyan)}
+.sp-track i{display:block;height:100%;width:0;background:var(--ui)}
 html.only body{background:transparent}
 html.only .sp-wrap{padding:0;max-width:none}
 html.only .sp-wrap>*:not(.sp-views){position:absolute!important;left:-30000px;top:0;width:900px}
@@ -69,7 +73,7 @@ html.only[data-only="vTop"] .sp-view:has(#vTop),html.only[data-only="vSide"] .sp
 #sigTxt{font:600 13px var(--f-mono);min-width:13ch;text-align:right}
 @media (max-width:640px){.sp-stage{aspect-ratio:4/3}.sp-hint{font-size:12px}}
 .sp-nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
-.sp-back{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none}
+.sp-back{font:600 13px var(--f-body);color:var(--ui);text-decoration:none}
 .sp-back:hover{text-decoration:underline}
 .sp-tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--grid);border-radius:10px;padding:4px}
 .sp-tabs a{font:600 13.5px var(--f-body);color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:7px}
@@ -77,21 +81,29 @@ html.only[data-only="vTop"] .sp-view:has(#vTop),html.only[data-only="vSide"] .sp
 .sp-tabs a[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,35,45,.12)}
 .sp-ctx{font-size:13.5px;color:var(--muted)}
 .sp-ctx b{color:var(--ink);font-weight:600}
-.sp-ctx a{color:var(--cyan)}
+.sp-ctx a{color:var(--ui)}
 .sp-date-in{font:600 13.5px var(--f-body);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:1px 6px;background:var(--card);cursor:pointer}
-.sp-date-in:hover{border-color:var(--cyan)}
+.sp-date-in:hover{border-color:var(--ui)}
 .sp-demo{font-size:13.5px;color:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:8px 12px}
 </style>
 </head>
 <body style="margin:0">
-<script>/* ?only=<svg id>: show just that view (embedded in the helper) */(function(){var m=/[?&]only=(v[A-Za-z]+)/.exec(location.search);if(!m)return;document.documentElement.classList.add("only");document.documentElement.setAttribute("data-only",m[1])})();</script>
+<script>/* ?only=<svg id>: show just that view (embedded in the helper); ?rec=1: driven by the video builder */(function(){if(/[?&]rec=1(&|$)/.test(location.search))document.documentElement.classList.add("rec");var m=/[?&]only=(v[A-Za-z]+)/.exec(location.search);if(!m)return;document.documentElement.classList.add("only");document.documentElement.setAttribute("data-only",m[1])})();</script>
 
 
-<div class="sp-wrap sp" id="sp">
-  <nav class="sp-nav" aria-label="Способы наведения">
-    <a class="sp-back" href="index.html">← Помощник установщика</a>
-    <div class="sp-tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html" aria-current="page">По солнцу</a><a href="magnetic.html">Магнитный компас</a><a href="video.html">Видео для клиента</a></div>
-  </nav>
+<a class="sf-skip" href="#sp">К содержимому</a>
+<header class="sf-header">
+  <div class="sf-header-inner">
+    <a class="sf-brand" href="index.html" aria-label="Помощник установщика антенны, на главную"><svg viewBox="0 0 40 40" width="40" height="40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="5" fill="currentColor"></circle><ellipse cx="20" cy="20" rx="18" ry="9" transform="rotate(-40 20 20)" stroke="currentColor" stroke-width="1.8"></ellipse><circle cx="7" cy="30" r="3" fill="currentColor"></circle></svg></a>
+    <div class="sf-intro">
+      <p class="sf-eyebrow">СПУТНИКОВАЯ СВЯЗЬ / НАВЕДЕНИЕ АНТЕННЫ</p>
+      <p class="sf-title">Помощник установщика антенны</p>
+      <p class="sf-desc">Анимация: наведение антенны по солнцу.</p>
+    </div>
+    <nav class="sf-nav" aria-label="Разделы"><a href="index.html">Расчёт</a><a href="sun.html" aria-current="page">По солнцу</a><a href="compass.html">Компас в телефоне</a><a href="magnetic.html">Магнитный компас</a><a href="video.html">Видео для клиента</a></nav>
+  </div>
+</header>
+<main class="sp-wrap sp" id="sp">
 
   <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · планируемая дата установки <input type="date" id="dateIn" class="sp-date-in" aria-label="Планируемая дата установки"></div>
   <div class="sp-demo" id="demo" hidden></div>
@@ -123,7 +135,7 @@ html.only[data-only="vTop"] .sp-view:has(#vTop),html.only[data-only="vSide"] .sp
     <div class="sp-view"><h2>ВИД СЗАДИ ЗЕРКАЛА АНТЕННЫ</h2><svg id="vBack" viewBox="0 0 320 260" role="img" aria-label="Вид из-за антенны глазами установщика"></svg><p>Так видит установщик: солнце должно оказаться точно по центру зеркала антенны.</p></div>
   </div>
 
-</div>
+</main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -203,7 +215,7 @@ fmtDom(document.getElementById("sp"));
 function setStoredDate(v){try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null")||{};s.date=v;localStorage.setItem("installer-helper",JSON.stringify(s))}catch(e){}}
 setTimeout(function(){var m=document.getElementById("matchMsg");if(m&&typeof WIN!=="undefined")m.textContent="В промежуток с "+hhmm(WIN[0],true)+" до "+hhmm(WIN[1],true)+" направление на солнце и на нужный вам спутник совпадут"},0);
 (function(){var msg=DEMO||(typeof DEMO_SUN!=="undefined"?DEMO_SUN:"");if(msg){var e=document.getElementById("demo");e.textContent=msg;e.hidden=false}
-  if(location.search)document.querySelectorAll(".sp-tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
+  if(location.search)document.querySelectorAll(".sp-tabs a,.sf-nav a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
 var SAT_AZ=AZ, SAT_EL=ELV, SUN_EL_REAL=SUNM?SUNM.el:22, SUN_EL=Math.max(9,SUN_EL_REAL), TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=44.5;
 var DEMO_SUN=(!DEMO&&!SUNM)?"В этот день для этой точки солнце не проходит направление на спутник достаточно высоко над горизонтом — время на анимации условное.":"";
 var SUN_AZ0=SUNM?SUNM.az0:SAT_AZ-32;
@@ -510,7 +522,7 @@ var G=null;
 
   function label(text,color,scale,thin){
     var c=document.createElement("canvas");c.width=512;c.height=128;var x=c.getContext("2d");
-    x.font=(thin?"300 46px 'Golos Text', system-ui, sans-serif":"600 52px 'JetBrains Mono', monospace");x.lineWidth=thin?0:10;x.strokeStyle="rgba(255,255,255,.85)";x.fillStyle=color;x.textAlign="center";x.textBaseline="middle";if(!thin)x.strokeText(text,256,64);x.fillText(text,256,64);
+    x.font=(thin?"300 46px Raleway, system-ui, sans-serif":"600 52px Raleway, monospace");x.lineWidth=thin?0:10;x.strokeStyle="rgba(255,255,255,.85)";x.fillStyle=color;x.textAlign="center";x.textBaseline="middle";if(!thin)x.strokeText(text,256,64);x.fillText(text,256,64);
     var tx=new THREE.CanvasTexture(c);var s=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false}));s.scale.set(2*(scale||1),0.5*(scale||1),1);return s;
   }
   [["С",0],["В",90],["Ю",180],["З",270]].forEach(function(q){var s=label(q[0],"#111111",0.9,true);s.position.copy(W(4.1*Math.sin(q[1]*D),4.1*Math.cos(q[1]*D),0.25));scene.add(s)});
@@ -585,7 +597,7 @@ var G=null;
   var ticks=[];for(var q=0;q<4;q++){var m=new THREE.Mesh(ribbonGeo(0.05),tMat);m.renderOrder=3;scene.add(m);ticks.push(m)}
   function placeRibbon(m,a,b,y){var dx=b.x-a.x,dz=b.z-a.z,L=Math.hypot(dx,dz)||1e-6;m.position.set((a.x+b.x)/2,y,(a.z+b.z)/2);m.rotation.y=Math.atan2(-dz,dx);m.scale.x=L}
   var lblCache={},parLbl=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,depthTest:false}));parLbl.scale.set(3.2,0.8,1);parLbl.renderOrder=5;scene.add(parLbl);
-  function setLbl(text,color){var key=text+color;if(!lblCache[key]){var c=document.createElement("canvas");c.width=1024;c.height=256;var x=c.getContext("2d");x.font="600 72px 'Golos Text', system-ui, sans-serif";x.textAlign="center";x.textBaseline="middle";
+  function setLbl(text,color){var key=text+color;if(!lblCache[key]){var c=document.createElement("canvas");c.width=1024;c.height=256;var x=c.getContext("2d");x.font="600 72px Raleway, system-ui, sans-serif";x.textAlign="center";x.textBaseline="middle";
     x.fillStyle="rgba(255,255,255,.92)";var w=Math.min(1000,x.measureText(text).width+80);x.beginPath();x.roundRect?x.roundRect(512-w/2,48,w,160,36):x.rect(512-w/2,48,w,160);x.fill();x.lineWidth=6;x.strokeStyle=color;x.stroke();
     x.fillStyle=color;x.fillText(text,512,130);lblCache[key]=new THREE.CanvasTexture(c)}
     if(parLbl.material.map!==lblCache[key]){parLbl.material.map=lblCache[key];parLbl.material.needsUpdate=true}}

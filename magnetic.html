@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Магнитный компас</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@300;400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="dtk.css">
 <style>
 /* Layout: header (title, readout, controls) → 3D stage → caption + step chips → four synchronized 2D views → signal meter. Same light technical-schematic look as the sun page. */
 :root{
-  --bg:#f2f5f7; --card:#ffffff; --grid:#e4ebf0; --line:#cdd8e0; --ink:#14232d; --muted:#5f7380;
-  --cyan:#0a8fb3; --amber:#d98a00; --warn:#e0650b; --green:#1f9d63; --red:#d23b2f; --shd:#8597a3;
-  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --bg:#f4f5f8; --card:#ffffff; --grid:#e8ebf2; --line:#dce1e9; --ink:#202737; --muted:#606b7e;
+  --cyan:#0a8fb3; --ui:#3732b5; --ui-soft:#eeedfc; --amber:#d98a00; --warn:#e0650b; --green:#1f9d63; --red:#d23b2f; --shd:#8597a3;
+  --f-body:Raleway,Arial,sans-serif;
+  --f-mono:Raleway,Arial,sans-serif;
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -21,14 +24,15 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-wrap{max-width:1100px;margin:0 auto;padding-block:18px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
 .sp-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
 .sp-head h1{font-size:20px;margin:0;font-weight:600;flex:1 1 260px;text-wrap:balance}
-.sp-link{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none;border-bottom:1px solid currentColor}
+.sp-link{font:600 13px var(--f-body);color:var(--ui);text-decoration:none;border-bottom:1px solid currentColor}
 .sp-read{font-family:var(--f-mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
 .sp-read small{display:block;font-size:11px;color:var(--muted);font-weight:400;letter-spacing:.12em}
 .sp-read #readout{display:block}
 .sp-corr{display:block;font:500 12.5px var(--f-body);color:var(--muted);max-width:34ch;line-height:1.35;margin-top:3px}
-.sp button{font:600 13px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
-.sp button:hover{border-color:var(--cyan);color:var(--cyan)}
-.sp button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.sp button{font:600 14px var(--f-body);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:9px 14px;min-height:44px;cursor:pointer}
+.sp button:hover{background:#f1f3f7}
+.sp button:hover{border-color:var(--ui);color:var(--ui)}
+.sp button:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
 .sp-stage{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#eef3f6;aspect-ratio:16/8;max-width:100%}
 .sp-stage canvas{display:block;width:100%;height:100%;touch-action:none}
 .sp-tag{position:absolute;left:14px;top:12px;font:12px var(--f-mono);color:var(--muted);letter-spacing:.12em;pointer-events:none}
@@ -37,13 +41,13 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-nogl{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;padding:20px;text-align:center}
 .sp-cap{display:grid;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .sp-cap p{margin:0;font-size:15.5px;line-height:1.5;max-width:75ch;min-height:2.9em}
-.sp-cap p b{color:var(--cyan);font-family:var(--f-mono);margin-right:8px}
+.sp-cap p b{color:var(--ui);font-family:var(--f-mono);margin-right:8px}
 .sp-chips{display:flex;flex-wrap:wrap;gap:6px}
 .sp-chips button{font-weight:500;color:var(--muted)}
-.sp-chips button[aria-current="step"]{background:var(--cyan);border-color:var(--cyan);color:var(--card);font-weight:600}
+.sp-chips button[aria-current="step"]{background:var(--ui);border-color:var(--ui);color:var(--card);font-weight:600}
 .sp-chips button.done{color:var(--green);border-color:#bfe3d1}
 .sp-track{height:3px;background:var(--grid);border-radius:2px;overflow:hidden}
-.sp-track i{display:block;height:100%;width:0;background:var(--cyan)}
+.sp-track i{display:block;height:100%;width:0;background:var(--ui)}
 .sp-views{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px}
 .sp-view{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
 .sp-view h2{margin:0;padding:10px 14px 0;font:600 12px var(--f-mono);letter-spacing:.12em;color:var(--muted)}
@@ -66,7 +70,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-wide{grid-column:1/-1}
 .sp-merge{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:8px 18px;align-items:center;padding:4px 16px 16px 4px}
 .mx{display:grid;gap:12px;min-width:0}
-.mx-step{font:600 12px var(--f-mono);letter-spacing:.1em;color:var(--cyan)}
+.mx-step{font:600 12px var(--f-mono);letter-spacing:.1em;color:var(--ui)}
 .mx-text{margin:0!important;padding:0!important;font-size:17px!important;line-height:1.5!important;color:var(--ink)!important;min-height:7.5em}
 .mx-text b{color:var(--green)}
 .mx-legend{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13px;color:var(--muted)}
@@ -75,7 +79,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 #sigTxt{font:600 13px var(--f-mono);min-width:13ch;text-align:right}
 @media (max-width:640px){.sp-stage{aspect-ratio:4/3}.sp-hint{font-size:12px}}
 .sp-nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
-.sp-back{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none}
+.sp-back{font:600 13px var(--f-body);color:var(--ui);text-decoration:none}
 .sp-back:hover{text-decoration:underline}
 .sp-tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--grid);border-radius:10px;padding:4px}
 .sp-tabs a{font:600 13.5px var(--f-body);color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:7px}
@@ -83,20 +87,29 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-tabs a[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,35,45,.12)}
 .sp-ctx{font-size:13.5px;color:var(--muted)}
 .sp-ctx b{color:var(--ink);font-weight:600}
-.sp-ctx a{color:var(--cyan)}
+.sp-ctx a{color:var(--ui)}
 .sp-date-in{font:600 13.5px var(--f-body);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:1px 6px;background:var(--card);cursor:pointer}
-.sp-date-in:hover{border-color:var(--cyan)}
+.sp-date-in:hover{border-color:var(--ui)}
 .sp-demo{font-size:13.5px;color:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:8px 12px}
 </style>
 </head>
 <body style="margin:0">
+<script>if(/[?&]rec=1(&|$)/.test(location.search))document.documentElement.classList.add("rec");</script>
 
 
-<div class="sp-wrap sp" id="sp">
-  <nav class="sp-nav" aria-label="Способы наведения">
-    <a class="sp-back" href="index.html">← Помощник установщика</a>
-    <div class="sp-tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html">По солнцу</a><a href="magnetic.html" aria-current="page">Магнитный компас</a><a href="video.html">Видео для клиента</a></div>
-  </nav>
+<a class="sf-skip" href="#sp">К содержимому</a>
+<header class="sf-header">
+  <div class="sf-header-inner">
+    <a class="sf-brand" href="index.html" aria-label="Помощник установщика антенны, на главную"><svg viewBox="0 0 40 40" width="40" height="40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="5" fill="currentColor"></circle><ellipse cx="20" cy="20" rx="18" ry="9" transform="rotate(-40 20 20)" stroke="currentColor" stroke-width="1.8"></ellipse><circle cx="7" cy="30" r="3" fill="currentColor"></circle></svg></a>
+    <div class="sf-intro">
+      <p class="sf-eyebrow">СПУТНИКОВАЯ СВЯЗЬ / НАВЕДЕНИЕ АНТЕННЫ</p>
+      <p class="sf-title">Помощник установщика антенны</p>
+      <p class="sf-desc">Анимация: наведение антенны по магнитному компасу.</p>
+    </div>
+    <nav class="sf-nav" aria-label="Разделы"><a href="index.html">Расчёт</a><a href="sun.html">По солнцу</a><a href="compass.html">Компас в телефоне</a><a href="magnetic.html" aria-current="page">Магнитный компас</a><a href="video.html">Видео для клиента</a></nav>
+  </div>
+</header>
+<main class="sp-wrap sp" id="sp">
 
   <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b></div>
   <div class="sp-demo" id="demo" hidden></div>
@@ -156,7 +169,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
     <p class="sp-note">Рядом с большими металлическими конструкциями — вышками, ёмкостями, вагончиками — компас может ошибаться на 5–10°. В солнечный день надёжнее <a href="sun.html">наведение по солнцу</a>.</p>
   </div>
 
-</div>
+</main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -237,7 +250,7 @@ fmtDom(document.getElementById("sp"));
   if(/date=/.test(location.search))setStoredDate(di.value)})();
 function setStoredDate(v){try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null")||{};s.date=v;localStorage.setItem("installer-helper",JSON.stringify(s))}catch(e){}}
 (function(){var msg=DEMO||(typeof DEMO_SUN!=="undefined"?DEMO_SUN:"");if(msg){var e=document.getElementById("demo");e.textContent=msg;e.hidden=false}
-  if(location.search)document.querySelectorAll(".sp-tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
+  if(location.search)document.querySelectorAll(".sp-tabs a,.sf-nav a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
 var SAT_AZ=AZ, SAT_EL=ELV, TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=47;
 var DECL=DECLR;                 /* magnetic declination, west negative */
 var MAG_AZ=((SAT_AZ-DECL)%360+360)%360;      /* azimuth set on the compass: 155 */
@@ -532,7 +545,7 @@ var G=null;
   var ld=dirv(210,48);L.position.copy(W(ld[0]*20,ld[1]*20,ld[2]*20));scene.add(L);scene.add(L.target);
   var ground=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({color:0xe2eaef}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
   var grid=new THREE.GridHelper(30,60,0xb3c4cf,0xcbd7df);grid.position.y=0.003;scene.add(grid);
-  function label(text,color,scale){var c=document.createElement("canvas");c.width=512;c.height=128;var x=c.getContext("2d");x.font="300 46px 'Golos Text', system-ui, sans-serif";x.fillStyle=color;x.textAlign="center";x.textBaseline="middle";x.fillText(text,256,64);
+  function label(text,color,scale){var c=document.createElement("canvas");c.width=512;c.height=128;var x=c.getContext("2d");x.font="300 46px Raleway, system-ui, sans-serif";x.fillStyle=color;x.textAlign="center";x.textBaseline="middle";x.fillText(text,256,64);
     var s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));s.scale.set(2*(scale||1),0.5*(scale||1),1);return s}
   [["С",0],["В",90],["Ю",180],["З",270]].forEach(function(q){var s=label(q[0],"#111111",0.9);s.position.copy(W(5.5*Math.sin(q[1]*D),5.5*Math.cos(q[1]*D),0.25));scene.add(s)});
   var steel=new THREE.MeshStandardMaterial({color:0x5f6f7a,metalness:.45,roughness:.55});
@@ -582,15 +595,15 @@ var G=null;
     var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false,toneMapped:false}));if(THREE.sRGBEncoding)sp.material.map.encoding=THREE.sRGBEncoding;sp.scale.set(0.42,0.16,1);sp.userData={c:c,v:null};return sp})();
   idxLbl.position.set(0,TOPY+0.12,-RD-0.2);plateG.add(idxLbl);
   function setIdxLbl(v,ok){var key=F1(v)+(ok?"1":"0");if(idxLbl.userData.v===key)return;idxLbl.userData.v=key;var c=idxLbl.userData.c,x=c.getContext("2d");x.clearRect(0,0,256,96);
-    x.fillStyle="rgba(255,255,255,.9)";x.fillRect(8,10,240,76);x.fillStyle=ok?"#1f9d63":"#14232d";x.font="700 54px 'JetBrains Mono', monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(F1(v)+"°",128,50);idxLbl.material.map.needsUpdate=true}
+    x.fillStyle="rgba(255,255,255,.9)";x.fillRect(8,10,240,76);x.fillStyle=ok?"#1f9d63":"#14232d";x.font="700 54px Raleway, monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(F1(v)+"°",128,50);idxLbl.material.map.needsUpdate=true}
   function dialTex(){var c=document.createElement("canvas");c.width=c.height=1024;var x=c.getContext("2d"),o=512;
     x.fillStyle="#d3dbe1";x.beginPath();x.arc(o,o,508,0,7);x.fill();x.strokeStyle="#8fa1ad";x.lineWidth=6;x.beginPath();x.arc(o,o,505,0,7);x.stroke();
     x.fillStyle="#ffffff";x.beginPath();x.arc(o,o,385,0,7);x.fill();
     x.strokeStyle="#90a4b1";x.lineWidth=6;x.beginPath();x.arc(o,o,385,0,7);x.stroke();
     x.strokeStyle="#5f7380";for(var a=0;a<360;a+=5){var r1=a%30===0?325:a%10===0?345:360;x.lineWidth=a%30===0?7:3;x.beginPath();x.moveTo(o+380*Math.sin(a*D),o-380*Math.cos(a*D));x.lineTo(o+r1*Math.sin(a*D),o-r1*Math.cos(a*D));x.stroke()}
-    x.textAlign="center";x.textBaseline="middle";x.fillStyle="#14232d";x.font="700 64px 'JetBrains Mono', monospace";
+    x.textAlign="center";x.textBaseline="middle";x.fillStyle="#14232d";x.font="700 64px Raleway, monospace";
     for(var b=0;b<360;b+=30){x.save();x.translate(o+445*Math.sin(b*D),o-445*Math.cos(b*D));x.rotate(b*D);x.fillText(String(b),0,0);x.restore()}
-    x.font="700 100px 'Golos Text', sans-serif";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.save();x.translate(o+255*Math.sin(q[1]*D),o-255*Math.cos(q[1]*D));x.rotate(q[1]*D);x.fillStyle=q[2];x.fillText(q[0],0,0);x.restore()});
+    x.font="700 100px Raleway, sans-serif";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.save();x.translate(o+255*Math.sin(q[1]*D),o-255*Math.cos(q[1]*D));x.rotate(q[1]*D);x.fillStyle=q[2];x.fillText(q[0],0,0);x.restore()});
     /* the value the installer has to set: green mark on the ring at MAG_AZ (it comes to the index when the ring is set) */
     x.save();x.strokeStyle="#0a8fb3";x.lineWidth=14;x.beginPath();x.moveTo(o+505*Math.sin(MAG_AZ*D),o-505*Math.cos(MAG_AZ*D));x.lineTo(o+320*Math.sin(MAG_AZ*D),o-320*Math.cos(MAG_AZ*D));x.stroke();x.restore();
     x.strokeStyle="#d23b2f";x.lineWidth=8;x.setLineDash([22,14]);x.beginPath();x.moveTo(o,o-300);x.lineTo(o-45,o-235);x.lineTo(o-45,o+40);x.lineTo(o+45,o+40);x.lineTo(o+45,o-235);x.closePath();x.stroke();
@@ -601,7 +614,7 @@ var G=null;
   /* satellite direction from the mark on the scale: arrow + label, turning with the scale */
   var markA=flatArrow(0.14,0.12,0.012,0x0a8fb3),markG=new THREE.Group();markA.position.set(0,TOPY+0.01,-(RD+0.1));markG.add(markA);markG.rotation.y=-MAG_AZ*D;dialG.add(markG);
   var markL=(function(){var c=document.createElement("canvas");c.width=320;c.height=140;var x=c.getContext("2d");x.fillStyle="rgba(255,255,255,.92)";x.fillRect(6,6,308,128);x.fillStyle="#0a8fb3";x.textAlign="center";x.textBaseline="middle";
-    x.font="600 34px 'Golos Text', sans-serif";x.fillText("на спутник",160,44);x.font="700 54px 'JetBrains Mono', monospace";x.fillText(F1(MAG_AZ)+"°",160,100);
+    x.font="600 34px Raleway, sans-serif";x.fillText("на спутник",160,44);x.font="700 54px Raleway, monospace";x.fillText(F1(MAG_AZ)+"°",160,100);
     var tx=new THREE.CanvasTexture(c);if(THREE.sRGBEncoding)tx.encoding=THREE.sRGBEncoding;var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:false,toneMapped:false}));sp.scale.set(0.5,0.22,1);return sp})();
   markL.center.set(0.5,0);markL.position.set(Math.sin(MAG_AZ*D)*(RD+0.42),TOPY+0.1,-Math.cos(MAG_AZ*D)*(RD+0.42));   /* label beyond and above the arrow so the arrow stays visible */dialG.add(markL);
   var ndl=new THREE.Group();ndl.position.y=TOPY+0.03;comp.add(ndl);
@@ -611,14 +624,14 @@ var G=null;
   var compLbl=label("компас","#111111",0.7);compLbl.position.y=1.55;comp.add(compLbl);
   /* green 155° arc from the needle (north) to the pointer */
   var arcMat=new THREE.MeshBasicMaterial({color:0x1f9d63}),arcMesh=null,arcKey="";
-  var arcLbl=(function(){var c=document.createElement("canvas");c.width=256;c.height=128;var x=c.getContext("2d");x.font="700 76px 'JetBrains Mono', monospace";x.textAlign="center";x.textBaseline="middle";x.lineWidth=12;x.strokeStyle="rgba(255,255,255,.9)";x.strokeText(F1(MAGR)+"°",128,64);x.fillStyle="#1f9d63";x.fillText(F1(MAGR)+"°",128,64);
+  var arcLbl=(function(){var c=document.createElement("canvas");c.width=256;c.height=128;var x=c.getContext("2d");x.font="700 76px Raleway, monospace";x.textAlign="center";x.textBaseline="middle";x.lineWidth=12;x.strokeStyle="rgba(255,255,255,.9)";x.strokeText(F1(MAGR)+"°",128,64);x.fillStyle="#1f9d63";x.fillText(F1(MAGR)+"°",128,64);
     var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false}));sp.scale.set(0.5,0.25,1);sp.renderOrder=6;return sp})();scene.add(arcLbl);
   /* stake */
   var stake=new THREE.Group();stake.position.copy(W(STAKE[0],STAKE[1],0));scene.add(stake);
   var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,STAKE_H,10),new THREE.MeshStandardMaterial({color:0xe0650b}));pole.position.y=STAKE_H/2;pole.castShadow=true;stake.add(pole);
   var flagGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,STAKE_H,0),new THREE.Vector3(0.32,STAKE_H-0.1,0),new THREE.Vector3(0,STAKE_H-0.2,0)]);
   var flag=new THREE.Mesh(flagGeo,new THREE.MeshBasicMaterial({color:0xe0650b,side:THREE.DoubleSide}));stake.add(flag);
-  var stLbl=(function(){var c=document.createElement("canvas"),x=c.getContext("2d"),F="300 46px 'Golos Text', system-ui, sans-serif";x.font=F;var cw=Math.ceil(Math.max(x.measureText("вешка или визуальный ориентир").width,x.measureText("по направлению на спутник").width)+16);c.width=cw;c.height=200;x=c.getContext("2d");x.font=F;x.fillStyle="#111111";x.textAlign="left";x.textBaseline="middle";x.fillText("вешка или визуальный ориентир",8,60);x.fillText("по направлению на спутник",8,140);
+  var stLbl=(function(){var c=document.createElement("canvas"),x=c.getContext("2d"),F="300 46px Raleway, system-ui, sans-serif";x.font=F;var cw=Math.ceil(Math.max(x.measureText("вешка или визуальный ориентир").width,x.measureText("по направлению на спутник").width)+16);c.width=cw;c.height=200;x=c.getContext("2d");x.font=F;x.fillStyle="#111111";x.textAlign="left";x.textBaseline="middle";x.fillText("вешка или визуальный ориентир",8,60);x.fillText("по направлению на спутник",8,140);
     var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sp.scale.set(c.width*0.0035,0.7,1);sp.center.set(-0.04,0.5);return sp})();stLbl.position.y=STAKE_H*0.62;stake.add(stLbl); /* label to the right of the stake, clear of the satellite label */
   /* ground ribbons: sight line and antenna direction */
   function ribbonGeo(w){var g=new THREE.PlaneGeometry(1,w);g.rotateX(-Math.PI/2);return g}
@@ -626,7 +639,7 @@ var G=null;
   var sMat=new THREE.MeshBasicMaterial({color:0x0a8fb3,transparent:true,opacity:0,depthWrite:false}),sight=new THREE.Mesh(ribbonGeo(0.06),sMat);scene.add(sight);
   var gMat=new THREE.MeshBasicMaterial({color:0xe0650b,transparent:true,opacity:0,depthWrite:false}),guide=new THREE.Mesh(ribbonGeo(0.07),gMat);guide.renderOrder=2;scene.add(guide);
   var lblCache={},stat=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,depthTest:false}));stat.scale.set(3.6,0.9,1);stat.renderOrder=5;scene.add(stat);
-  function setLbl(text,color){var key=text+color;if(!lblCache[key]){var c=document.createElement("canvas");c.width=1024;c.height=256;var x=c.getContext("2d");x.font="600 64px 'Golos Text', system-ui, sans-serif";x.textAlign="center";x.textBaseline="middle";
+  function setLbl(text,color){var key=text+color;if(!lblCache[key]){var c=document.createElement("canvas");c.width=1024;c.height=256;var x=c.getContext("2d");x.font="600 64px Raleway, system-ui, sans-serif";x.textAlign="center";x.textBaseline="middle";
     x.fillStyle="rgba(255,255,255,.92)";var w=Math.min(1000,x.measureText(text).width+80);x.beginPath();x.roundRect?x.roundRect(512-w/2,48,w,160,36):x.rect(512-w/2,48,w,160);x.fill();x.lineWidth=6;x.strokeStyle=color;x.stroke();x.fillStyle=color;x.fillText(text,512,130);lblCache[key]=new THREE.CanvasTexture(c)}
     if(stat.material.map!==lblCache[key]){stat.material.map=lblCache[key];stat.material.needsUpdate=true}}
   var controls=null,userCam=false,target=W(-0.4*bw[0],-0.4*bw[1],0.9);

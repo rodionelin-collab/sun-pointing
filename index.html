@@ -6,34 +6,32 @@
 <title>Помощник установщика</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="dtk.css">
 <style>
 /* Layout: a single working column — point & satellite on top, the four key angles as a readout strip, then method panels (dish, sun, compass, all satellites, clock) */
 :root{
-  --bg:#eef2f4; --panel:#ffffff; --ink:#122029; --muted:#5b6b75; --line:#d3dce1;
-  --accent:#0f6e8c; --accent-soft:#e0eff4; --sun:#c27a00; --warn:#b3261e; --ok:#2e7d32;
-  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --f-data:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --bg:#f4f5f8; --panel:#ffffff; --ink:#202737; --muted:#606b7e; --line:#dce1e9;
+  --accent:#3732b5; --accent-soft:#eeedfc; --surface:#f1f3f7; --sun:#c27a00; --warn:#b3261e; --ok:#2e7d32;
+  --f-body:Raleway,Arial,sans-serif;
+  --f-data:Raleway,Arial,sans-serif;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0e1519; --panel:#152027; --ink:#e3ebef; --muted:#93a4ad; --line:#26353e;
-  --accent:#4fb3d4; --accent-soft:#17323d; --sun:#f0b23c; --warn:#ff8a80; --ok:#81c784; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0e1519; --panel:#152027; --ink:#e3ebef; --muted:#93a4ad; --line:#26353e;
-  --accent:#4fb3d4; --accent-soft:#17323d; --sun:#f0b23c; --warn:#ff8a80; --ok:#81c784; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
-.wrap{max-width:1040px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+.wrap{max-width:1100px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
 header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
-h1{font-size:22px;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+h1{font-size:22px;margin:0;font-weight:600;text-wrap:balance}
 header p{margin:0;color:var(--muted);font-size:13px}
-h2{font-size:17px;margin:0;font-weight:600;text-wrap:balance}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:14px;min-width:0;align-content:start}
+h2{font-size:18px;margin:0;font-weight:600;text-wrap:balance}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:14px;min-width:0;align-content:start}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
-label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;display:block;margin-bottom:4px}
+label{font-size:12px;color:var(--muted);font-weight:500;display:block;margin-bottom:6px}
 input,select,button{font:inherit;color:var(--ink)}
-input,select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;min-width:0}
+input,select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:9px 12px;min-width:0;min-height:44px;font-size:14px}
+input:hover,select:hover{border-color:#c3cad6}
+input[readonly]{background:var(--surface)}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
 .hint{font-size:13px;color:var(--muted);margin:0}
@@ -44,13 +42,15 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .ac-list li[aria-selected="true"],.ac-list li:hover{background:var(--accent-soft)}
 .ex{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:12.5px;color:var(--muted)}
 .ex button{font:12.5px var(--f-data);background:var(--accent-soft);color:var(--accent);border:0;border-radius:6px;padding:4px 8px;cursor:pointer}
-button{background:var(--accent);color:var(--panel);border:0;border-radius:7px;padding:8px 14px;font-weight:600;cursor:pointer}
-button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button{background:var(--accent);color:#fff;border:0;border-radius:6px;padding:10px 16px;min-height:44px;font-weight:600;font-size:14px;cursor:pointer}
+button:hover{background:#27238b}
+button.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+button.ghost:hover{background:var(--surface);border-color:var(--accent)}
 /* readout strip */
-.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .cell{background:var(--panel);padding:14px 16px;display:grid;gap:2px;align-content:start}
-.cell .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
-.cell .v{font-family:var(--f-data);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15}
+.cell .k{font-size:12px;color:var(--muted);font-weight:500}
+.cell .v{font-family:var(--f-data);font-size:30px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.15}
 .cell .s{font-size:13px;color:var(--muted)}
 .kitnote{margin-top:16px;padding:12px 14px;border-left:4px solid var(--sun);background:var(--accent-soft);border-radius:6px;font-size:14px;line-height:1.5;max-width:80ch}
 .past{margin-top:10px;border:1px solid var(--warn);border-radius:10px;padding:12px 14px;display:grid;gap:10px}
@@ -59,16 +59,18 @@ button.ghost{background:transparent;color:var(--accent);border:1px solid var(--a
 .cell .v.gone{color:var(--muted);text-decoration:line-through;text-decoration-thickness:2px}
 .status{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);justify-self:start}
 .status.bad{color:var(--warn);background:transparent;border:1px solid var(--warn)}
-nav{display:flex;flex-wrap:wrap;gap:6px}
-nav button{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
-nav button[aria-selected="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+nav[role="tablist"]{display:flex;flex-wrap:wrap;gap:4px;padding:4px;border:1px solid var(--line);background:var(--surface);border-radius:6px}
+nav[role="tablist"] button{background:transparent;color:var(--muted);border:0;border-radius:4px;font-weight:500;min-height:44px;padding:8px 14px}
+nav[role="tablist"] button:hover{color:var(--accent);background:transparent}
+nav[role="tablist"] button[aria-selected="true"]{background:var(--panel);color:var(--accent);box-shadow:0 1px 3px #18264016;font-weight:600}
 #sat{height:40.5px}
+@media (max-width:480px){#tzMsk{position:static!important;transform:none!important;display:block;margin-top:4px}}
 .actbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
 .actbtn{display:inline-flex;flex-direction:column;justify-content:center;align-items:center;min-height:46px;padding:6px 16px;border-radius:8px;border:1px solid var(--accent);color:var(--accent);background:var(--panel);font-weight:600;font-size:15px;text-decoration:none;line-height:1.15}
 .actbtn:hover{background:var(--accent-soft)}
 .actbtn small{display:block;font-size:11px;font-weight:400;opacity:.85;margin-top:2px}
-nav button.two{line-height:1.1;padding-top:6px;padding-bottom:6px}
-nav button.two small{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:2px}
+nav[role="tablist"] button.two{line-height:1.1;padding-top:6px;padding-bottom:6px}
+nav[role="tablist"] button.two small{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:2px}
 .data{font-family:var(--f-data);font-variant-numeric:tabular-nums}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -98,11 +100,19 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
 <body style="margin:0">
 
 
-<div class="wrap">
-  <header>
-    <h1>Помощник установщика антенны</h1>
-    <p>Азимут, угол места, поворот конвертора, наведение по солнцу и компасу · анимации: <a href="compass.html" style="color:var(--accent)">компас в телефоне</a>, <a href="sun.html" style="color:var(--accent)">по солнцу</a>, <a href="magnetic.html" style="color:var(--accent)">магнитный компас</a> · <a href="video.html" style="color:var(--accent);font-weight:600">видео для клиента</a></p>
-  </header>
+<a class="sf-skip" href="#main">К содержимому</a>
+<header class="sf-header">
+  <div class="sf-header-inner">
+    <a class="sf-brand" href="index.html" aria-label="Помощник установщика антенны, на главную"><svg viewBox="0 0 40 40" width="40" height="40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="5" fill="currentColor"></circle><ellipse cx="20" cy="20" rx="18" ry="9" transform="rotate(-40 20 20)" stroke="currentColor" stroke-width="1.8"></ellipse><circle cx="7" cy="30" r="3" fill="currentColor"></circle></svg></a>
+    <div class="sf-intro">
+      <p class="sf-eyebrow">СПУТНИКОВАЯ СВЯЗЬ / НАВЕДЕНИЕ АНТЕННЫ</p>
+      <p class="sf-title">Помощник установщика антенны</p>
+      <p class="sf-desc">Азимут, угол места и поворот конвертора для точки и спутника; наведение по солнцу и по компасу.</p>
+    </div>
+    <nav class="sf-nav" aria-label="Разделы"><a href="index.html" aria-current="page">Расчёт</a><a href="sun.html">По солнцу</a><a href="compass.html">Компас в телефоне</a><a href="magnetic.html">Магнитный компас</a><a href="video.html">Видео для клиента</a></nav>
+  </div>
+</header>
+<main class="wrap" id="main">
 
   <section class="grid2">
     <div class="panel">
@@ -279,7 +289,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
     <p class="hint">Сверка идёт по времени веб-сервера, точность около 1 секунды. Если расхождение больше 30 секунд, поправьте часы устройства.</p>
   </section>
 
-</div>
+</main>
 
 
 <!-- precise time zones of Russia: 0.05° grid built from timezone-boundary-builder (OpenStreetMap) boundaries via geo-tz; elsewhere tz-lookup -->

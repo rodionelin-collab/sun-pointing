@@ -4,14 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Видео для клиента</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="dtk.css">
 <style>
 /* Builds one vertical (9:16) MP4 for a phone: intro card → each chosen pointing method, played frame by frame from its animation page in a hidden iframe → closing note. */
 :root{
-  --bg:#f2f5f7; --card:#ffffff; --grid:#e4ebf0; --line:#cdd8e0; --ink:#14232d; --muted:#5f7380;
-  --cyan:#0a8fb3; --warn:#e0650b; --green:#1f9d63;
-  --f-body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --bg:#f4f5f8; --card:#ffffff; --grid:#e8ebf2; --line:#dce1e9; --ink:#202737; --muted:#606b7e;
+  --cyan:#3732b5; --warn:#e0650b; --green:#1f9d63;
+  --f-body:Raleway,Arial,sans-serif;
+  --f-mono:Raleway,Arial,sans-serif;
   color-scheme:light;
 }
 *{box-sizing:border-box}
@@ -49,11 +52,19 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
 </style>
 </head>
 <body>
-<div class="wrap">
-  <nav>
-    <a class="back" href="index.html">← Помощник установщика</a>
-    <div class="tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html">По солнцу</a><a href="magnetic.html">Магнитный компас</a><a href="video.html" aria-current="page">Видео для клиента</a></div>
-  </nav>
+<a class="sf-skip" href="#main">К содержимому</a>
+<header class="sf-header">
+  <div class="sf-header-inner">
+    <a class="sf-brand" href="index.html" aria-label="Помощник установщика антенны, на главную"><svg viewBox="0 0 40 40" width="40" height="40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="5" fill="currentColor"></circle><ellipse cx="20" cy="20" rx="18" ry="9" transform="rotate(-40 20 20)" stroke="currentColor" stroke-width="1.8"></ellipse><circle cx="7" cy="30" r="3" fill="currentColor"></circle></svg></a>
+    <div class="sf-intro">
+      <p class="sf-eyebrow">СПУТНИКОВАЯ СВЯЗЬ / НАВЕДЕНИЕ АНТЕННЫ</p>
+      <p class="sf-title">Помощник установщика антенны</p>
+      <p class="sf-desc">Вертикальный ролик для клиента из анимаций наведения.</p>
+    </div>
+    <nav class="sf-nav" aria-label="Разделы"><a href="index.html">Расчёт</a><a href="sun.html">По солнцу</a><a href="compass.html">Компас в телефоне</a><a href="magnetic.html">Магнитный компас</a><a href="video.html" aria-current="page">Видео для клиента</a></nav>
+  </div>
+</header>
+<main class="wrap" id="main">
   <h1>Видео для клиента</h1>
   <p class="hint">Соберём один вертикальный ролик для смартфона с анимациями наведения для выбранной точки, спутника и даты. Его можно скачать и отправить клиенту в мессенджер.</p>
 
@@ -101,7 +112,7 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
     <span class="k" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Так выглядит кадр</span>
     <canvas id="preview" width="720" height="1280"></canvas>
   </div>
-</div>
+</main>
 
 
 <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
@@ -165,7 +176,7 @@ function svgPart(svg,cs,keep){
   if(fo){var par=fo.parentNode,kids=Array.prototype.slice.call(par.childNodes),i=kids.indexOf(fo);
     kids.forEach(function(n,j){if(n.nodeName==="defs"||n.nodeName==="clipPath"||n.nodeName==="mask")return;if(j===i||(keep==="before"?j>i:j<i))par.removeChild(n)})}
   c.querySelectorAll("foreignObject").forEach(function(n){if(n.parentNode)n.parentNode.removeChild(n)});
-  var st=document.createElementNS("http://www.w3.org/2000/svg","style");st.textContent="text{font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace}";c.insertBefore(st,c.firstChild);
+  var st=document.createElementNS("http://www.w3.org/2000/svg","style");st.textContent="text{font-family:Raleway,ui-monospace,Menlo,Consolas,monospace}";c.insertBefore(st,c.firstChild);
   return resolveVars(XS.serializeToString(c),cs)}
 function toImg(str){return new Promise(function(res,rej){var im=new Image();im.onload=function(){res(im)};im.onerror=rej;im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(str)})}
 function drawSvg(ctx,w,id,x,y,s){
@@ -179,7 +190,7 @@ function drawSvg(ctx,w,id,x,y,s){
 
 /* ---------- drawing helpers ---------- */
 var C={bg:"#f2f5f7",card:"#ffffff",line:"#cdd8e0",ink:"#14232d",muted:"#5f7380",cyan:"#0a8fb3",green:"#1f9d63",warn:"#e0650b",grid:"#e4ebf0"};
-var FB="'Golos Text',system-ui,sans-serif",FM="'JetBrains Mono',ui-monospace,monospace";
+var FB="Raleway,system-ui,sans-serif",FM="Raleway,ui-monospace,monospace";
 function rr(ctx,x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke()}}
 function wrap(ctx,text,x,y,maxW,lh,maxLines){var words=String(text).split(/\s+/),line="",n=0;
   for(var i=0;i<words.length;i++){var t=line?line+" "+words[i]:words[i];if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y+n*lh);n++;line=words[i];if(maxLines&&n>=maxLines-1&&i<words.length-1){var rest=words.slice(i).join(" ");while(ctx.measureText(rest+"…").width>maxW&&rest.length)rest=rest.slice(0,-1);ctx.fillText(rest+"…",x,y+n*lh);return n+1}}else line=t}
