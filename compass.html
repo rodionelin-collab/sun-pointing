@@ -491,7 +491,9 @@ var G=null;
   var body=new THREE.Mesh(new THREE.BoxGeometry(0.24,0.025,0.48),new THREE.MeshStandardMaterial({color:0x1d262c,roughness:.4}));body.position.y=0.97;body.castShadow=true;phoneG.add(body);
   var scC=document.createElement("canvas");scC.width=256;scC.height=512;var scX=scC.getContext("2d"),scT=new THREE.CanvasTexture(scC);
   var screen=new THREE.Mesh(new THREE.PlaneGeometry(0.21,0.44),new THREE.MeshBasicMaterial({map:scT}));screen.rotation.x=-Math.PI/2;screen.position.y=0.984;phoneG.add(screen);
-  var tipM=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.1,3),new THREE.MeshBasicMaterial({color:0x0a8fb3}));tipM.rotation.x=-Math.PI/2;tipM.position.set(0,0.98,-0.3);phoneG.add(tipM);
+  function flatArrow(len,wid,thick,color){var sh=new THREE.Shape();sh.moveTo(0,len/2);sh.lineTo(-wid/2,-len/2);sh.lineTo(wid/2,-len/2);sh.lineTo(0,len/2);
+    var g=new THREE.ExtrudeGeometry(sh,{depth:thick,bevelEnabled:false});var m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:color,roughness:.5}));m.rotation.x=-Math.PI/2;m.castShadow=true;return m}
+  var tipM=flatArrow(0.1,0.09,0.01,0x0a8fb3);tipM.position.set(0,0.972,-0.32);phoneG.add(tipM);
   var lastShown=null;
   function drawScreen(v,ok){var key=Math.round(v)+(ok?"g":"");if(key===lastShown)return;lastShown=key;var x=scX;x.fillStyle="#fff";x.fillRect(0,0,256,512);
     x.fillStyle=ok?"#1f9d63":"#14232d";x.font="600 70px 'JetBrains Mono', monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(Math.round(v)+"°",128,110);

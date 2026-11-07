@@ -504,7 +504,9 @@ var G=null;
   comp.add(rod(W(0,0,0),W(0,0,TOPY-0.03),0.014,new THREE.MeshStandardMaterial({color:0x8b6a45,roughness:.9})));
   var plateG=new THREE.Group();comp.add(plateG);
   var plate=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.014,0.92),new THREE.MeshStandardMaterial({color:0xdbe9ef,transparent:true,opacity:.9,roughness:.3}));plate.position.set(0,TOPY-0.012,-0.04);plate.castShadow=true;plateG.add(plate);
-  var arrowM=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.12,3),new THREE.MeshBasicMaterial({color:0x0a8fb3}));arrowM.rotation.x=-Math.PI/2;arrowM.position.set(0,TOPY,-0.49);plateG.add(arrowM);
+  function flatArrow(len,wid,thick,color){var sh=new THREE.Shape();sh.moveTo(0,len/2);sh.lineTo(-wid/2,-len/2);sh.lineTo(wid/2,-len/2);sh.lineTo(0,len/2);
+    var g=new THREE.ExtrudeGeometry(sh,{depth:thick,bevelEnabled:false});var m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:color,roughness:.5}));m.rotation.x=-Math.PI/2;m.castShadow=true;return m}
+  var arrowM=flatArrow(0.16,0.13,0.012,0x0a8fb3);arrowM.position.set(0,TOPY-0.006,-0.56);plateG.add(arrowM);
   var idxM=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.006,0.07),new THREE.MeshBasicMaterial({color:0x14232d}));idxM.position.set(0,TOPY+0.03,-RD-0.03);plateG.add(idxM);
   function dialTex(){var c=document.createElement("canvas");c.width=c.height=1024;var x=c.getContext("2d"),o=512;
     x.fillStyle="#dfe7ec";x.beginPath();x.arc(o,o,505,0,7);x.fill();
