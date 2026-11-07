@@ -95,10 +95,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 <div class="sp-wrap sp" id="sp">
   <nav class="sp-nav" aria-label="Способы наведения">
     <a class="sp-back" href="index.html">← Помощник установщика</a>
-    <div class="sp-tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html">По солнцу</a><a href="magnetic.html" aria-current="page">Магнитный компас</a></div>
+    <div class="sp-tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html">По солнцу</a><a href="magnetic.html" aria-current="page">Магнитный компас</a><a href="video.html">Видео для клиента</a></div>
   </nav>
 
-  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · дата <input type="date" id="dateIn" class="sp-date-in" aria-label="Дата установки"> · <a href="index.html">изменить в Помощнике</a></div>
+  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · <a href="index.html">изменить в Помощнике</a></div>
   <div class="sp-demo" id="demo" hidden></div>
 
   <div class="sp-head">
@@ -166,6 +166,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 /* ================= model & timeline ================= */
 var D=Math.PI/180;
 /* ================= site parameters: point & satellite chosen in «Помощник установщика» ================= */
+/* rec=1: page is driven frame by frame by video.html (no animation loop, all panels rendered) */
+var REC=/[?&]rec=1(&|$)/.test(location.search);
 var PRM=(function(){
   var d={lat:52.2869,lon:104.305,tz:8,satLon:145,satName:"Экспресс-АМУ7",decl:-4.8,place:"Иркутск",date:""};
   try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null");if(s)for(var k in d)if(s[k]!==undefined&&s[k]!==null&&s[k]!=="")d[k]=s[k]}catch(e){}
@@ -498,7 +500,7 @@ var G=null;
   var canvas=$("gl"),stage=$("stage");
   function fail(){canvas.hidden=true;$("glHint").hidden=true;var d=document.createElement("div");d.className="sp-nogl";d.textContent="3D-вид недоступен в этом браузере. Ниже работают плоские виды.";stage.appendChild(d)}
   if(!window.THREE){fail();return}
-  var renderer;try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true})}catch(e){fail();return}
+  var renderer;try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,preserveDrawingBuffer:REC})}catch(e){fail();return}
   renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   if(THREE.sRGBEncoding)renderer.outputEncoding=THREE.sRGBEncoding;
@@ -558,6 +560,12 @@ var G=null;
     var g=new THREE.ExtrudeGeometry(sh,{depth:thick,bevelEnabled:false});var m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:color,roughness:.5}));m.rotation.x=-Math.PI/2;m.castShadow=true;return m}
   var arrowM=flatArrow(0.16,0.13,0.012,0x0a8fb3);arrowM.position.set(0,TOPY-0.006,-0.47);plateG.add(arrowM);
   var idxM=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.006,0.07),new THREE.MeshBasicMaterial({color:0x14232d}));idxM.position.set(0,TOPY+0.03,-RD-0.03);plateG.add(idxM);
+  /* value at the index, read from the ring */
+  var idxLbl=(function(){var c=document.createElement("canvas");c.width=256;c.height=96;var x=c.getContext("2d");
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false,toneMapped:false}));if(THREE.sRGBEncoding)sp.material.map.encoding=THREE.sRGBEncoding;sp.scale.set(0.42,0.16,1);sp.userData={c:c,v:null};return sp})();
+  idxLbl.position.set(0,TOPY+0.12,-RD-0.2);plateG.add(idxLbl);
+  function setIdxLbl(v,ok){var key=F1(v)+(ok?"1":"0");if(idxLbl.userData.v===key)return;idxLbl.userData.v=key;var c=idxLbl.userData.c,x=c.getContext("2d");x.clearRect(0,0,256,96);
+    x.fillStyle="rgba(255,255,255,.9)";x.fillRect(8,10,240,76);x.fillStyle=ok?"#1f9d63":"#14232d";x.font="700 54px 'JetBrains Mono', monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(F1(v)+"°",128,50);idxLbl.material.map.needsUpdate=true}
   function dialTex(){var c=document.createElement("canvas");c.width=c.height=1024;var x=c.getContext("2d"),o=512;
     x.fillStyle="#d3dbe1";x.beginPath();x.arc(o,o,508,0,7);x.fill();x.strokeStyle="#8fa1ad";x.lineWidth=6;x.beginPath();x.arc(o,o,505,0,7);x.stroke();
     x.fillStyle="#ffffff";x.beginPath();x.arc(o,o,385,0,7);x.fill();
@@ -566,6 +574,8 @@ var G=null;
     x.textAlign="center";x.textBaseline="middle";x.fillStyle="#14232d";x.font="700 64px 'JetBrains Mono', monospace";
     for(var b=0;b<360;b+=30){x.save();x.translate(o+445*Math.sin(b*D),o-445*Math.cos(b*D));x.rotate(b*D);x.fillText(String(b),0,0);x.restore()}
     x.font="700 100px 'Golos Text', sans-serif";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.save();x.translate(o+255*Math.sin(q[1]*D),o-255*Math.cos(q[1]*D));x.rotate(q[1]*D);x.fillStyle=q[2];x.fillText(q[0],0,0);x.restore()});
+    /* the value the installer has to set: green mark on the ring at MAG_AZ (it comes to the index when the ring is set) */
+    x.save();x.strokeStyle="#1f9d63";x.lineWidth=12;x.beginPath();x.moveTo(o+505*Math.sin(MAG_AZ*D),o-505*Math.cos(MAG_AZ*D));x.lineTo(o+320*Math.sin(MAG_AZ*D),o-320*Math.cos(MAG_AZ*D));x.stroke();x.restore();
     x.strokeStyle="#d23b2f";x.lineWidth=8;x.setLineDash([22,14]);x.beginPath();x.moveTo(o,o-300);x.lineTo(o-45,o-235);x.lineTo(o-45,o+40);x.lineTo(o+45,o+40);x.lineTo(o+45,o-235);x.closePath();x.stroke();
     var t=new THREE.CanvasTexture(c);t.anisotropy=8;if(THREE.sRGBEncoding)t.encoding=THREE.sRGBEncoding;return t}
   var dialG=new THREE.Group();comp.add(dialG);
@@ -585,8 +595,8 @@ var G=null;
   var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,STAKE_H,10),new THREE.MeshStandardMaterial({color:0xe0650b}));pole.position.y=STAKE_H/2;pole.castShadow=true;stake.add(pole);
   var flagGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,STAKE_H,0),new THREE.Vector3(0.32,STAKE_H-0.1,0),new THREE.Vector3(0,STAKE_H-0.2,0)]);
   var flag=new THREE.Mesh(flagGeo,new THREE.MeshBasicMaterial({color:0xe0650b,side:THREE.DoubleSide}));stake.add(flag);
-  var stLbl=(function(){var c=document.createElement("canvas");c.width=1024;c.height=200;var x=c.getContext("2d");x.font="300 46px 'Golos Text', system-ui, sans-serif";x.fillStyle="#111111";x.textAlign="center";x.textBaseline="middle";x.fillText("вешка или визуальный ориентир",512,60);x.fillText("по направлению на спутник",512,140);
-    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sp.scale.set(3.6,0.7,1);return sp})();stLbl.position.y=STAKE_H+0.5;stake.add(stLbl);
+  var stLbl=(function(){var c=document.createElement("canvas"),x=c.getContext("2d"),F="300 46px 'Golos Text', system-ui, sans-serif";x.font=F;var cw=Math.ceil(Math.max(x.measureText("вешка или визуальный ориентир").width,x.measureText("по направлению на спутник").width)+16);c.width=cw;c.height=200;x=c.getContext("2d");x.font=F;x.fillStyle="#111111";x.textAlign="left";x.textBaseline="middle";x.fillText("вешка или визуальный ориентир",8,60);x.fillText("по направлению на спутник",8,140);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sp.scale.set(c.width*0.0035,0.7,1);sp.center.set(-0.04,0.5);return sp})();stLbl.position.y=STAKE_H*0.62;stake.add(stLbl); /* label to the right of the stake, clear of the satellite label */
   /* ground ribbons: sight line and antenna direction */
   function ribbonGeo(w){var g=new THREE.PlaneGeometry(1,w);g.rotateX(-Math.PI/2);return g}
   function placeRibbon(m,a,b,y){var dx=b.x-a.x,dz=b.z-a.z,Ln=Math.hypot(dx,dz)||1e-6;m.position.set((a.x+b.x)/2,y,(a.z+b.z)/2);m.rotation.y=Math.atan2(-dz,dx);m.scale.x=Ln}
@@ -612,7 +622,7 @@ var G=null;
   function camBack(o,w,h){w=w||320;h=h||260;var c=new THREE.PerspectiveCamera(2*Math.atan(o.cy/o.f)*180/Math.PI,o.cx/o.cy,0.05,200);c.setViewOffset(2*o.cx,2*o.cy,0,0,w,h);
     var e=W(o.eye[0],o.eye[1],o.eye[2]);c.position.copy(e);c.up.copy(W(o.up[0],o.up[1],o.up[2]));c.lookAt(e.clone().add(W(o.fw[0],o.fw[1],o.fw[2])));c.updateProjectionMatrix();return c}
   function addPanel(cv,cam,obs){if(!PR||!cv)return;obs=obs||{};var p={cv:cv,ctx:cv.getContext("2d"),cam:cam,vis:true,scale:obs.scale||1,shadows:!!obs.shadows};
-    if(window.IntersectionObserver){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}
+    if(window.IntersectionObserver&&!REC){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}
   var ANTSET=new Set();
   function markAntenna(list){list.forEach(function(o){if(!o.isSprite)ANTSET.add(o)})}
   var CATCH=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.ShadowMaterial({opacity:0.22}));CATCH.rotation.x=-Math.PI/2;CATCH.position.y=0.002;CATCH.receiveShadow=true;CATCH.visible=false;scene.add(CATCH);
@@ -635,7 +645,7 @@ var G=null;
   G={render:function(S){
     head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
     comp.position.copy(W(S.cp[0],S.cp[1],0));
-    plateG.rotation.y=-S.heading*D;dialG.rotation.y=-(S.heading-S.reading)*D;ndl.rotation.y=-S.needle*D;
+    plateG.rotation.y=-S.heading*D;dialG.rotation.y=-(S.heading-S.reading)*D;setIdxLbl(S.reading,Math.abs(S.reading-MAG_AZ)<0.05);ndl.rotation.y=-S.needle*D;
     compLbl.visible=(ease((S.t-0.6)/1.4)-ease((S.t-12.3)/1.5))<0.3;
     var showArc=S.t>=11&&S.t<17&&S.inN,cpos=W(S.cp[0],S.cp[1],TOPY+0.04);
     if(showArc){var a0=S.needle,a1=S.heading,key=a0.toFixed(1)+"_"+a1.toFixed(1)+"_"+S.cp[0].toFixed(2);
@@ -659,6 +669,7 @@ var G=null;
       var fp=W(S.cp[0]-bw[0]*1.05+bp[0]*0.3,S.cp[1]-bw[1]*1.05+bp[1]*0.3,TOPY+1.15),ft=W(S.cp[0]+bw[0]*0.25,S.cp[1]+bw[1]*0.25,TOPY-0.1);
       camera.position.copy(ov.lerp(fp,fc));var tg=ot.lerp(ft,fc);camera.lookAt(tg);if(controls)controls.target.copy(tg)}
     if(controls&&userCam)controls.update();
+    (function(){var p=new THREE.Vector3(),r=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0).multiplyScalar(stLbl.scale.x*1.05);stLbl.getWorldPosition(p);var q=p.clone().add(r);p.project(camera);q.project(camera);stLbl.center.set(q.x>0.97?1.04:-0.04,0.5)})(); /* keep the stake label inside the frame */
     renderer.render(scene,camera);
     renderPanels();
   }};
@@ -668,7 +679,7 @@ var G=null;
 var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 var T=reduce?16:0,playing=!reduce,last=null,lastStep=-1;
 function frame(t){
-  var S=state(t);
+  var S=state(t);LASTS=S;
   $("readout").textContent=F1(S.reading)+"°";
   if(S.step!==lastStep){lastStep=S.step;$("cap").innerHTML="<b>"+(S.step+1)+"/5</b>"+STEPS[S.step][1];
     chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
@@ -683,9 +694,16 @@ function loop(ts){if(playing){if(last!==null){T+=Math.min(0.1,(ts-last)/1000);if
 function jump(x){T=x;last=null}
 window.__spJump=function(x){T=x;frame(T)};
 $("btnPlay").addEventListener("click",function(){playing=!playing;this.textContent=playing?"Пауза":"Играть"});
+/* click (not drag) on the 3D stage or any view toggles play / pause */
+(function(){var down=null;document.querySelectorAll("#stage,.sp-view").forEach(function(el){el.style.cursor="pointer";
+  el.addEventListener("pointerdown",function(e){down=[e.clientX,e.clientY]});
+  el.addEventListener("click",function(e){if(e.target.closest("button,a,input,select,label"))return;if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;$("btnPlay").click()})})})();
 $("btnRestart").addEventListener("click",function(){jump(0);playing=true;$("btnPlay").textContent="Пауза"});
 $("btnPlay").textContent=playing?"Пауза":"Играть";
-frame(T);requestAnimationFrame(loop);
+var LASTS=null;
+window.__spRec={dur:T_END,steps:STEPS.map(function(s){return s[0]}),texts:STEPS.map(function(s){return s[1]}),views:["vMerge","vMerge","vMerge","vBack","vSnake"],tok:TOK,
+  set:function(t){T=t;frame(t);return LASTS},head:function(){return {label:"НА КОЛЬЦЕ КОМПАСА",value:$("readout").textContent,ok:false,note:""}},gl:$("gl")};
+frame(T);if(!REC)requestAnimationFrame(loop);
 })();
 </script>
 

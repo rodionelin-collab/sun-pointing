@@ -83,10 +83,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 <div class="sp-wrap sp" id="sp">
   <nav class="sp-nav" aria-label="Способы наведения">
     <a class="sp-back" href="index.html">← Помощник установщика</a>
-    <div class="sp-tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html" aria-current="page">По солнцу</a><a href="magnetic.html">Магнитный компас</a></div>
+    <div class="sp-tabs"><a href="compass.html">Компас в телефоне</a><a href="sun.html" aria-current="page">По солнцу</a><a href="magnetic.html">Магнитный компас</a><a href="video.html">Видео для клиента</a></div>
   </nav>
 
-  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · дата <input type="date" id="dateIn" class="sp-date-in" aria-label="Дата установки"> · <a href="index.html">изменить в Помощнике</a></div>
+  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b> · планируемая дата установки <input type="date" id="dateIn" class="sp-date-in" aria-label="Планируемая дата установки"> · <a href="index.html">изменить в Помощнике</a></div>
   <div class="sp-demo" id="demo" hidden></div>
 
   <div class="sp-head">
@@ -126,6 +126,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 /* ================= shared model & timeline ================= */
 var D=Math.PI/180;
 /* ================= site parameters: point & satellite chosen in «Помощник установщика» ================= */
+/* rec=1: page is driven frame by frame by video.html (no animation loop, all panels rendered) */
+var REC=/[?&]rec=1(&|$)/.test(location.search);
 var PRM=(function(){
   var d={lat:52.2869,lon:104.305,tz:8,satLon:145,satName:"Экспресс-АМУ7",decl:-4.8,place:"Иркутск",date:""};
   try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null");if(s)for(var k in d)if(s[k]!==undefined&&s[k]!==null&&s[k]!=="")d[k]=s[k]}catch(e){}
@@ -464,7 +466,7 @@ var G=null;
   var canvas=$("gl"),stage=$("stage");
   if(!window.THREE){fail();return}
   var renderer;
-  try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true})}catch(e){fail();return}
+  try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,preserveDrawingBuffer:REC})}catch(e){fail();return}
   function fail(){canvas.hidden=true;$("glHint").hidden=true;var d=document.createElement("div");d.className="sp-nogl";d.textContent="3D-вид недоступен в этом браузере. Ниже работают плоские виды.";stage.appendChild(d)}
   renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -585,7 +587,7 @@ var G=null;
   function camBack(o,w,h){w=w||320;h=h||260;var c=new THREE.PerspectiveCamera(2*Math.atan(o.cy/o.f)*180/Math.PI,o.cx/o.cy,0.05,200);c.setViewOffset(2*o.cx,2*o.cy,0,0,w,h);
     var e=W(o.eye[0],o.eye[1],o.eye[2]);c.position.copy(e);c.up.copy(W(o.up[0],o.up[1],o.up[2]));c.lookAt(e.clone().add(W(o.fw[0],o.fw[1],o.fw[2])));c.updateProjectionMatrix();return c}
   function addPanel(cv,cam,obs){if(!PR||!cv)return;obs=obs||{};var p={cv:cv,ctx:cv.getContext("2d"),cam:cam,vis:true,scale:obs.scale||1,shadows:!!obs.shadows};
-    if(window.IntersectionObserver){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}
+    if(window.IntersectionObserver&&!REC){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}
   var ANTSET=new Set();
   function markAntenna(list){list.forEach(function(o){if(!o.isSprite)ANTSET.add(o)})}
   var CATCH=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.ShadowMaterial({opacity:0.22}));CATCH.rotation.x=-Math.PI/2;CATCH.position.y=0.002;CATCH.receiveShadow=true;CATCH.visible=false;scene.add(CATCH);
@@ -638,7 +640,7 @@ var G=null;
 var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 var T=reduce?13.5:0,playing=!reduce,last=null,lastStep=-1;
 function frame(t){
-  var S=state(t);
+  var S=state(t);LASTS=S;
   var hl=t>=6&&t<14.6;$("clock").textContent=hl?hhmm(MTX,true):hhmm(CLK0+S.secs*1000,true);$("clock").classList.toggle("is-match",hl);$("matchMsg").hidden=!hl;
   if(S.step!==lastStep){lastStep=S.step;$("cap").innerHTML="<b>"+(S.step+1)+"/5</b>"+STEPS[S.step][1];
     chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
@@ -655,9 +657,16 @@ function loop(ts){
 function jump(x){T=x;last=null}
 window.__spJump=function(x){T=x;frame(T)};
 $("btnPlay").addEventListener("click",function(){playing=!playing;this.textContent=playing?"Пауза":"Играть"});
+/* click (not drag) on the 3D stage or any view toggles play / pause */
+(function(){var down=null;document.querySelectorAll("#stage,.sp-view").forEach(function(el){el.style.cursor="pointer";
+  el.addEventListener("pointerdown",function(e){down=[e.clientX,e.clientY]});
+  el.addEventListener("click",function(e){if(e.target.closest("button,a,input,select,label"))return;if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;$("btnPlay").click()})})})();
 $("btnRestart").addEventListener("click",function(){jump(0);playing=true;$("btnPlay").textContent="Пауза"});
 $("btnPlay").textContent=playing?"Пауза":"Играть";
-frame(T);requestAnimationFrame(loop);
+var LASTS=null;
+window.__spRec={dur:T_END,steps:STEPS.map(function(s){return s[0]}),texts:STEPS.map(function(s){return s[1]}),views:["vSide","vTop","vBack","vTop","vSnake"],tok:TOK,
+  set:function(t){T=t;frame(t);return LASTS},head:function(){return {label:"ВРЕМЯ НА ТОЧКЕ",value:$("clock").textContent,ok:$("clock").classList.contains("is-match"),note:$("matchMsg").hidden?"":$("matchMsg").textContent}},gl:$("gl")};
+frame(T);if(!REC)requestAnimationFrame(loop);
 })();
 </script>
 

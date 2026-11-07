@@ -88,7 +88,7 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
 <div class="wrap">
   <header>
     <h1>Помощник установщика антенны</h1>
-    <p>Азимут, угол места, поворот конвертора, наведение по солнцу и компасу · анимации: <a href="compass.html" style="color:var(--accent)">компас в телефоне</a>, <a href="sun.html" style="color:var(--accent)">по солнцу</a>, <a href="magnetic.html" style="color:var(--accent)">магнитный компас</a></p>
+    <p>Азимут, угол места, поворот конвертора, наведение по солнцу и компасу · анимации: <a href="compass.html" style="color:var(--accent)">компас в телефоне</a>, <a href="sun.html" style="color:var(--accent)">по солнцу</a>, <a href="magnetic.html" style="color:var(--accent)">магнитный компас</a> · <a href="video.html" style="color:var(--accent);font-weight:600">видео для клиента</a></p>
   </header>
 
   <section class="grid2">
@@ -170,10 +170,10 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
   <!-- SUN -->
   <section class="panel" data-pane="sun" hidden>
     <h2>Наведение по солнцу</h2>
-    <p class="hint"><a href="sun.html" style="color:var(--accent);font-weight:600">Посмотреть анимацию: как это выглядит в 3D →</a></p>
+    <p class="hint"><a href="sun.html" style="color:var(--accent);font-weight:600">Посмотреть анимацию: как это выглядит в 3D →</a> · <a href="video.html" style="color:var(--accent);font-weight:600">Создать видео для клиента →</a></p>
     <p class="hint" style="font-size:14px;color:var(--ink);max-width:68ch">Солнце за день проходит по небу с востока на запад. Один раз в день оно оказывается точно в той стороне, где висит спутник, только выше или ниже него. В эту минуту достаточно развернуть антенну «лицом» к солнцу, и по сторонам света она будет смотреть точно на спутник. Ни компас, ни транспортир не нужны.</p>
     <div class="row">
-      <div><label for="sunDate">Дата установки</label><input id="sunDate" type="date"></div>
+      <div><label for="sunDate">Планируемая дата установки</label><input id="sunDate" type="date"></div>
       <div style="align-self:end"><button class="ghost" id="sunNow" type="button">Сегодня</button></div>
     </div>
     <div class="cell" style="border:1px solid var(--line);border-radius:10px">
@@ -301,7 +301,7 @@ function placeName(){var cs=document.getElementById("city");if(cs&&cs.value!==""
 function save(){try{localStorage.setItem("installer-helper",JSON.stringify({lat:S.lat,lon:S.lon,tz:S.tz,satLon:S.satLon,satName:S.satName,place:placeName(),offset:S.offset,H:S.H,W:S.W,tab:S.tab,decl:S.decl,declManual:S.declManual,date:$("sunDate").value||null}))}catch(e){}
   /* pass the chosen point and satellite to the animation pages */
   var q="?lat="+S.lat.toFixed(5)+"&lon="+S.lon.toFixed(5)+"&tz="+S.tz+"&satLon="+S.satLon+"&decl="+S.decl+"&sat="+encodeURIComponent(S.satName||"")+"&place="+encodeURIComponent(placeName())+($("sunDate").value?"&date="+$("sunDate").value:"");
-  document.querySelectorAll('a[href^="sun.html"],a[href^="compass.html"],a[href^="magnetic.html"]').forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+q)})}
+  document.querySelectorAll('a[href^="sun.html"],a[href^="compass.html"],a[href^="magnetic.html"],a[href^="video.html"]').forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+q)})}
 
 /* ---------- geometry ---------- */
 function look(lat,lon,satLon){
