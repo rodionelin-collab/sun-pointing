@@ -34,6 +34,13 @@ label.k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacin
 input[type=date]{font:600 15px var(--f-body);border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card);color:var(--ink)}
 .methods{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:15px}
 .methods label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.quals{display:flex;flex-wrap:wrap;gap:8px}
+.quals label{position:relative;cursor:pointer}
+.quals input{position:absolute;opacity:0;width:1px;height:1px}
+.quals span{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:44px;padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);font:600 14px var(--f-body,Raleway,sans-serif);color:var(--ink);line-height:1.2}
+.quals small{font-weight:400;font-size:12px;color:var(--muted)}
+.quals input:checked+span{border-color:#3732b5;background:#eeedfc;color:#3732b5}
+.quals input:focus-visible+span{outline:3px solid #3732b5;outline-offset:2px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 button,.btn{font:600 15px var(--f-body);border-radius:9px;padding:11px 18px;border:1px solid var(--cyan);background:var(--cyan);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
 button.ghost,.btn.ghost{background:var(--card);color:var(--cyan)}
@@ -83,9 +90,14 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
     </div>
     <div class="row">
       <button type="button" id="go">Создать видео</button>
+      <div class="quals" role="radiogroup" aria-label="Качество видео">
+        <label><input type="radio" name="qual" value="max" checked><span>Максимальное<small id="qs-max">≈ 37 МБ</small></span></label>
+        <label><input type="radio" name="qual" value="mid"><span>Среднее<small id="qs-mid">≈ 18 МБ</small></span></label>
+        <label><input type="radio" name="qual" value="low"><span>Лёгкое<small id="qs-low">≈ 11 МБ</small></span></label>
+      </div>
       <button type="button" class="ghost" id="stop" hidden>Остановить</button>
     </div>
-    <p class="hint" id="eta">Ролик длится около 5 минут (все три способа). Сборка идёт прямо в браузере и занимает 6–8 минут — не закрывайте и не сворачивайте вкладку.</p>
+    <p class="hint" id="eta">Ролик длится около 5,5 минуты (все три способа). Сборка идёт прямо в браузере — не закрывайте и не сворачивайте вкладку. Чем ниже качество, тем меньше файл и быстрее сборка; размер указан для всех трёх способов.</p>
     <div id="progWrap" hidden>
       <div class="bar"><i id="prog"></i></div>
       <p class="hint" id="progTxt" style="margin-top:6px"></p>
@@ -119,8 +131,10 @@ iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border
 (function(){
 "use strict";
 var $=function(id){return document.getElementById(id)};
-var W=720,H=1280,FPS=25,GH=420,SLOW=2,   /* animations play at half speed in the video */
-    BR=4e6;(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));if(/[?&]test=1/.test(location.search)&&b>0)BR=b})();   /* 4 Mbit/s, keyframe every 2 s: browser hardware encoders blur thin lines and small text at low bitrates */
+/* video quality presets: the drawing is always laid out at 720×1280 and scaled down into the encoded frame */
+var QUAL={max:{w:720,h:1280,fps:25,br:4e6},mid:{w:540,h:960,fps:15,br:1.6e6},low:{w:432,h:768,fps:10,br:0.7e6}};
+var OW=720,OH=1280,W=720,H=1280,FPS=25,GH=420,SLOW=2,   /* animations play at half speed in the video */
+    BR=4e6,BRQ=(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));return /[?&]test=1/.test(location.search)&&b>0?b:0})();   /* 4 Mbit/s, keyframe every 2 s: browser hardware encoders blur thin lines and small text at low bitrates */
 var TEST=/[?&]test=1(&|$)/.test(location.search),TT=parseFloat(new URLSearchParams(location.search).get("tt"));if(isNaN(TT))TT=-1;   /* short clips for checking the pipeline */
 var METHODS={sun:{page:"sun.html",name:"По солнцу",lead:"Ловим момент, когда солнце стоит точно в стороне спутника, и разворачиваем антенну «лицом» к солнцу."},
   compass:{page:"compass.html",name:"Компас в телефоне",lead:"Находим направление на спутник по компасу в телефоне, ставим вешку и разворачиваем на неё антенну."},
@@ -316,11 +330,11 @@ function methodFrame(ctx,w,k,i,n,S,prog){
 function pickCodec(){var list=["avc1.640028","avc1.4d0028","avc1.42002a","avc1.42001f"];
   if(!window.VideoEncoder||!window.Mp4Muxer)return Promise.resolve(null);
   return list.reduce(function(p,c){return p.then(function(found){if(found)return found;
-    return VideoEncoder.isConfigSupported({codec:c,width:W,height:H,bitrate:BR,framerate:FPS}).then(function(r){return r.supported?c:null}).catch(function(){return null})})},Promise.resolve(null))}
+    return VideoEncoder.isConfigSupported({codec:c,width:OW,height:OH,bitrate:BR,framerate:FPS}).then(function(r){return r.supported?c:null}).catch(function(){return null})})},Promise.resolve(null))}
 function makeSink(cv){return pickCodec().then(function(codec){
-  if(codec){var muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:"avc",width:W,height:H,frameRate:FPS},fastStart:"in-memory"}),err=null;
+  if(codec){var muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:"avc",width:OW,height:OH,frameRate:FPS},fastStart:"in-memory"}),err=null;
     var enc=new VideoEncoder({output:function(ch,meta){muxer.addVideoChunk(ch,meta)},error:function(e){err=e}});
-    enc.configure({codec:codec,width:W,height:H,bitrate:BR,framerate:FPS,latencyMode:"quality"});var n=0;
+    enc.configure({codec:codec,width:OW,height:OH,bitrate:BR,framerate:FPS,latencyMode:"quality"});var n=0;
     return {kind:"mp4",add:function(){if(err)return Promise.reject(err);var f=new VideoFrame(cv,{timestamp:Math.round(n*1e6/FPS),duration:Math.round(1e6/FPS)});enc.encode(f,{keyFrame:n%(FPS*2)===0});f.close();n++;
         return enc.encodeQueueSize>6?new Promise(function(r){(function w(){if(enc.encodeQueueSize<=2)r();else setTimeout(w,5)})()}):Promise.resolve()},
       done:function(){return enc.flush().then(function(){muxer.finalize();enc.close();return new Blob([muxer.target.buffer],{type:"video/mp4"})})},cancel:function(){try{enc.close()}catch(e){}}}}
@@ -332,6 +346,8 @@ function makeSink(cv){return pickCodec().then(function(codec){
   return {kind:mt.indexOf("mp4")>=0?"mp4":"webm",add:function(){if(track.requestFrame)track.requestFrame();n++;var due=t0+n*1000/FPS,wait=due-performance.now();return new Promise(function(r){setTimeout(r,Math.max(0,wait))})},
     done:function(){return new Promise(function(r){rec.onstop=function(){r(new Blob(parts,{type:mt.split(";")[0]}))};rec.stop()})},cancel:function(){try{rec.stop()}catch(e){}}}})}
 
+/* quality choice: the page always starts at maximum */
+function qualKey(){var r=document.querySelector('input[name="qual"]:checked');return r&&QUAL[r.value]?r.value:"max"}
 /* ---------- build ---------- */
 var busy=false,cancelled=false;
 $("stop").addEventListener("click",function(){cancelled=true});
@@ -342,13 +358,15 @@ function build(){
   var list=Array.prototype.slice.call(document.querySelectorAll(".methods input:checked")).map(function(i){return i.value});
   if(!list.length){alert("Отметьте хотя бы один способ наведения.");return Promise.resolve()}
   busy=true;cancelled=false;$("go").disabled=true;$("stop").hidden=false;$("progWrap").hidden=false;$("out").hidden=true;$("prevCard").hidden=false;
+  var qk=qualKey(),q=QUAL[qk];OW=q.w;OH=q.h;FPS=q.fps;BR=BRQ||q.br;
   var cv=document.createElement("canvas");cv.width=W;cv.height=H;var ctx=cv.getContext("2d",{alpha:false}),pv=$("preview").getContext("2d");
+  var oc=cv,octx=null;if(OW!==W){oc=document.createElement("canvas");oc.width=OW;oc.height=OH;octx=oc.getContext("2d",{alpha:false});octx.imageSmoothingQuality="high"}
   var INTRO=5,MI=2.5,OUT=5,SUPP=6,durs={},total=0,doneSec=0,sink;
   function setProg(txt){var p=Math.min(1,doneSec/Math.max(1,total));$("prog").style.width=(p*100).toFixed(1)+"%";$("progTxt").textContent=txt+" · "+Math.round(p*100)+"%"}
-  function emit(){pv.drawImage(cv,0,0);return sink.add().then(function(){doneSec+=1/FPS;if(cancelled)throw new Error("остановлено")})}
+  function emit(){pv.drawImage(cv,0,0);if(octx)octx.drawImage(cv,0,0,OW,OH);return sink.add().then(function(){doneSec+=1/FPS;if(cancelled)throw new Error("остановлено")})}
   function still(drawFn,sec,label){var n=Math.round(sec*FPS),k=0;drawFn(ctx);
     return (function next(){if(k>=n)return Promise.resolve();k++;if(k%10===0)setProg(label);return emit().then(next)})()}
-  return (document.fonts?document.fonts.ready:Promise.resolve()).then(function(){return Promise.all([imgReady(LOGO),imgReady(LOGOSQ),fontsReady])}).then(function(){return makeSink(cv)}).then(function(s){
+  return (document.fonts?document.fonts.ready:Promise.resolve()).then(function(){return Promise.all([imgReady(LOGO),imgReady(LOGOSQ),fontsReady])}).then(function(){return makeSink(oc)}).then(function(s){
     if(!s)throw new Error("этот браузер не умеет записывать видео. Откройте страницу в Chrome, Edge или Safari.");sink=s;
     list.forEach(function(k){durs[k]=TEST?TD:(k==="sun"?46:49)*SLOW});   /* estimate; the real length is taken when each page loads */
     if(TOK)return;return loadPage(METHODS[list[0]].page).then(function(w){TOK=w.__spRec.tok})})
@@ -367,7 +385,7 @@ function build(){
   .then(function(blob){dropFrame();busy=false;$("go").disabled=false;$("stop").hidden=true;$("prog").style.width="100%";
     var ext=sink.kind==="mp4"?"mp4":"webm",name=("Наведение_"+TOK.SAT+"_"+TOK.PLACE+"_"+date).replace(/[\\/:*?"<>|\s]+/g,"_")+"."+ext,url=URL.createObjectURL(blob);
     $("vid").src=url;$("dl").href=url;$("dl").setAttribute("download",name);$("outName").textContent=name;
-    $("outInfo").textContent=(blob.size/1048576).toFixed(1).replace(".",",")+" МБ · "+Math.round(total)+" с · вертикальное видео 720×1280"+(ext==="webm"?" · формат WebM (iPhone может не открыть — лучше собирать в Chrome на компьютере)":"");
+    $("outInfo").textContent=(blob.size/1048576).toFixed(1).replace(".",",")+" МБ · "+Math.round(total)+" с · вертикальное видео "+OW+"×"+OH+(ext==="webm"?" · формат WebM (iPhone может не открыть — лучше собирать в Chrome на компьютере)":"");
     $("progTxt").textContent="Готово.";$("out").hidden=false;
     var file=null;try{file=new File([blob],name,{type:blob.type})}catch(e){}
     $("share").hidden=!(file&&navigator.canShare&&navigator.canShare({files:[file]}));
