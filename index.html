@@ -108,8 +108,6 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
         </div>
         <p class="err" id="coordsErr" hidden></p>
         <p class="hint" id="coordsInfo" style="margin:4px 0 0"></p>
-        <p class="hint" style="margin:6px 0 0">Вставьте координаты как есть — из Яндекс Карт, Google Maps, навигатора или письма: формат определится сам. Без букв полушарий сначала широта, потом долгота. Или начните вводить название ближайшего населённого пункта и выберите его из списка.</p>
-        <div class="ex" id="coordsEx"><span>Примеры:</span><button type="button">52.2869, 104.3050</button><button type="button">52,2869 104,3050</button><button type="button">52°17'13" N 104°18'18" E</button><button type="button">62°32′07″ с. ш. 113°57′40″ в. д.</button><button type="button">Мирный</button></div>
       </div>
       <div class="row">
         <div><label for="tz">Часовой пояс точки, UTC+</label><input id="tz" type="number" step="0.5" min="-12" max="14"><p class="hint" id="tzHint" style="margin:4px 0 0"></p></div>
@@ -471,7 +469,6 @@ $("coords").addEventListener("keydown",function(e){
 $("coords").addEventListener("change",function(){if($("acList").hidden)applyCoords()});
 $("coords").addEventListener("blur",function(){setTimeout(function(){if(!$("acList").hidden){closeAc();applyCoords()}},150)});
 $("acList").addEventListener("mousedown",function(e){var li=e.target.closest("li");if(li){e.preventDefault();pickAc(+li.dataset.i)}});
-$("coordsEx").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;$("coords").value=b.textContent;closeAc();applyCoords()});
 $("tz").addEventListener("input",function(){var v=parseFloat(this.value);if(!isNaN(v)){S.tz=v;$("tzHint").textContent="Введён вручную"+(S.tzName?"; по координатам: "+S.tzName:"")+".";render()}});
 $("decl").addEventListener("input",function(){
   if(this.value.trim()===""){S.declManual=false;refreshDecl();render();return}
