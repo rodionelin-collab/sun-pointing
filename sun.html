@@ -27,7 +27,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-clock .sp-date{display:block;font:600 14px var(--f-body);color:var(--ink);margin:1px 0 2px}
 .sp-clock #clock{display:block;transition:color .3s}
 .sp-clock #clock.is-match{color:var(--green);font-weight:800}
-.sp-match{display:block;font:600 12.5px var(--f-body);color:var(--green);max-width:26ch;line-height:1.3;margin-top:3px}
+.sp-match{display:block;font:600 12.5px var(--f-body);color:var(--green);max-width:34ch;line-height:1.35;margin-top:3px}
 .sp button{font:600 13px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
 .sp button:hover{border-color:var(--cyan);color:var(--cyan)}
 .sp button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
@@ -85,7 +85,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 
   <div class="sp-head">
     <h1>Наведение антенны по солнцу</h1>
-    <div class="sp-clock"><small>ДАТА И ВРЕМЯ НА ТОЧКЕ</small><span class="sp-date">{DATE}</span><span id="clock">--:--:--</span><span class="sp-match" id="matchMsg" hidden>в это время направление на спутник и на солнце совпадут</span></div>
+    <div class="sp-clock"><small>ДАТА И ВРЕМЯ НА ТОЧКЕ</small><span class="sp-date">{DATE}</span><span id="clock">--:--:--</span><span class="sp-match" id="matchMsg" hidden></span></div>
     <button id="btnPlay" type="button">Пауза</button>
     <button id="btnRestart" type="button">С начала</button>
   </div>
@@ -156,8 +156,8 @@ var MAGR=((AZ-DECLR)%360+360)%360;
 var SUNM=(function(){
   if(DEMO)return null;
   var now=new Date(Date.now()+PRM.tz*3600000),day=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate())-PRM.tz*3600000,prev=null,pt=0;
-  for(var m=0;m<=1440;m+=2){var t=day+m*60000,df=w180(sunPos(new Date(t),PRM.lat,PRM.lon).az-AZ);
-    if(prev!==null&&Math.sign(df)!==Math.sign(prev)&&Math.abs(df)<30&&Math.abs(prev)<30){var a=pt,b=t;for(var i=0;i<30;i++){var c=(a+b)/2;if(Math.sign(w180(sunPos(new Date(c),PRM.lat,PRM.lon).az-AZ))===Math.sign(prev))a=c;else b=c}
+  for(var m=0;m<=1440;m+=2){var t=day+m*60000,df=w180(sunPos(new Date(t),PRM.lat,PRM.lon).az-LK.az);
+    if(prev!==null&&Math.sign(df)!==Math.sign(prev)&&Math.abs(df)<30&&Math.abs(prev)<30){var a=pt,b=t;for(var i=0;i<30;i++){var c=(a+b)/2;if(Math.sign(w180(sunPos(new Date(c),PRM.lat,PRM.lon).az-LK.az))===Math.sign(prev))a=c;else b=c}
       var tt=(a+b)/2,se=sunPos(new Date(tt),PRM.lat,PRM.lon).el;if(se>3)return {t:tt,el:se,az0:sunPos(new Date(tt-24*60000),PRM.lat,PRM.lon).az}}
     prev=df;pt=t}
   return null;
@@ -173,6 +173,7 @@ function fmt(s){return String(s).replace(/\{([A-Z]+)\}/g,function(m,k){return TO
 function fmtDom(root){var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,list=[];while((n=w.nextNode()))if(/\{[A-Z]+\}/.test(n.nodeValue))list.push(n);list.forEach(function(n){n.nodeValue=fmt(n.nodeValue)})}
 
 fmtDom(document.getElementById("sp"));
+setTimeout(function(){var m=document.getElementById("matchMsg");if(m&&typeof WIN!=="undefined")m.textContent="В промежуток с "+hhmm(WIN[0],true)+" до "+hhmm(WIN[1],true)+" направление на солнце и на нужный вам спутник совпадут"},0);
 (function(){var msg=DEMO||(typeof DEMO_SUN!=="undefined"?DEMO_SUN:"");if(msg){var e=document.getElementById("demo");e.textContent=msg;e.hidden=false}
   if(location.search)document.querySelectorAll(".sp-tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
 var SAT_AZ=AZ, SAT_EL=ELV, SUN_EL_REAL=SUNM?SUNM.el:22, SUN_EL=Math.max(9,SUN_EL_REAL), TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=23;
@@ -180,6 +181,14 @@ var DEMO_SUN=(!DEMO&&!SUNM)?"Сегодня для этой точки солн�
 var SUN_AZ0=SUNM?SUNM.az0:SAT_AZ-32;
 var CLK0=SUNM?SUNM.t-29*60000:(function(){var n=new Date(Date.now()+PRM.tz*3600000);return Date.UTC(n.getUTCFullYear(),n.getUTCMonth(),n.getUTCDate(),9)-PRM.tz*3600000})();
 TOK.TIME=hhmm(CLK0+29*60000);
+var MTX=CLK0+29*60000;                       /* moment of exact coincidence */
+var WIN=(function(){                         /* window while the sun is within ±1° of the satellite azimuth */
+  if(!SUNM)return [MTX-3*60000,MTX+3*60000];
+  function at(tg,lo,hi){var fl=w180(sunPos(new Date(lo),PRM.lat,PRM.lon).az-tg),fh=w180(sunPos(new Date(hi),PRM.lat,PRM.lon).az-tg);if(Math.sign(fl)===Math.sign(fh))return null;
+    for(var i=0;i<40;i++){var c=(lo+hi)/2,fc=w180(sunPos(new Date(c),PRM.lat,PRM.lon).az-tg);if(Math.sign(fc)===Math.sign(fl)){lo=c;fl=fc}else hi=c}return (lo+hi)/2}
+  var a=at(LK.az-1,MTX-180*60000,MTX),b=at(LK.az+1,MTX,MTX+180*60000);
+  return [a||MTX-3*60000,b||MTX+3*60000];
+})();
 var STARTS=[0,6,8,12.2,14.6];
 var STEPS=[
   ["Солнце идёт по небу","Утром солнце на востоке и смещается к югу. Направление на спутник не меняется. Угол места заранее выставлен примерно, по шкале кронштейна. Болты азимута ослаблены."],
@@ -549,7 +558,7 @@ var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce
 var T=reduce?13.5:0,playing=!reduce,last=null,lastStep=-1;
 function frame(t){
   var S=state(t);
-  $("clock").textContent=hhmm(CLK0+S.secs*1000,true);var hl=t>=6&&t<14.6;$("clock").classList.toggle("is-match",hl);$("matchMsg").hidden=!hl;
+  var hl=t>=6&&t<14.6;$("clock").textContent=hl?hhmm(MTX,true):hhmm(CLK0+S.secs*1000,true);$("clock").classList.toggle("is-match",hl);$("matchMsg").hidden=!hl;
   if(S.step!==lastStep){lastStep=S.step;$("cap").innerHTML="<b>"+(S.step+1)+"/5</b>"+STEPS[S.step][1];
     chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
   $("prog").style.width=(t/T_END*100).toFixed(2)+"%";
