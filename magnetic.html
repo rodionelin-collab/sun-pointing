@@ -380,8 +380,6 @@ var MERGE=(function(){
   /* installer + compass (rotate together with heading) */
   var who=mk("g",{},svg);
   var body=mk("g",{},who);
-  mk("ellipse",{cx:0,cy:CR+30,rx:30,ry:13,fill:"#c9d5dd"},body);mk("circle",{cx:0,cy:CR+30,r:10,fill:"#9fb0bc"},body);
-  mk("path",{d:"M-22 "+(CR+24)+"L-16 "+(CR+4)+"M22 "+(CR+24)+"L16 "+(CR+4),stroke:"#c9d5dd","stroke-width":7,"stroke-linecap":"round"},body);
 
   var bez=mk("g",{},who);
   mk("circle",{r:CR,fill:"#fff",stroke:"#90a4b1","stroke-width":1.8},bez);
