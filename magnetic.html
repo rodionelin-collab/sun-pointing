@@ -435,24 +435,36 @@ var G=null;
   var sd=dirv(SAT_AZ,SAT_EL);sat.position.copy(W(sd[0]*8,sd[1]*8,1+sd[2]*8));scene.add(sat);
   var satLbl=label("спутник","#111111",0.8);satLbl.position.copy(sat.position).add(new THREE.Vector3(0,0.45,0));scene.add(satLbl);
   var satLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(dishGeom(SAT_AZ).C),sat.position.clone()]),new THREE.LineDashedMaterial({color:0x0a8fb3,dashSize:.18,gapSize:.12}));satLine.computeLineDistances();scene.add(satLine);
-  /* compass on a small stand */
+  /* big, detailed baseplate compass on a small stand (drawn larger than life so the scale is readable) */
   var comp=new THREE.Group();scene.add(comp);
-  comp.add(rod(W(0,0,0),W(0,0,0.95),0.012,new THREE.MeshStandardMaterial({color:0x8b6a45,roughness:.9})));
-  var plate=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.012,0.52),new THREE.MeshStandardMaterial({color:0xcfe3ea,transparent:true,opacity:.85,roughness:.3}));plate.position.y=0.97;plate.castShadow=true;
-  var plateG=new THREE.Group();plateG.add(plate);
-  var arrowM=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.12,3),new THREE.MeshBasicMaterial({color:0x0a8fb3}));arrowM.rotation.x=-Math.PI/2;arrowM.position.set(0,0.985,-0.21);plateG.add(arrowM);
-  comp.add(plateG);
-  function dialTex(){var c=document.createElement("canvas");c.width=c.height=512;var x=c.getContext("2d");x.fillStyle="#fff";x.beginPath();x.arc(256,256,250,0,7);x.fill();x.strokeStyle="#5f7380";
-    for(var a=0;a<360;a+=5){var r1=a%30===0?205:a%10===0?222:232;x.lineWidth=a%30===0?5:2;x.beginPath();x.moveTo(256+246*Math.sin(a*D),256-246*Math.cos(a*D));x.lineTo(256+r1*Math.sin(a*D),256-r1*Math.cos(a*D));x.stroke()}
-    x.font="600 64px 'Golos Text', sans-serif";x.textAlign="center";x.textBaseline="middle";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.fillStyle=q[2];x.fillText(q[0],256+165*Math.sin(q[1]*D),256-165*Math.cos(q[1]*D))});
-    x.strokeStyle="#d23b2f";x.lineWidth=5;x.setLineDash([14,10]);x.beginPath();x.moveTo(256,110);x.lineTo(226,150);x.lineTo(226,300);x.lineTo(286,300);x.lineTo(286,150);x.closePath();x.stroke();
-    return new THREE.CanvasTexture(c)}
-  var dial=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.02,48),[new THREE.MeshStandardMaterial({color:0x90a4b1}),new THREE.MeshStandardMaterial({map:dialTex()}),new THREE.MeshStandardMaterial({color:0x90a4b1})]);
-  dial.position.y=0.985;var dialG=new THREE.Group();dialG.add(dial);comp.add(dialG);
-  var ndl=new THREE.Group();var nR=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.13,4),new THREE.MeshBasicMaterial({color:0xd23b2f}));nR.rotation.x=-Math.PI/2;nR.position.z=-0.065;
-  var nW=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.13,4),new THREE.MeshBasicMaterial({color:0xf4f7f9}));nW.rotation.x=Math.PI/2;nW.position.z=0.065;ndl.add(nR);ndl.add(nW);ndl.position.y=1.0;comp.add(ndl);
-  comp.children.forEach(function(ch){if(ch!==plateG&&ch!==dialG&&ch!==ndl)return;ch.scale.set(2,1,2)});
-  var compLbl=label("компас","#111111",0.7);compLbl.position.y=1.45;comp.add(compLbl);
+  var RD=0.32,TOPY=1.0;
+  comp.add(rod(W(0,0,0),W(0,0,TOPY-0.03),0.014,new THREE.MeshStandardMaterial({color:0x8b6a45,roughness:.9})));
+  var plateG=new THREE.Group();comp.add(plateG);
+  var plate=new THREE.Mesh(new THREE.BoxGeometry(0.52,0.014,0.92),new THREE.MeshStandardMaterial({color:0xdbe9ef,transparent:true,opacity:.9,roughness:.3}));plate.position.set(0,TOPY-0.012,-0.04);plate.castShadow=true;plateG.add(plate);
+  var arrowM=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.12,3),new THREE.MeshBasicMaterial({color:0x0a8fb3}));arrowM.rotation.x=-Math.PI/2;arrowM.position.set(0,TOPY,-0.49);plateG.add(arrowM);
+  var idxM=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.006,0.07),new THREE.MeshBasicMaterial({color:0x14232d}));idxM.position.set(0,TOPY+0.03,-RD-0.03);plateG.add(idxM);
+  function dialTex(){var c=document.createElement("canvas");c.width=c.height=1024;var x=c.getContext("2d"),o=512;
+    x.fillStyle="#dfe7ec";x.beginPath();x.arc(o,o,505,0,7);x.fill();
+    x.fillStyle="#ffffff";x.beginPath();x.arc(o,o,385,0,7);x.fill();
+    x.strokeStyle="#90a4b1";x.lineWidth=6;x.beginPath();x.arc(o,o,385,0,7);x.stroke();
+    x.strokeStyle="#5f7380";for(var a=0;a<360;a+=5){var r1=a%30===0?325:a%10===0?345:360;x.lineWidth=a%30===0?7:3;x.beginPath();x.moveTo(o+380*Math.sin(a*D),o-380*Math.cos(a*D));x.lineTo(o+r1*Math.sin(a*D),o-r1*Math.cos(a*D));x.stroke()}
+    x.textAlign="center";x.textBaseline="middle";x.fillStyle="#14232d";x.font="700 64px 'JetBrains Mono', monospace";
+    for(var b=0;b<360;b+=30){x.save();x.translate(o+445*Math.sin(b*D),o-445*Math.cos(b*D));x.rotate(b*D);x.fillText(String(b),0,0);x.restore()}
+    x.font="700 100px 'Golos Text', sans-serif";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.save();x.translate(o+255*Math.sin(q[1]*D),o-255*Math.cos(q[1]*D));x.rotate(q[1]*D);x.fillStyle=q[2];x.fillText(q[0],0,0);x.restore()});
+    x.strokeStyle="#d23b2f";x.lineWidth=8;x.setLineDash([22,14]);x.beginPath();x.moveTo(o,o-300);x.lineTo(o-45,o-235);x.lineTo(o-45,o+40);x.lineTo(o+45,o+40);x.lineTo(o+45,o-235);x.closePath();x.stroke();
+    var t=new THREE.CanvasTexture(c);t.anisotropy=8;return t}
+  var dialG=new THREE.Group();comp.add(dialG);
+  var dialSide=new THREE.Mesh(new THREE.CylinderGeometry(RD,RD,0.03,64),new THREE.MeshStandardMaterial({color:0x90a4b1}));dialSide.position.y=TOPY;dialSide.castShadow=true;dialG.add(dialSide);
+  var dialFace=new THREE.Mesh(new THREE.CircleGeometry(RD,64),new THREE.MeshStandardMaterial({map:dialTex(),roughness:.6}));dialFace.rotation.x=-Math.PI/2;dialFace.position.y=TOPY+0.016;dialG.add(dialFace);
+  var ndl=new THREE.Group();ndl.position.y=TOPY+0.03;comp.add(ndl);
+  var nR=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.2,4),new THREE.MeshBasicMaterial({color:0xd23b2f}));nR.rotation.x=-Math.PI/2;nR.position.z=-0.1;nR.scale.set(1,1,0.35);ndl.add(nR);
+  var nW=new THREE.Mesh(new THREE.ConeGeometry(0.03,0.2,4),new THREE.MeshBasicMaterial({color:0xf4f7f9}));nW.rotation.x=Math.PI/2;nW.position.z=0.1;nW.scale.set(1,1,0.35);ndl.add(nW);
+  var hub=new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.02,16),new THREE.MeshBasicMaterial({color:0x14232d}));ndl.add(hub);
+  var compLbl=label("компас","#111111",0.7);compLbl.position.y=1.55;comp.add(compLbl);
+  /* green 155° arc from the needle (north) to the pointer */
+  var arcMat=new THREE.MeshBasicMaterial({color:0x1f9d63}),arcMesh=null,arcKey="";
+  var arcLbl=(function(){var c=document.createElement("canvas");c.width=256;c.height=128;var x=c.getContext("2d");x.font="700 76px 'JetBrains Mono', monospace";x.textAlign="center";x.textBaseline="middle";x.lineWidth=12;x.strokeStyle="rgba(255,255,255,.9)";x.strokeText("155°",128,64);x.fillStyle="#1f9d63";x.fillText("155°",128,64);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,depthTest:false}));sp.scale.set(0.5,0.25,1);sp.renderOrder=6;return sp})();scene.add(arcLbl);
   /* stake */
   var stake=new THREE.Group();stake.position.copy(W(STAKE[0],STAKE[1],0));scene.add(stake);
   var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,STAKE_H,10),new THREE.MeshStandardMaterial({color:0xe0650b}));pole.position.y=STAKE_H/2;pole.castShadow=true;stake.add(pole);
@@ -480,6 +492,14 @@ var G=null;
     head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
     comp.position.copy(W(S.cp[0],S.cp[1],0));
     plateG.rotation.y=-S.heading*D;dialG.rotation.y=-(S.heading-S.reading)*D;ndl.rotation.y=-S.needle*D;
+    compLbl.visible=(ease((S.t-0.6)/1.4)-ease((S.t-12.3)/1.5))<0.3;
+    var showArc=S.t>=11&&S.t<17&&S.inN,cpos=W(S.cp[0],S.cp[1],TOPY+0.04);
+    if(showArc){var a0=S.needle,a1=S.heading,key=a0.toFixed(1)+"_"+a1.toFixed(1)+"_"+S.cp[0].toFixed(2);
+      if(key!==arcKey){arcKey=key;if(arcMesh){scene.remove(arcMesh);arcMesh.geometry.dispose()}
+        var pts=[],span=((a1-a0)%360+360)%360;for(var i=0;i<=40;i++){var a=(a0+span*i/40)*D;pts.push(new THREE.Vector3(cpos.x+(RD+0.17)*Math.sin(a),cpos.y,cpos.z-(RD+0.17)*Math.cos(a)))}
+        arcMesh=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),60,0.009,6,false),arcMat);scene.add(arcMesh)}
+      arcMesh.visible=true;var mid=(a0+(((a1-a0)%360+360)%360)/2)*D;arcLbl.position.set(cpos.x+(RD+0.32)*Math.sin(mid),cpos.y+0.05,cpos.z-(RD+0.32)*Math.cos(mid));arcLbl.visible=true}
+    else{if(arcMesh)arcMesh.visible=false;arcLbl.visible=false}
     stake.scale.set(1,Math.max(0.001,S.stake),1);stake.visible=S.stake>0;
     var c1=W(COMP1[0],COMP1[1],0),st=W(STAKE[0],STAKE[1],0);placeRibbon(sight,c1,c1.clone().lerp(st,S.line),0.012);sMat.opacity=0.85*Math.min(1,S.line*3);
     var m0=W(0,0,0),ge=W(Math.sin(S.dishAz*D)*5,Math.cos(S.dishAz*D)*5,0);placeRibbon(guide,m0,ge,0.016);gMat.color.setHex(S.ok?0x1f9d63:0xe0650b);gMat.opacity=0.9*S.gv;
@@ -487,9 +507,13 @@ var G=null;
     if(S.t>=4.5&&S.t<9&&S.defl>6){txt="рядом металл — стрелка врёт";pos=W(S.cp[0],S.cp[1],1.9)}
     else if(S.t>=9&&S.t<12.5&&S.inN){txt="✓ стрелка на букве С";col="#1f9d63";pos=W(S.cp[0],S.cp[1],1.9)}
     else if(S.gv>0){txt=S.ok?"✓ АНТЕННА НА ОРИЕНТИР":"угол антенна — ориентир "+Math.max(1,Math.round(S.dAz))+"°";col=S.ok?"#1f9d63":"#e0650b";pos=W(2.6*bw[0]-1.2*bp[0],2.6*bw[1]-1.2*bp[1],0.9)}
-    if(txt){setLbl(txt,col);stat.position.copy(pos);stat.material.opacity=1;stat.visible=true}else stat.visible=false;
+    var fcs=ease((S.t-0.6)/1.4)-ease((S.t-12.3)/1.5);
+    if(txt){setLbl(txt,col);if(S.t<12.5)pos=W(S.cp[0]+bw[0]*0.55,S.cp[1]+bw[1]*0.55,TOPY+0.62);stat.position.copy(pos);var sc2=1-0.72*fcs;stat.scale.set(3.6*sc2,0.9*sc2,1);stat.material.opacity=1;stat.visible=true}else stat.visible=false;
     if(!userCam){var up=ease((S.t-12.7)/1.6)-ease((S.t-17.2)/1.8),ca=(SAT_AZ+115+8*Math.sin(S.t/T_END*2*Math.PI))*D,R=9.8-2.6*up;
-      camera.position.copy(W(R*Math.sin(ca),R*Math.cos(ca),3+4*up));camera.lookAt(target);if(controls)controls.target.copy(target)}
+      var ov=W(R*Math.sin(ca),R*Math.cos(ca),3+4*up),ot=target.clone();
+      var fc=ease((S.t-0.6)/1.4)-ease((S.t-12.3)/1.5);           /* close-up on the compass during steps 1–3 */
+      var fp=W(S.cp[0]-bw[0]*1.05+bp[0]*0.3,S.cp[1]-bw[1]*1.05+bp[1]*0.3,TOPY+1.15),ft=W(S.cp[0]+bw[0]*0.25,S.cp[1]+bw[1]*0.25,TOPY-0.1);
+      camera.position.copy(ov.lerp(fp,fc));var tg=ot.lerp(ft,fc);camera.lookAt(tg);if(controls)controls.target.copy(tg)}
     if(controls&&userCam)controls.update();
     renderer.render(scene,camera);
   }};
