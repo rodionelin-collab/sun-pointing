@@ -52,6 +52,11 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-meter span{font:12px var(--f-mono);letter-spacing:.12em;color:var(--muted)}
 .sp-bars{display:flex;gap:4px;flex:1 1 240px}
 .sp-bars i{flex:1;height:18px;border-radius:2px;background:var(--grid)}
+.sp-phone h2{margin:0;font-size:16px;font-weight:600}
+.sp-phone ol{margin:0;padding-left:22px;display:grid;gap:8px;font-size:14.5px;line-height:1.5;max-width:80ch}
+.sp-phone p{min-height:0}
+.sp-phone a{color:var(--cyan)}
+.sp-note{font-size:13.5px!important;color:var(--muted)}
 #sigTxt{font:600 13px var(--f-mono);min-width:7ch;text-align:right}
 @media (max-width:640px){.sp-stage{aspect-ratio:4/3}.sp-hint{font-size:12px}}
 </style>
@@ -64,7 +69,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
     <h1>Наведение антенны по компасу</h1>
     <a class="sp-link" href="index.html">По солнцу</a>
     <a class="sp-link" href="helper.html">Помощник установщика →</a>
-    <div class="sp-read"><small>ЛИМБ КОМПАСА</small><span id="readout">0°</span></div>
+    <div class="sp-read"><small>НА ЭКРАНЕ ТЕЛЕФОНА</small><span id="readout">0°</span></div>
     <button id="btnPlay" type="button">Пауза</button>
     <button id="btnRestart" type="button">С начала</button>
   </div>
@@ -83,10 +88,25 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
   </div>
 
   <div class="sp-views">
-    <div class="sp-view"><h2>КОМПАС</h2><svg id="vComp" viewBox="0 0 320 260" role="img" aria-label="Компас: лимб, стрелка и указатель направления"></svg><p>Выставляем на лимбе азимут по компасу, затем поворачиваем компас целиком, пока красный конец стрелки не встанет в метку С. Указатель на корпусе смотрит на спутник.</p></div>
-    <div class="sp-view"><h2>ВИД СВЕРХУ</h2><svg id="vTop" viewBox="0 0 320 260" role="img" aria-label="Вид сверху: компас, линия на ориентир, антенна"></svg><p>Магнитный север отличается от географического на склонение. Линия от компаса через антенну упирается в ориентир, на него и разворачиваем антенну.</p></div>
-    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Компас даёт ошибку 1–2°. Шаг по углу места 0,5–1°, на каждом шаге поводим по азимуту влево-вправо и находим максимум сигнала.</p></div>
+    <div class="sp-view"><h2>КОМПАС В ТЕЛЕФОНЕ</h2><svg id="vComp" viewBox="0 0 320 260" role="img" aria-label="Компас в телефоне: число на экране и картушка"></svg><p>На экране — направление, куда смотрит верхний край телефона. Поворачиваемся, пока не будет 155°: тогда верх телефона смотрит на спутник.</p></div>
+    <div class="sp-view"><h2>ВИД СВЕРХУ</h2><svg id="vTop" viewBox="0 0 320 260" role="img" aria-label="Вид сверху: компас, линия на ориентир, антенна"></svg><p>Компас телефона отсчитывает от магнитного севера, а он на 5° левее настоящего. Линия от телефона через антенну идёт к вешке, на неё и разворачиваем антенну.</p></div>
+    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Компас телефона ошибается на 1–3°. Шаг по углу места 0,5–1°, на каждом шаге поводим по азимуту влево-вправо и находим максимум сигнала.</p></div>
     <div class="sp-view"><h2>ВИД ИЗ-ЗА АНТЕННЫ</h2><svg id="vBack" viewBox="0 0 320 260" role="img" aria-label="Вид из-за антенны глазами установщика"></svg><p>Так видит установщик: верх вешки должен оказаться точно над центром зеркала. Низ вешки, штанга и приёмопередатчик за зеркалом показаны пунктиром.</p></div>
+  </div>
+
+  <div class="sp-cap sp-phone">
+    <h2>Инструкция: наведение по компасу в смартфоне</h2>
+    <ol>
+      <li><b>Узнайте азимут и угол места.</b> Откройте «<a href="helper.html">Помощник установщика</a>», выберите точку и спутник. Запишите азимут (например, 150°), склонение и угол места.</li>
+      <li><b>Посчитайте число для телефона.</b> Если в настройках компаса включён «Истинный север» (на iPhone: Настройки → Компас), ищем сам азимут — 150°. Если нет, телефон отсчитывает от магнитного севера: вычтите склонение из азимута. При западном склонении −5° получается 150 − (−5) = <b>155°</b>, при восточном +5° — 145°.</li>
+      <li><b>Подготовьте антенну.</b> Соберите её на треноге, выставьте угол места по шкале кронштейна, затяните болты угла места. Болты поворота по азимуту ослабьте, чтобы антенна поворачивалась рукой.</li>
+      <li><b>Подготовьте телефон.</b> Снимите чехол с магнитом. Откройте приложение «Компас» и поводите телефоном в воздухе «восьмёркой» — это калибровка.</li>
+      <li><b>Отойдите от металла.</b> Встаньте в 3–5 шагах позади антенны, со стороны, противоположной спутнику, подальше от треноги, машины и вагончиков. Держите телефон ровно, экраном вверх.</li>
+      <li><b>Найдите направление.</b> Медленно поворачивайтесь всем телом, пока на экране не будет нужное число. Верхний край телефона смотрит на спутник. Посмотрите вдоль него и попросите помощника поставить вешку в 10–20 м за антенной на этой линии. Можно выбрать и дальний ориентир: дерево, столб.</li>
+      <li><b>Разверните антенну.</b> Встаньте за зеркалом и поворачивайте антенну, пока верх вешки не окажется точно над центром зеркала, а штанга конвертора не будет смотреть прямо на вешку. Затяните болты азимута.</li>
+      <li><b>Донаведите «змейкой».</b> Включите модем. Ослабив болты, на каждом положении угла места медленно поводите антенну влево-вправо на 2–3°, затем измените угол места на 0,5–1° и пройдите обратно. Найдя максимум сигнала, верните антенну в эту точку и затяните все болты.</li>
+    </ol>
+    <p class="sp-note">Рядом с большими металлическими конструкциями — вышками, ёмкостями, вагончиками — компас телефона может ошибаться на 5–10°. В солнечный день надёжнее <a href="index.html">наведение по солнцу</a>.</p>
   </div>
 
   <div class="sp-meter"><span>СИГНАЛ МОДЕМА</span><div class="sp-bars" id="bars"></div><b id="sigTxt">нет</b></div>
@@ -106,11 +126,11 @@ var ERR=1.2;                 /* typical compass error, degrees */
 var LINE_AZ=SAT_AZ+ERR;      /* true direction of the sight line actually laid out */
 var STARTS=[0,4.5,9,12.5,17];
 var STEPS=[
-  ["Азимут по компасу","«Помощник установщика» дал истинный азимут 150° и склонение −5°. По компасу это 150 + 5 = 155°. Выставляем 155° на лимбе компаса."],
-  ["Отходим от металла","Рядом с антенной, треногой и машиной стрелка отклоняется. Отходим на 3–5 м за антенну, держим компас горизонтально и ждём, пока стрелка успокоится."],
-  ["Стрелка в метке С — ставим ориентир","Поворачиваем компас целиком, пока красный конец стрелки не встанет в метку С. Указатель на корпусе теперь смотрит на спутник: в этом направлении, за антенной, ставим вешку или замечаем ориентир."],
-  ["Поворачиваем антенну на ориентир","Встаём за зеркалом и разворачиваем антенну, пока высокая вешка не окажется точно над центром зеркала, а штанга конвертора не будет смотреть прямо на неё. Затягиваем болты азимута."],
-  ["Донаводим «змейкой»","Компас даёт ошибку 1–2°, а угол места выставлен по шкале. На каждом положении угла места медленно поводим антенну влево-вправо, меняем угол места на 0,5–1° и идём обратно. Нашли максимум — затягиваем все болты."]
+  ["Какое число искать","Азимут — угол на спутник, отсчитанный от севера по часовой стрелке. «Помощник установщика» дал 150°. Компас в телефоне обычно показывает магнитный север, а он здесь на 5° левее настоящего. Поэтому на экране ищем 150 + 5 = 155°. Если в настройках компаса включён «Истинный север», ищем сразу 150°."],
+  ["Калибровка и отход от металла","Снимаем чехол с магнитом и поводим телефоном «восьмёркой» — это калибровка. Рядом с антенной, треногой и машиной число на экране скачет, поэтому отходим на 3–5 шагов за антенну."],
+  ["155° на экране — ставим вешку","Держим телефон ровно, экраном вверх, и медленно поворачиваемся всем телом, пока на экране не будет 155°. Верхний край телефона теперь смотрит на спутник. В этом направлении, за антенной, ставим вешку или замечаем дальний ориентир: дерево, столб."],
+  ["Поворачиваем антенну на вешку","Встаём за зеркалом и разворачиваем антенну, пока верх вешки не окажется точно над центром зеркала, а штанга конвертора не будет смотреть прямо на неё. Затягиваем болты азимута."],
+  ["Донаводим «змейкой»","Компас телефона ошибается на 1–3°, а угол места выставлен по шкале. На каждом положении угла места медленно поводим антенну влево-вправо, меняем угол места на 0,5–1° и идём обратно. Нашли максимум сигнала — затягиваем все болты."]
 ];
 function clamp(x){return x<0?0:x>1?1:x}
 function ease(x){x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2}
@@ -132,12 +152,14 @@ function snakeAt(t){
 }
 function state(t){
   var step=0;for(var i=0;i<STARTS.length;i++)if(t>=STARTS[i])step=i;
-  var reading=MAG_AZ*ease((t-1)/2.6);
   var mv=ease((t-4.8)/3.2),cp=[COMP0[0]+(COMP1[0]-COMP0[0])*mv,COMP0[1]+(COMP1[1]-COMP0[1])*mv];
   var defl=28*(1-mv)+(t>4.8&&t<9.5?Math.sin((t-4.8)*6)*7*Math.exp(-(t-4.8)*0.9)*(mv<1?1:0.6):0);
   var heading=100+(LINE_AZ-100)*ease((t-9.2)/2.2);
-  var needle=DECL+defl;                                /* world angle of the red end */
-  var inN=Math.abs(wrap(needle-(heading-reading)))<2.5&&t>=11;
+  var noise=t<9.2?Math.sin(t*7.3)*3*(1-mv)+Math.sin(t*3.1)*1.5:0;
+  var display=((heading-DECL-defl-noise-ERR)%360+360)%360;   /* what the phone shows (magnetic, with sensor error) */
+  var calib=clamp((t-5)/2.6);
+  var needle=DECL+defl;
+  var inN=Math.abs(wrap(display-MAG_AZ))<1&&t>=11;
   var line=clamp((t-11.2)/0.8),stake=clamp((t-11.6)/0.9);
   var rot=ease((t-12.9)/3.4),sn=snakeAt(t);
   var dishAz=104+(SAT_AZ+ERR-104)*rot+(t>=SN_T0?sn.az-ERR:0),dEl=t>=SN_T0?sn.el:-2;
@@ -145,7 +167,7 @@ function state(t){
   var gv=t>=12.5?clamp((t-12.5)/0.5)*(1-clamp((t-17)/0.6)):0;
   var ok=t>=15.8&&dAz<0.6;
   var lvl=t<15.5?0:sig(dishAz-SAT_AZ,dEl);
-  return {t:t,step:step,reading:reading,cp:cp,defl:defl,heading:heading,needle:needle,inN:inN,line:line,stake:stake,dishAz:dishAz,dEl:dEl,dAz:dAz,gv:gv,ok:ok,sn:sn,lvl:Math.max(0,Math.min(1,lvl)),near:1-mv};
+  return {t:t,step:step,display:display,calib:calib,cp:cp,defl:defl,heading:heading,needle:needle,inN:inN,line:line,stake:stake,dishAz:dishAz,dEl:dEl,dAz:dAz,gv:gv,ok:ok,sn:sn,lvl:Math.max(0,Math.min(1,lvl)),near:1-mv};
 }
 /* antenna geometry (world: x east, y north, z up; metres) */
 var MAST_H=0.95;
@@ -181,39 +203,44 @@ function setA(e,a){for(var k in a)e.setAttribute(k,typeof a[k]==="number"?a[k].t
 function ptsStr(a){return a.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1)}).join(" ")}
 function tr(x,y,r,s){return "translate("+x.toFixed(1)+" "+y.toFixed(1)+")"+(r!==undefined?" rotate("+r.toFixed(1)+")":"")+(s!==undefined?" scale("+s+")":"")}
 
-/* ================= panel 1: the compass (in its own frame, direction arrow up) ================= */
+/* ================= panel 1: the phone compass (phone upright, rose turns) ================= */
 var COMPV=(function(){
-  var svg=$("vComp"),cx=160,cy=132,R=92;
-  mk("rect",{x:cx-70,y:cy-118,width:140,height:236,rx:14,fill:"#eef4f7",stroke:"var(--line)","stroke-width":1.5},svg);
-  mk("path",{d:"M"+cx+" "+(cy-114)+"l-9 16h18z",fill:"var(--cyan)"},svg);
-  mk("line",{x1:cx,y1:cy-98,x2:cx,y2:cy-R-4,stroke:"var(--cyan)","stroke-width":2},svg);
-  mk("text",{x:cx+14,y:cy-104,"font-size":9,fill:"var(--cyan)"},svg).textContent="на спутник";
-  var bez=mk("g",{},svg);
-  mk("circle",{cx:0,cy:0,r:R,fill:"#ffffff",stroke:"#90a4b1","stroke-width":2},bez);
-  for(var a=0;a<360;a+=5){var r1=a%30===0?R-12:a%10===0?R-8:R-5;mk("line",{x1:R*Math.sin(a*D),y1:-R*Math.cos(a*D),x2:r1*Math.sin(a*D),y2:-r1*Math.cos(a*D),stroke:"#5f7380","stroke-width":a%30===0?1.4:0.8},bez)}
-  for(var b=30;b<360;b+=30){if(b%90===0)continue;mk("text",{x:(R-22)*Math.sin(b*D),y:-(R-22)*Math.cos(b*D)+3,"font-size":8.5,"text-anchor":"middle",fill:"#5f7380",transform:"rotate("+b+" "+((R-22)*Math.sin(b*D)).toFixed(1)+" "+(-(R-22)*Math.cos(b*D)).toFixed(1)+")"},bez).textContent=b}
-  [["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){mk("text",{x:(R-24)*Math.sin(q[1]*D),y:-(R-24)*Math.cos(q[1]*D)+5,"font-size":14,"font-weight":600,"text-anchor":"middle",fill:q[2],"font-family":"var(--f-body)"},bez).textContent=q[0]});
-  /* orienting arrow ("домик") pointing to bezel N */
-  var house=mk("path",{d:"M0 "+(-R+30)+"L-11 "+(-R+48)+"L-11 18L11 18L11 "+(-R+48)+"Z",fill:"none",stroke:"var(--red)","stroke-width":1.6,"stroke-dasharray":"4 3"},bez);
-  var needle=mk("g",{},svg);
-  mk("path",{d:"M0 -74L6 0L-6 0Z",fill:"var(--red)"},needle);mk("path",{d:"M0 74L6 0L-6 0Z",fill:"#ffffff",stroke:"#90a4b1","stroke-width":1},needle);mk("circle",{r:4,fill:"#14232d"},needle);
-  var idx=mk("line",{x1:cx,y1:cy-R-6,x2:cx,y2:cy-R+10,stroke:"var(--ink)","stroke-width":2.5},svg);
-  var top=mk("text",{x:14,y:20,"font-size":10.5,fill:"var(--muted)"},svg);
-  var stat=mk("text",{x:160,y:254,"font-size":10.5,"font-weight":600,"text-anchor":"middle","font-family":"var(--f-body)"},svg);
-  var rd=mk("text",{x:cx-14,y:cy-R-14,"font-size":12,"font-weight":600,"text-anchor":"end",fill:"var(--ink)"},svg);
+  var svg=$("vComp"),cx=160,cy=126;
+  mk("rect",{x:cx-62,y:cy-112,width:124,height:226,rx:18,fill:"#1d262c"},svg);
+  mk("rect",{x:cx-55,y:cy-98,width:110,height:196,rx:6,fill:"#ffffff"},svg);
+  mk("rect",{x:cx-14,y:cy-107,width:28,height:4,rx:2,fill:"#4a5660"},svg);
+  var num=mk("text",{x:cx,y:cy-62,"font-size":28,"font-weight":600,"text-anchor":"middle",fill:"var(--ink)"},svg);
+  var hint=mk("text",{x:cx,y:cy-46,"font-size":9,"text-anchor":"middle",fill:"var(--muted)"},svg);hint.textContent="нужно 155°";
+  var rcx=cx,rcy=cy+22,RR=46;
+  var rose=mk("g",{},svg);
+  mk("circle",{r:RR,fill:"#f4f7f9",stroke:"#90a4b1","stroke-width":1.5},rose);
+  for(var a=0;a<360;a+=10){var r1=a%30===0?RR-8:RR-4;mk("line",{x1:RR*Math.sin(a*D),y1:-RR*Math.cos(a*D),x2:r1*Math.sin(a*D),y2:-r1*Math.cos(a*D),stroke:"#5f7380","stroke-width":a%30===0?1.3:.7},rose)}
+  [["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){mk("text",{x:(RR-16)*Math.sin(q[1]*D),y:-(RR-16)*Math.cos(q[1]*D)+4,"font-size":11,"font-weight":600,"text-anchor":"middle",fill:q[2]},rose).textContent=q[0]});
+  var tgt=mk("path",{d:"M0 "+(-RR-1)+"l-4 -7h8z",fill:"var(--cyan)"},rose);
+  mk("line",{x1:rcx,y1:rcy-RR-10,x2:rcx,y2:rcy-RR+10,stroke:"var(--ink)","stroke-width":2.5},svg);
+  mk("path",{d:"M"+cx+" "+(cy-125)+"l-8 12h16z",fill:"var(--cyan)"},svg);
+  mk("text",{x:cx+14,y:cy-114,"font-size":9.5,fill:"var(--cyan)"},svg).textContent="верх телефона";
+  /* calibration figure-eight */
+  var cal=mk("g",{opacity:0},svg);
+  mk("path",{d:"M30 128c0-24 40-24 40 0s40 24 40 0s-40-24-40 0s-40 24-40 0",fill:"none",stroke:"var(--cyan)","stroke-width":1.5,"stroke-dasharray":"3 3",transform:"translate(-20 0) scale(0.75)"},cal);
+  var calDot=mk("rect",{width:8,height:14,rx:2,fill:"#1d262c"},cal);
+  mk("text",{x:8,y:160,"font-size":9.5,fill:"var(--cyan)"},cal).textContent="калибровка";
+  mk("text",{x:8,y:171,"font-size":9.5,fill:"var(--cyan)"},cal).textContent="«восьмёркой»";
+  var stat=mk("text",{x:160,y:254,"font-size":10.5,"font-weight":600,"text-anchor":"middle"},svg);
+  function fig8(p){var t=p*2*Math.PI*2;return [(70+40*Math.sin(t))*0.75-20,(128+16*Math.sin(2*t))*0.75]}
   return {draw:function(S){
-    setA(bez,{transform:tr(cx,cy,-S.reading)});
-    setA(needle,{transform:tr(cx,cy,S.needle-S.heading)});
-    top.textContent=S.t<4.5?"ист. 150° − склонение (−5°) = 155° по компасу":"";
-    rd.textContent=Math.round(S.reading)+"°";
-    var msg,col;
-    if(S.t<1)  {msg="";col="var(--muted)"}
-    else if(S.t<4.5){msg="выставляем 155° напротив указателя";col="var(--muted)"}
-    else if(S.t<9){msg=S.defl>6?"рядом металл — стрелка врёт":"стрелка успокоилась";col=S.defl>6?"var(--warn)":"var(--muted)"}
-    else if(!S.inN){msg="поворачиваем компас целиком…";col="var(--muted)"}
-    else {msg="✓ стрелка в метке С — указатель смотрит на спутник";col="var(--green)"}
+    setA(rose,{transform:tr(rcx,rcy,-S.display)});
+    setA(tgt,{transform:"rotate("+MAG_AZ+")"});
+    num.textContent=Math.round(S.display)+"°";setA(num,{fill:S.inN?"var(--green)":"var(--ink)"});
+    var showCal=S.t>=4.8&&S.t<7.8;setA(cal,{opacity:showCal?1:0});
+    if(showCal){var q=fig8(S.calib);setA(calDot,{x:q[0]-4,y:q[1]-7})}
+    var msg,col="var(--muted)";
+    if(S.t<4.5)msg="ищем на экране 155° (150° + 5° поправка)";
+    else if(S.t<9)msg=S.defl>6?"рядом металл — число скачет":"показания успокоились";
+    else if(!S.inN)msg="поворачиваемся с телефоном…";
+    else {msg="✓ 155° — верх телефона смотрит на спутник";col="var(--green)"}
+    if(S.t>=4.5&&S.t<9&&S.defl>6)col="var(--warn)";
     stat.textContent=msg;setA(stat,{fill:col});
-    setA(house,{stroke:S.inN?"var(--green)":"var(--red)","stroke-dasharray":S.inN?"none":"4 3"});
   }};
 })();
 
@@ -231,15 +258,15 @@ var TOPV=(function(){
   var mast=mk("circle",{r:3,fill:"#4e6676"},svg);
   var stakeG=mk("g",{},svg);mk("circle",{r:5,fill:"var(--warn)"},stakeG);mk("circle",{r:2,fill:"#fff"},stakeG);
   var stakeT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);stakeT.textContent="ориентир (на спутник)";
-  var comp=mk("g",{},svg);mk("circle",{r:8,fill:"#fff",stroke:"var(--ink)","stroke-width":1.4},comp);var cn=mk("path",{d:"M0 -7L2.5 0L-2.5 0Z",fill:"var(--red)"},comp);
-  var compT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);compT.textContent="компас";
+  var comp=mk("g",{},svg);mk("rect",{x:-5,y:-9,width:10,height:18,rx:2,fill:"#1d262c"},comp);mk("path",{d:"M0 -15l-3 5h6z",fill:"var(--cyan)"},comp);var cn=mk("g",{},svg);
+  var compT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);compT.textContent="телефон";
   var tN=mk("line",{stroke:"var(--ink)","stroke-width":1.4},svg),mN=mk("line",{stroke:"var(--red)","stroke-width":1.4,"stroke-dasharray":"3 2"},svg);
   var tNT=mk("text",{"font-size":9,fill:"var(--ink)","text-anchor":"middle"},svg);tNT.textContent="С ист.";
   var mNT=mk("text",{"font-size":9,fill:"var(--red)","text-anchor":"end"},svg);mNT.textContent="С магн.";
   
   var lab=mk("text",{x:12,y:250,"font-size":12,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
   return {draw:function(S,g){
-    var c=P(S.cp);setA(comp,{transform:tr(c[0],c[1])});setA(cn,{transform:"rotate("+S.needle.toFixed(1)+")"});setA(compT,{x:c[0]+12,y:c[1]+4});
+    var c=P(S.cp);setA(comp,{transform:tr(c[0],c[1],S.heading)});setA(compT,{x:c[0]+12,y:c[1]+4});
     setA(tN,{x1:c[0],y1:c[1]-10,x2:c[0],y2:c[1]-34});setA(tNT,{x:c[0],y:c[1]-37});
     var mx=c[0]+24*Math.sin(DECL*D),my=c[1]-24*Math.cos(DECL*D);setA(mN,{x1:c[0]+10*Math.sin(DECL*D),y1:c[1]-10*Math.cos(DECL*D),x2:mx,y2:my});setA(mNT,{x:mx-3,y:my-2});
     var st=P(STAKE),c1=P(COMP1);
@@ -384,24 +411,21 @@ var G=null;
   var sd=dirv(SAT_AZ,SAT_EL);sat.position.copy(W(sd[0]*8,sd[1]*8,1+sd[2]*8));scene.add(sat);
   var satLbl=label("спутник","#111111",0.8);satLbl.position.copy(sat.position).add(new THREE.Vector3(0,0.45,0));scene.add(satLbl);
   var satLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(dishGeom(SAT_AZ).C),sat.position.clone()]),new THREE.LineDashedMaterial({color:0x0a8fb3,dashSize:.18,gapSize:.12}));satLine.computeLineDistances();scene.add(satLine);
-  /* compass on a small stand */
+  /* phone on a small stand (held level, screen up) */
   var comp=new THREE.Group();scene.add(comp);
   comp.add(rod(W(0,0,0),W(0,0,0.95),0.012,new THREE.MeshStandardMaterial({color:0x8b6a45,roughness:.9})));
-  var plate=new THREE.Mesh(new THREE.BoxGeometry(0.34,0.012,0.52),new THREE.MeshStandardMaterial({color:0xcfe3ea,transparent:true,opacity:.85,roughness:.3}));plate.position.y=0.97;plate.castShadow=true;
-  var plateG=new THREE.Group();plateG.add(plate);
-  var arrowM=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.12,3),new THREE.MeshBasicMaterial({color:0x0a8fb3}));arrowM.rotation.x=-Math.PI/2;arrowM.position.set(0,0.985,-0.21);plateG.add(arrowM);
-  comp.add(plateG);
-  function dialTex(){var c=document.createElement("canvas");c.width=c.height=512;var x=c.getContext("2d");x.fillStyle="#fff";x.beginPath();x.arc(256,256,250,0,7);x.fill();x.strokeStyle="#5f7380";
-    for(var a=0;a<360;a+=5){var r1=a%30===0?205:a%10===0?222:232;x.lineWidth=a%30===0?5:2;x.beginPath();x.moveTo(256+246*Math.sin(a*D),256-246*Math.cos(a*D));x.lineTo(256+r1*Math.sin(a*D),256-r1*Math.cos(a*D));x.stroke()}
-    x.font="600 64px 'Golos Text', sans-serif";x.textAlign="center";x.textBaseline="middle";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.fillStyle=q[2];x.fillText(q[0],256+165*Math.sin(q[1]*D),256-165*Math.cos(q[1]*D))});
-    x.strokeStyle="#d23b2f";x.lineWidth=5;x.setLineDash([14,10]);x.beginPath();x.moveTo(256,110);x.lineTo(226,150);x.lineTo(226,300);x.lineTo(286,300);x.lineTo(286,150);x.closePath();x.stroke();
-    return new THREE.CanvasTexture(c)}
-  var dial=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.02,48),[new THREE.MeshStandardMaterial({color:0x90a4b1}),new THREE.MeshStandardMaterial({map:dialTex()}),new THREE.MeshStandardMaterial({color:0x90a4b1})]);
-  dial.position.y=0.985;var dialG=new THREE.Group();dialG.add(dial);comp.add(dialG);
-  var ndl=new THREE.Group();var nR=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.13,4),new THREE.MeshBasicMaterial({color:0xd23b2f}));nR.rotation.x=-Math.PI/2;nR.position.z=-0.065;
-  var nW=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.13,4),new THREE.MeshBasicMaterial({color:0xf4f7f9}));nW.rotation.x=Math.PI/2;nW.position.z=0.065;ndl.add(nR);ndl.add(nW);ndl.position.y=1.0;comp.add(ndl);
-  comp.children.forEach(function(ch){if(ch!==plateG&&ch!==dialG&&ch!==ndl)return;ch.scale.set(2,1,2)});
-  var compLbl=label("компас","#111111",0.7);compLbl.position.y=1.45;comp.add(compLbl);
+  var phoneG=new THREE.Group();phoneG.scale.set(1.7,1,1.7);comp.add(phoneG);
+  var body=new THREE.Mesh(new THREE.BoxGeometry(0.24,0.025,0.48),new THREE.MeshStandardMaterial({color:0x1d262c,roughness:.4}));body.position.y=0.97;body.castShadow=true;phoneG.add(body);
+  var scC=document.createElement("canvas");scC.width=256;scC.height=512;var scX=scC.getContext("2d"),scT=new THREE.CanvasTexture(scC);
+  var screen=new THREE.Mesh(new THREE.PlaneGeometry(0.21,0.44),new THREE.MeshBasicMaterial({map:scT}));screen.rotation.x=-Math.PI/2;screen.position.y=0.984;phoneG.add(screen);
+  var tipM=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.1,3),new THREE.MeshBasicMaterial({color:0x0a8fb3}));tipM.rotation.x=-Math.PI/2;tipM.position.set(0,0.98,-0.3);phoneG.add(tipM);
+  var lastShown=null;
+  function drawScreen(v,ok){var key=Math.round(v)+(ok?"g":"");if(key===lastShown)return;lastShown=key;var x=scX;x.fillStyle="#fff";x.fillRect(0,0,256,512);
+    x.fillStyle=ok?"#1f9d63":"#14232d";x.font="600 70px 'JetBrains Mono', monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(Math.round(v)+"°",128,110);
+    x.save();x.translate(128,320);x.rotate(-v*D);x.strokeStyle="#90a4b1";x.lineWidth=4;x.beginPath();x.arc(0,0,105,0,7);x.stroke();
+    x.font="600 40px 'Golos Text', sans-serif";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.fillStyle=q[2];x.fillText(q[0],70*Math.sin(q[1]*D),-70*Math.cos(q[1]*D))});x.restore();
+    x.fillStyle="#14232d";x.fillRect(124,200,8,30);scT.needsUpdate=true}
+  var compLbl=label("телефон","#111111",0.7);compLbl.position.y=1.45;comp.add(compLbl);
   /* stake */
   var stake=new THREE.Group();stake.position.copy(W(STAKE[0],STAKE[1],0));scene.add(stake);
   var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,STAKE_H,10),new THREE.MeshStandardMaterial({color:0xe0650b}));pole.position.y=STAKE_H/2;pole.castShadow=true;stake.add(pole);
@@ -417,7 +441,7 @@ var G=null;
   function setLbl(text,color){var key=text+color;if(!lblCache[key]){var c=document.createElement("canvas");c.width=1024;c.height=256;var x=c.getContext("2d");x.font="600 64px 'Golos Text', system-ui, sans-serif";x.textAlign="center";x.textBaseline="middle";
     x.fillStyle="rgba(255,255,255,.92)";var w=Math.min(1000,x.measureText(text).width+80);x.beginPath();x.roundRect?x.roundRect(512-w/2,48,w,160,36):x.rect(512-w/2,48,w,160);x.fill();x.lineWidth=6;x.strokeStyle=color;x.stroke();x.fillStyle=color;x.fillText(text,512,130);lblCache[key]=new THREE.CanvasTexture(c)}
     if(stat.material.map!==lblCache[key]){stat.material.map=lblCache[key];stat.material.needsUpdate=true}}
-  var controls=null,userCam=false,target=W(0.5*bw[0],0.5*bw[1],0.9);
+  var controls=null,userCam=false,target=W(-0.4*bw[0],-0.4*bw[1],0.9);
   if(THREE.OrbitControls){controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=4;controls.maxDistance=22;controls.maxPolarAngle=Math.PI/2-0.05;controls.target.copy(target);
     controls.addEventListener("start",function(){userCam=true;$("camReset").hidden=false})}else $("glHint").hidden=true;
   if(window.matchMedia&&window.matchMedia("(pointer: coarse)").matches)$("glHint").textContent="Ведите пальцем по картинке — сцена повернётся. Двумя пальцами — ближе / дальше.";
@@ -427,16 +451,16 @@ var G=null;
   G={render:function(S){
     head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*D;
     comp.position.copy(W(S.cp[0],S.cp[1],0));
-    plateG.rotation.y=-S.heading*D;dialG.rotation.y=-(S.heading-S.reading)*D;ndl.rotation.y=-S.needle*D;
+    phoneG.rotation.y=-S.heading*D;drawScreen(S.display,S.inN);
     stake.scale.set(1,Math.max(0.001,S.stake),1);stake.visible=S.stake>0;
     var c1=W(COMP1[0],COMP1[1],0),st=W(STAKE[0],STAKE[1],0);placeRibbon(sight,c1,c1.clone().lerp(st,S.line),0.012);sMat.opacity=0.85*Math.min(1,S.line*3);
     var m0=W(0,0,0),ge=W(Math.sin(S.dishAz*D)*5,Math.cos(S.dishAz*D)*5,0);placeRibbon(guide,m0,ge,0.016);gMat.color.setHex(S.ok?0x1f9d63:0xe0650b);gMat.opacity=0.9*S.gv;
     var txt=null,col="#e0650b",pos=null;
-    if(S.t>=4.5&&S.t<9&&S.defl>6){txt="рядом металл — стрелка врёт";pos=W(S.cp[0],S.cp[1],1.9)}
-    else if(S.t>=9&&S.t<12.5&&S.inN){txt="✓ стрелка в метке С";col="#1f9d63";pos=W(S.cp[0],S.cp[1],1.9)}
+    if(S.t>=4.5&&S.t<9&&S.defl>6){txt="рядом металл — число скачет";pos=W(S.cp[0],S.cp[1],1.9)}
+    else if(S.t>=9&&S.t<12.5&&S.inN){txt="✓ на экране 155°";col="#1f9d63";pos=W(S.cp[0],S.cp[1],1.9)}
     else if(S.gv>0){txt=S.ok?"✓ АНТЕННА НА ОРИЕНТИР":"угол антенна — ориентир "+Math.max(1,Math.round(S.dAz))+"°";col=S.ok?"#1f9d63":"#e0650b";pos=W(2.6*bw[0]-1.2*bp[0],2.6*bw[1]-1.2*bp[1],0.9)}
     if(txt){setLbl(txt,col);stat.position.copy(pos);stat.material.opacity=1;stat.visible=true}else stat.visible=false;
-    if(!userCam){var up=ease((S.t-12.7)/1.6)-ease((S.t-17.2)/1.8),ca=(SAT_AZ+115+8*Math.sin(S.t/T_END*2*Math.PI))*D,R=8.6-1.6*up;
+    if(!userCam){var up=ease((S.t-12.7)/1.6)-ease((S.t-17.2)/1.8),ca=(SAT_AZ+115+8*Math.sin(S.t/T_END*2*Math.PI))*D,R=9.8-2.6*up;
       camera.position.copy(W(R*Math.sin(ca),R*Math.cos(ca),3+4*up));camera.lookAt(target);if(controls)controls.target.copy(target)}
     if(controls&&userCam)controls.update();
     renderer.render(scene,camera);
@@ -448,7 +472,7 @@ var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce
 var T=reduce?16:0,playing=!reduce,last=null,lastStep=-1;
 function frame(t){
   var S=state(t);
-  $("readout").textContent=Math.round(S.reading)+"°";
+  $("readout").textContent=Math.round(S.display)+"°";
   if(S.step!==lastStep){lastStep=S.step;$("cap").innerHTML="<b>"+(S.step+1)+"/5</b>"+STEPS[S.step][1];
     chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
   $("prog").style.width=(t/T_END*100).toFixed(2)+"%";
