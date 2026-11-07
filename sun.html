@@ -464,8 +464,8 @@ var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
   var hidTxt=mk("text",{"font-size":9.5,fill:"var(--muted)",display:"none"},svg);hidTxt.textContent="";
   svg.appendChild(v.e.cross);
   /* fading trail of the converter during the snake, as seen from behind the dish */
-  var BT_N=160,BT_LEN=150,BT_GAP=3.5,btl=[];
-  for(var bi=0;bi<BT_N;bi++)btl.push(mk("line",{stroke:"#e0650b","stroke-width":1.6,"stroke-linecap":"round",opacity:0},svg));
+  var BT_N=160,BT_LEN=150,BT_GAP=1.8,btl=[];
+  for(var bi=0;bi<BT_N;bi++)btl.push(mk("line",{stroke:"#e0650b","stroke-width":1.3,"stroke-linecap":"round",opacity:0},svg));
   /* like a contrail: the trail is measured along the snake path (about two passes long, 60° = one pass) and fades out towards its tail */
   function snPtAt(L){var i=1;while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k]}
   function backTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),prev=null,L0=snCostToLen(clamp((S.t-SN_T0)/(SN_T1-SN_T0)));
