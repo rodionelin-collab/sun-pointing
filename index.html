@@ -68,6 +68,11 @@ ol.steps{margin:0;padding-left:20px;display:grid;gap:6px}
 svg{max-width:100%;height:auto;display:block}
 svg text{font-family:var(--f-body);fill:var(--ink)}
 .fig{display:grid;place-items:center;background:var(--bg);border-radius:8px;padding:10px}
+.lead{margin:0;font-size:16px;line-height:1.5;max-width:70ch}
+.lead b{font-family:var(--f-data);font-size:18px}
+ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
+.more{border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+.more summary{cursor:pointer;font-weight:600;color:var(--accent)}
 .note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;margin:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -121,7 +126,7 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
   </section>
 
   <nav role="tablist" aria-label="Способы наведения">
-    <button role="tab" data-tab="dish" aria-selected="true">Наклон антенны</button>
+    <button role="tab" data-tab="dish" aria-selected="true">Угол места</button>
     <button role="tab" data-tab="sun" aria-selected="false">По солнцу</button>
     <button role="tab" data-tab="compass" aria-selected="false">По компасу</button>
     <button role="tab" data-tab="all" aria-selected="false">Все спутники</button>
@@ -130,23 +135,30 @@ svg text{font-family:var(--f-body);fill:var(--ink)}
 
   <!-- DISH -->
   <section class="panel" data-pane="dish">
-    <h2>Угол офсетности и наклон зеркала</h2>
-    <div class="grid2">
-      <div style="display:grid;gap:12px;align-content:start">
-        <div class="row">
-          <div><label for="offset">Угол офсетности, °</label><input id="offset" type="number" step="0.1" value="24"></div>
-          <div><label for="dishH">Высота зеркала, мм</label><input id="dishH" type="number" step="1" value="600"></div>
+    <h2>Как выставить угол места</h2>
+    <p class="lead">Угол места — на сколько градусов вверх от горизонта антенна должна «смотреть», чтобы попасть на спутник. Для выбранной точки и спутника — <b id="elMain">—</b>.</p>
+    <ol class="steps big" id="elSteps"></ol>
+    <p class="note" id="elNote"></p>
+    <details class="more">
+      <summary>Если на кронштейне нет шкалы угла места: выставить наклон зеркала по отвесу</summary>
+      <div class="grid2" style="margin-top:12px">
+        <div style="display:grid;gap:12px;align-content:start">
+          <p class="hint" style="color:var(--ink)">Плоскость зеркала офсетной антенны направлена не туда, куда антенна «смотрит»: антенна смотрит выше на несколько десятков градусов. Эта разница называется <b>угол офсетности</b>. Он указан в паспорте антенны, обычно 22–26°. Зная его, можно выставить наклон зеркала с помощью отвеса и рулетки.</p>
+          <div class="row">
+            <div><label for="offset">Угол офсетности (из паспорта), °</label><input id="offset" type="number" step="0.1" value="24"></div>
+            <div><label for="dishH">Высота зеркала, мм</label><input id="dishH" type="number" step="1" value="600"></div>
+          </div>
+          <div class="row">
+            <div><label for="dishW">Ширина зеркала, мм</label><input id="dishW" type="number" step="1" value="550"></div>
+            <div style="align-self:end"><button class="ghost" id="estOffset" type="button">Прикинуть угол по размерам</button></div>
+          </div>
+          <p class="hint">Если паспорта нет, угол можно прикинуть по размерам зеркала: измерьте его высоту и ширину и нажмите кнопку. Это приблизительная оценка.</p>
+          <dl class="kv" id="dishKv"></dl>
+          <ol class="steps" id="dishSteps"></ol>
         </div>
-        <div class="row">
-          <div><label for="dishW">Ширина зеркала, мм</label><input id="dishW" type="number" step="1" value="550"></div>
-          <div style="align-self:end"><button class="ghost" id="estOffset" type="button">Оценить офсет по размерам</button></div>
-        </div>
-        <p class="hint">Точный угол офсетности берите из паспорта антенны. Оценка по размерам (arccos ширины к высоте) даёт приблизительное значение.</p>
-        <dl class="kv" id="dishKv"></dl>
-        <ol class="steps" id="dishSteps"></ol>
+        <div class="fig"><svg id="dishSvg" viewBox="0 0 320 300" width="320" role="img" aria-label="Схема наклона зеркала с отвесом"></svg></div>
       </div>
-      <div class="fig"><svg id="dishSvg" viewBox="0 0 320 300" width="320" role="img" aria-label="Схема наклона зеркала с отвесом"></svg></div>
-    </div>
+    </details>
   </section>
 
   <!-- SUN -->
@@ -462,6 +474,15 @@ function render(){
 }
 
 function renderDish(L){
+  var lo=Math.max(0,Math.round(L.el)-2);
+  $("elMain").textContent=deg(L.el);
+  $("elSteps").innerHTML=
+    "<li><b>Найдите шкалу угла места.</b> Она на кронштейне антенны — опорно-поворотном устройстве, которым зеркало крепится к трубе треноги. Это дуга с делениями в градусах и риска-указатель. Цифры на такой шкале уже учитывают форму зеркала, поэтому выставляйте по ней прямо число из «Помощника».</li>"+
+    "<li><b>Поставьте чуть ниже нужного:</b> ослабьте болты наклона и выставьте по шкале <b>"+lo+"°</b> — на 2° меньше, чем "+deg(L.el)+". Затяните болты так, чтобы антенна держалась, но поворачивалась рукой с усилием.</li>"+
+    "<li><b>Определите примерный азимут</b> — по солнцу или по компасу (соседние вкладки) — и разверните антенну в эту сторону.</li>"+
+    "<li><b>Ищите спутник «змейкой» снизу вверх.</b> Медленно, без рывков, ведите антенну на 30° влево и 30° вправо от направления на спутник. После каждого прохода поднимайте зеркало на 0,5–1° и снова ведите влево-вправо, следя за уровнем сигнала на модеме. Начинать чуть ниже удобно: вы движетесь только вверх и не проскочите спутник.</li>"+
+    "<li><b>Поймав максимум сигнала</b>, верните антенну в эту точку и затяните все болты.</li>";
+  $("elNote").textContent="Не удивляйтесь, что зеркало стоит почти вертикально, хотя антенна должна смотреть вверх на "+deg(L.el)+". У офсетной антенны конвертор вынесен вниз и вперёд, и антенна «смотрит» заметно выше, чем повёрнута плоскость зеркала. Поэтому угол места не меряют транспортиром по зеркалу — его выставляют по шкале кронштейна.";
   var b=L.el-S.offset; // plate tilt from vertical, + = face looks up
   var d=S.H*Math.sin(Math.abs(b)*D2R);
   $("dishKv").innerHTML=
@@ -471,7 +492,7 @@ function renderDish(L){
     "<dt>Отвес от верхнего края до нижнего</dt><dd>"+Math.round(d)+" мм</dd>";
   var where=Math.abs(b)<0.05?"Нижний край должен касаться нити отвеса: зеркало стоит вертикально.":
     (b>0?"Нижний край зеркала должен выступать вперёд, в сторону спутника, на "+Math.round(d)+" мм от нити отвеса.":"Нижний край зеркала должен уходить назад, к мачте, на "+Math.round(d)+" мм от нити отвеса.");
-  $("dishSteps").innerHTML="<li>Закрепите нить отвеса на верхнем крае зеркала, посередине.</li><li>Дождитесь, пока отвес успокоится.</li><li>Рулеткой измерьте по горизонтали расстояние от нити до нижнего края зеркала.</li><li>"+where+"</li><li>Если на кронштейне есть шкала угла места с учётом офсета, выставьте на ней "+deg(L.el)+".</li>";
+  $("dishSteps").innerHTML="<li>Закрепите нить отвеса на верхнем крае зеркала, посередине.</li><li>Дождитесь, пока отвес успокоится.</li><li>Рулеткой измерьте по горизонтали расстояние от нити до нижнего края зеркала.</li><li>"+where+"</li>";
   // drawing: side view, satellite to the right
   var cx=150,top=40,len=200,ang=b*D2R;
   var bx=cx+len*Math.sin(ang),by=top+len*Math.cos(ang);
@@ -521,7 +542,7 @@ function renderSun(L){
   steps.push("<li><b>К "+t5+" будьте у антенны.</b> Найдите на земле тень от мачты. Если мачта стоит не строго вертикально, повесьте отвес и смотрите на его тень.</li>");
   steps.push("<li><b>Ровно в "+hm(t)+"</b> поверните антенну «лицом» к солнцу так, чтобы тень от штанги конвертора на земле шла <b>параллельно тени мачты</b>, как на рисунке. Вверх-вниз антенну не трогайте: солнце выше или ниже спутника, это нормально.</li>");
   steps.push("<li><b>Затяните болты азимута</b>, не сдвинув антенну. На всё у вас есть около 2 минут, до "+t2+": потом солнце уйдёт в сторону.</li>");
-  steps.push("<li><b>Включите модем или измеритель сигнала</b> и доведите антенну по сигналу «змейкой»: на каждом положении угла места ведите её на 20° влево и 20° вправо от предполагаемого направления на спутник, меняя угол места на 0,5–1°.</li>");
+  steps.push("<li><b>Включите модем или измеритель сигнала</b> и доведите антенну по сигналу «змейкой»: на каждом положении угла места ведите её на 30° влево и 30° вправо от предполагаемого направления на спутник, меняя угол места на 0,5–1°.</li>");
   $("sunSteps").innerHTML=steps.join("");
 }
 
