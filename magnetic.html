@@ -133,7 +133,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
         </div>
       </div>
     </div>
-    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Как только сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум пройден: выше не поднимайтесь, опустите зеркало на шаг обратно и по этому проходу вернитесь в точку, где сигнал был самым сильным.</p></div>
+    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Когда сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум, скорее всего, пройден. Для уверенности сделайте ещё два прохода выше: если сигнал продолжает падать, опустите зеркало до прохода с самым сильным сигналом и по нему вернитесь в точку максимума.</p></div>
     <div class="sp-view"><h2>ВИД ИЗ-ЗА АНТЕННЫ</h2><svg id="vBack" viewBox="0 0 320 260" role="img" aria-label="Вид из-за антенны глазами установщика"></svg><p>Так видит установщик: верх вешки должен оказаться точно над центром зеркала. Низ вешки, штанга и приёмопередатчик за зеркалом показаны пунктиром.</p></div>
   </div>
 
@@ -225,7 +225,7 @@ fmtDom(document.getElementById("sp"));
     q.set("date",di.value);location.replace(location.pathname+"?"+q.toString())})})();
 (function(){var msg=DEMO||(typeof DEMO_SUN!=="undefined"?DEMO_SUN:"");if(msg){var e=document.getElementById("demo");e.textContent=msg;e.hidden=false}
   if(location.search)document.querySelectorAll(".sp-tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
-var SAT_AZ=AZ, SAT_EL=ELV, TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=31;
+var SAT_AZ=AZ, SAT_EL=ELV, TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=47;
 var DECL=DECLR;                 /* magnetic declination, west negative */
 var MAG_AZ=((SAT_AZ-DECL)%360+360)%360;      /* azimuth set on the compass: 155 */
 var ERR=1.2;                 /* typical compass error, degrees */
@@ -247,11 +247,11 @@ var bw=[Math.sin(LINE_AZ*D),Math.cos(LINE_AZ*D)],bp=[bw[1],-bw[0]];
 var COMP0=[-1.6*bw[0]+1.6*bp[0],-1.6*bw[1]+1.6*bp[1]],COMP1=[-4.2*bw[0],-4.2*bw[1]];
 var STAKE=[7*bw[0],7*bw[1]],STAKE_H=3;
 /* snake around the final error */
-var SN_T0=17.3,SN_T1=29.3;
+var SN_T0=17.3,SN_T1=45.3;
 /* fine pointing: passes of ±30° in azimuth, 0.5° up until the signal drops, then back to the best point in two straight moves */
 var SN_AMP=30;
 var SN_PTS=(function(){var p=[[ERR,-3.5],[-SN_AMP,-3.5],[SN_AMP,-3.5]],el=-3.5,side=1;
-  for(var r=1;r<9;r++){el+=0.5;p.push([side*SN_AMP,el]);side=-side;p.push([side*SN_AMP,el])}
+  for(var r=1;r<11;r++){el+=0.5;p.push([side*SN_AMP,el]);side=-side;p.push([side*SN_AMP,el])}
   p.push([side*SN_AMP,0]);p.push([0,0]);return p})();
 var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],(SN_PTS[q][1]-SN_PTS[q-1][1])*12));
 function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*1.6*1.6)-(dEl*dEl)/(2*0.6*0.6))}
@@ -396,7 +396,7 @@ var MERGE=(function(){
 
 /* ================= panel 3: snake ================= */
 var SNK=(function(){
-  var svg=$("vSnake"),cx=160,cy=82,kx=118/SN_AMP,ky=28;
+  var svg=$("vSnake"),cx=160,cy=92,kx=118/SN_AMP,ky=26;
   function P(a,e){return [cx+a*kx,cy-e*ky]}
   [0.1,0.3,0.5,0.7,0.9].forEach(function(lv){var m=Math.sqrt(-2*Math.log(lv));mk("ellipse",{cx:cx,cy:cy,rx:1.6*kx*m,ry:0.6*ky*m,fill:"var(--cyan)","fill-opacity":0.1,stroke:"var(--cyan)","stroke-opacity":.35},svg)});
   mk("line",{x1:16,y1:cy,x2:304,y2:cy,stroke:"var(--line)"},svg);mk("line",{x1:cx,y1:30,x2:cx,y2:200,stroke:"var(--line)"},svg);

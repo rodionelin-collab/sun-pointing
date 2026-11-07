@@ -108,7 +108,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
   <div class="sp-views">
     <div class="sp-view"><h2>ВИД СВЕРХУ</h2><svg id="vTop" viewBox="0 0 320 260" role="img" aria-label="Вид сверху"></svg><p>Сравниваем тень штанги конвертора с тенью шеста: в нужный момент они параллельны.</p></div>
     <div class="sp-view"><h2>ВИД СБОКУ</h2><svg id="vSide" viewBox="0 0 320 260" role="img" aria-label="Вид сбоку"></svg><p>Солнце и спутник на разной высоте, поэтому по солнцу находим только азимут. Угол места доводим в конце по сигналу модема.</p></div>
-    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Как только сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум пройден: выше не поднимайтесь, опустите зеркало на шаг обратно и по этому проходу вернитесь в точку, где сигнал был самым сильным.</p></div>
+    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Когда сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум, скорее всего, пройден. Для уверенности сделайте ещё два прохода выше: если сигнал продолжает падать, опустите зеркало до прохода с самым сильным сигналом и по нему вернитесь в точку максимума.</p></div>
     <div class="sp-view"><h2>ВИД ИЗ-ЗА АНТЕННЫ</h2><svg id="vBack" viewBox="0 0 320 260" role="img" aria-label="Вид из-за антенны глазами установщика"></svg><p>Так видит установщик: солнце должно оказаться точно по центру за зеркалом.</p></div>
   </div>
 
@@ -184,7 +184,7 @@ fmtDom(document.getElementById("sp"));
 setTimeout(function(){var m=document.getElementById("matchMsg");if(m&&typeof WIN!=="undefined")m.textContent="В промежуток с "+hhmm(WIN[0],true)+" до "+hhmm(WIN[1],true)+" направление на солнце и на нужный вам спутник совпадут"},0);
 (function(){var msg=DEMO||(typeof DEMO_SUN!=="undefined"?DEMO_SUN:"");if(msg){var e=document.getElementById("demo");e.textContent=msg;e.hidden=false}
   if(location.search)document.querySelectorAll(".sp-tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
-var SAT_AZ=AZ, SAT_EL=ELV, SUN_EL_REAL=SUNM?SUNM.el:22, SUN_EL=Math.max(9,SUN_EL_REAL), TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=28.5;
+var SAT_AZ=AZ, SAT_EL=ELV, SUN_EL_REAL=SUNM?SUNM.el:22, SUN_EL=Math.max(9,SUN_EL_REAL), TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=44.5;
 var DEMO_SUN=(!DEMO&&!SUNM)?"В этот день для этой точки солнце не проходит направление на спутник достаточно высоко над горизонтом — время на анимации условное.":"";
 var SUN_AZ0=SUNM?SUNM.az0:SAT_AZ-32;
 var CLK0=SUNM?SUNM.t-29*60000:(function(){return DAY0+9*3600000})();
@@ -211,11 +211,11 @@ function ease(x){x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2}
 function pad(n){return String(n).padStart(2,"0")}
 function dirv(az,el){return [Math.sin(az*D)*Math.cos(el*D),Math.cos(az*D)*Math.cos(el*D),Math.sin(el*D)]}
 /* fine pointing "snake": sweep azimuth left-right at each elevation step */
-var SN_T0=14.8,SN_T1=26.8;
+var SN_T0=14.8,SN_T1=42.8;
 /* fine pointing: passes of ±30° in azimuth, 0.5° up until the signal drops, then back to the best point in two straight moves */
 var SN_AMP=30;
 var SN_PTS=(function(){var p=[[0,-3.5],[-SN_AMP,-3.5],[SN_AMP,-3.5]],el=-3.5,side=1;
-  for(var r=1;r<9;r++){el+=0.5;p.push([side*SN_AMP,el]);side=-side;p.push([side*SN_AMP,el])}
+  for(var r=1;r<11;r++){el+=0.5;p.push([side*SN_AMP,el]);side=-side;p.push([side*SN_AMP,el])}
   p.push([side*SN_AMP,0]);p.push([0,0]);return p})();
 var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],(SN_PTS[q][1]-SN_PTS[q-1][1])*12));
 function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*1.6*1.6)-(dEl*dEl)/(2*0.6*0.6))}
@@ -401,7 +401,7 @@ var vBack=buildView($("vBack"),{proj:BACK,bg:function(svg){
 var views=[vTop,vSide,vBack];
 /* snake panel: x = azimuth offset, y = elevation offset, degrees */
 var SNK=(function(){
-  var svg=$("vSnake"),cx=160,cy=82,kx=118/SN_AMP,ky=28;
+  var svg=$("vSnake"),cx=160,cy=92,kx=118/SN_AMP,ky=26;
   function P(a,e){return [cx+a*kx,cy-e*ky]}
   [0.1,0.3,0.5,0.7,0.9].forEach(function(lv){var m=Math.sqrt(-2*Math.log(lv));mk("ellipse",{cx:cx,cy:cy,rx:1.6*kx*m,ry:0.6*ky*m,fill:"var(--cyan)","fill-opacity":0.1,stroke:"var(--cyan)","stroke-opacity":.35},svg)});
   mk("line",{x1:16,y1:cy,x2:304,y2:cy,stroke:"var(--line)"},svg);mk("line",{x1:cx,y1:30,x2:cx,y2:200,stroke:"var(--line)"},svg);
