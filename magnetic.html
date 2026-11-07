@@ -24,6 +24,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 .sp-link{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none;border-bottom:1px solid currentColor}
 .sp-read{font-family:var(--f-mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
 .sp-read small{display:block;font-size:11px;color:var(--muted);font-weight:400;letter-spacing:.12em}
+.sp-read #readout{display:block}
+.sp-corr{display:block;font:500 12.5px var(--f-body);color:var(--muted);max-width:34ch;line-height:1.35;margin-top:3px}
 .sp button{font:600 13px var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
 .sp button:hover{border-color:var(--cyan);color:var(--cyan)}
 .sp button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
@@ -95,7 +97,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
 
   <div class="sp-head">
     <h1>Наведение антенны по магнитному компасу</h1>
-    <div class="sp-read"><small>НА КОЛЬЦЕ КОМПАСА</small><span id="readout">0°</span></div>
+    <div class="sp-read"><small>НА КОЛЬЦЕ КОМПАСА</small><span id="readout">0°</span><span class="sp-corr">{CORR}</span></div>
     <button id="btnPlay" type="button">Пауза</button>
     <button id="btnRestart" type="button">С начала</button>
   </div>
@@ -207,6 +209,8 @@ var TOK={AZ:String(AZ),MAG:String(MAGR),EL:String(ELV).replace(".",","),D:String
   CALC:DECLR===0?String(AZ):DECLR<0?AZ+" + "+Math.abs(DECLR)+" = "+MAGR:AZ+" − "+Math.abs(DECLR)+" = "+MAGR,
   DECLNOTE:DECLR===0?"здесь магнитный и настоящий север почти совпадают":"он здесь на "+Math.abs(DECLR)+"° "+(DECLR<0?"левее":"правее")+" настоящего"};
 TOK.DATE=(function(){var n=new Date(Date.now()+PRM.tz*3600000),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return n.getUTCDate()+" "+m[n.getUTCMonth()]+" "+n.getUTCFullYear()})();
+TOK.CORR=DECLR===0?"магнитное склонение здесь ≈ 0°, поправка не нужна":
+  AZ+"° (азимут) "+(DECLR<0?"+ ":"− ")+Math.abs(DECLR)+"° — поправка на магнитное склонение в месте установки ("+TOK.DECLS+", "+(DECLR<0?"западное":"восточное")+")";
 function fmt(s){return String(s).replace(/\{([A-Z]+)\}/g,function(m,k){return TOK[k]!==undefined?TOK[k]:m})}
 function fmtDom(root){var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,list=[];while((n=w.nextNode()))if(/\{[A-Z]+\}/.test(n.nodeValue))list.push(n);list.forEach(function(n){n.nodeValue=fmt(n.nodeValue)})}
 
