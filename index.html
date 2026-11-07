@@ -62,6 +62,8 @@ button.ghost{background:transparent;color:var(--accent);border:1px solid var(--a
 nav{display:flex;flex-wrap:wrap;gap:6px}
 nav button{background:transparent;color:var(--muted);border:1px solid var(--line);font-weight:500}
 nav button[aria-selected="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+nav button.two{line-height:1.1;padding-top:6px;padding-bottom:6px}
+nav button.two small{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:2px}
 .data{font-family:var(--f-data);font-variant-numeric:tabular-nums}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -138,8 +140,9 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
 
   <nav role="tablist" aria-label="Способы наведения">
     <button role="tab" data-tab="dish" aria-selected="true">Угол места</button>
+    <button role="tab" data-tab="compass" aria-selected="false" class="two">По компасу<small>в телефоне</small></button>
+    <button role="tab" data-tab="magcomp" aria-selected="false" class="two">По компасу<small>магнитному</small></button>
     <button role="tab" data-tab="sun" aria-selected="false">По солнцу</button>
-    <button role="tab" data-tab="compass" aria-selected="false">По компасу</button>
     <button role="tab" data-tab="all" aria-selected="false">Все спутники</button>
     <button role="tab" data-tab="clock" aria-selected="false">Часы</button>
   </nav>
@@ -207,11 +210,11 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
 
   <!-- COMPASS -->
   <section class="panel" data-pane="compass" hidden>
-    <h2>Наведение по компасу</h2>
-    <p class="hint"><a href="compass.html" style="color:var(--accent);font-weight:600">Анимация: компас в телефоне →</a> &nbsp; <a href="magnetic.html" style="color:var(--accent);font-weight:600">Анимация: магнитный компас →</a></p>
+    <h2>Наведение по компасу в телефоне</h2>
+    <p class="hint"><a href="compass.html" style="color:var(--accent);font-weight:600">Анимация: компас в телефоне →</a></p>
     <div class="grid2">
       <div style="display:grid;gap:12px;align-content:start">
-        <dl class="kv" id="cmpKv"></dl>
+        <dl class="kv cmpKv"></dl>
         <ol class="steps">
           <li>Снимите чехол с магнитом, откройте «Компас» в телефоне и поводите телефоном «восьмёркой» — это калибровка.</li>
           <li>Отойдите на 3–5 шагов от антенны, треноги и машины, держите телефон ровно, экраном вверх.</li>
@@ -220,7 +223,27 @@ ol.steps.big{font-size:15px;line-height:1.5;gap:10px;max-width:75ch}
         </ol>
         <p class="note">Склонение посчитано по мировой магнитной модели WMM-2025 на текущую дату. Восточное склонение положительное. В районах магнитных аномалий компас может врать на несколько градусов, тогда надёжнее способ по солнцу.</p>
       </div>
-      <div class="fig"><svg id="cmpSvg" viewBox="0 0 320 320" width="320" role="img" aria-label="Компасная роза с направлением на спутник"></svg></div>
+      <div class="fig"><svg class="cmpSvg" viewBox="0 0 320 320" width="320" role="img" aria-label="Компасная роза с направлением на спутник"></svg></div>
+    </div>
+    <div class="kitnote"><b>Важно.</b> Для разных спутников используются разные комплекты антенн: зеркало, кронштейн, конвертор и шкалы на них отличаются. Перед установкой внимательно прочитайте инструкцию к вашему комплекту. Этот сервис даёт только общее представление о базовых принципах наведения антенны на спутник.</div>
+  </section>
+
+  <section class="panel" data-pane="magcomp" hidden>
+    <h2>Наведение по магнитному компасу</h2>
+    <p class="hint"><a href="magnetic.html" style="color:var(--accent);font-weight:600">Анимация: магнитный компас →</a></p>
+    <div class="grid2">
+      <div style="display:grid;gap:12px;align-content:start">
+        <dl class="kv cmpKv"></dl>
+        <ol class="steps">
+          <li>Найдите на шкале компаса число «азимут по компасу» — на рисунке справа оно отмечено синим. Это направление на спутник.</li>
+          <li>Отойдите на 3–5 шагов от антенны, треноги и машины, уберите от компаса телефон и ключи. Держите компас ровно, на ладони.</li>
+          <li>Поворачивайте компас вместе с собой, пока красный конец стрелки не ляжет точно на букву «С» шкалы. Стрелка стоит на месте — поворачивается шкала.</li>
+          <li>Теперь отметка с нужным числом показывает на спутник. Посмотрите от центра компаса через это число и поставьте в этом направлении вешку за антенной или заметьте дальний ориентир: дерево, столб.</li>
+          <li>Разверните антенну на вешку, выставьте угол места и доводите по сигналу «змейкой»: на каждом положении угла места ведите антенну на 30° влево и 30° вправо от предполагаемого направления на спутник, меняя угол места на 0,5–1°.</li>
+        </ol>
+        <p class="note">Склонение посчитано по мировой магнитной модели WMM-2025 на текущую дату. Восточное склонение положительное. В районах магнитных аномалий компас может врать на несколько градусов, тогда надёжнее способ по солнцу.</p>
+      </div>
+      <div class="fig"><svg class="cmpSvg" viewBox="0 0 320 320" width="320" role="img" aria-label="Шкала магнитного компаса: стрелка на С, отметка направления на спутник"></svg></div>
     </div>
     <div class="kitnote"><b>Важно.</b> Для разных спутников используются разные комплекты антенн: зеркало, кронштейн, конвертор и шкалы на них отличаются. Перед установкой внимательно прочитайте инструкцию к вашему комплекту. Этот сервис даёт только общее представление о базовых принципах наведения антенны на спутник.</div>
   </section>
@@ -598,7 +621,7 @@ function renderSun(L){
 }
 
 function renderCompass(L,mag){
-  $("cmpKv").innerHTML="<dt>Азимут по компасу</dt><dd>"+deg(mag)+"</dd><dt>Истинный азимут</dt><dd>"+deg(L.az)+"</dd><dt>Магнитное склонение</dt><dd>"+(S.decl>=0?"+":"")+f1(S.decl)+"° "+(S.decl>=0?"восточное":"западное")+"</dd><dt>Направление</dt><dd>"+dirWord(L.az)+"</dd>";
+  document.querySelectorAll(".cmpKv").forEach(function(el){el.innerHTML="<dt>Азимут по компасу</dt><dd>"+deg(mag)+"</dd><dt>Истинный азимут</dt><dd>"+deg(L.az)+"</dd><dt>Магнитное склонение</dt><dd>"+(S.decl>=0?"+":"")+f1(S.decl)+"° "+(S.decl>=0?"восточное":"западное")+"</dd><dt>Направление</dt><dd>"+dirWord(L.az)+"</dd>"});
   /* compass dial (magnetic north up): degree scale, С/В/Ю/З, a real needle (red end → north, grey end → south) and the satellite direction marked on the scale */
   function P(a,r){var x=a*D2R;return [(c+r*Math.sin(x)).toFixed(1),(c-r*Math.cos(x)).toFixed(1)]}
   var c=170,R=122,svg='<circle cx="'+c+'" cy="'+c+'" r="'+(R+6)+'" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/><circle cx="'+c+'" cy="'+c+'" r="'+(R-34)+'" fill="none" stroke="var(--line)"/>';
@@ -618,8 +641,7 @@ function renderCompass(L,mag){
   var nN=P(0,R-66),nS=P(180,R-66),nL=P(270,8),nR=P(90,8);
   svg+='<path d="M'+nN[0]+' '+nN[1]+'L'+nR[0]+' '+nR[1]+'L'+nL[0]+' '+nL[1]+'Z" fill="#d23b2f"/><path d="M'+nS[0]+' '+nS[1]+'L'+nR[0]+' '+nR[1]+'L'+nL[0]+' '+nL[1]+'Z" fill="#9aa8b2"/>';
   svg+='<circle cx="'+c+'" cy="'+c+'" r="5" fill="var(--ink)"/>';
-  $("cmpSvg").setAttribute("viewBox","-30 -30 400 400");
-  $("cmpSvg").innerHTML=svg;
+  document.querySelectorAll(".cmpSvg").forEach(function(el){el.setAttribute("viewBox","-30 -30 400 400");el.innerHTML=svg});
 }
 
 function renderAll(){
