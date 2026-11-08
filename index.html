@@ -697,6 +697,14 @@ $("clkCheck").addEventListener("click",function(){
 function storedDate(){try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null");var d=s&&s.date;if(!/^\d{4}-\d{2}-\d{2}$/.test(d||""))return null;
   var p=siteParts(Date.now()),today=p.y+"-"+pad(p.m)+"-"+pad(p.d);return d<today?null:d}catch(e){return null}}
 function applyStoredDate(){var d=storedDate();if(d)$("sunDate").value=d;else setSunNow()}
+/* point and satellite passed in the link (e.g. from the coverage map «Как навести антенну»): they take priority over the saved ones */
+(function(){var U=new URLSearchParams(location.search),la=parseFloat(U.get("lat")),lo=parseFloat(U.get("lon"));
+  if(isFinite(la)&&isFinite(lo)&&Math.abs(la)<=90&&Math.abs(lo)<=180){S.lat=la;S.lon=lo;S.city=U.get("place")||"";S.cityRegion="";S.tz=tzFromCoords(la,lo)}
+  var sl=parseFloat(U.get("satLon"));if(isFinite(sl)){sl=((sl+180)%360+360)%360-180;
+    var norm=function(x){return String(x||"").replace(/\s*\(.*?\)\s*/g,"").replace(/A/g,"А").replace(/M/g,"М").replace(/K/g,"К").replace(/[УY]/g,"У").toLowerCase().trim()},nm=norm(U.get("sat")),best=-1;
+    SATS.forEach(function(s,i){if(Math.abs(s[1]-sl)<0.6&&(best<0||norm(s[0])===nm||(norm(SATS[best][0])!==nm&&s[2]>SATS[best][2])))best=i});
+    if(best>=0){S.satName=SATS[best][0];S.satLon=SATS[best][1]}else{S.satName="";S.satLon=sl}}
+  if(U.has("lat")||U.has("satLon")){save();history.replaceState(null,"",location.pathname)}})();
 syncInputs();refreshDecl();showTab();applyStoredDate();render();
 window.addEventListener("pageshow",function(e){if(!e.persisted)return;var d=storedDate();if(d&&d!==$("sunDate").value){$("sunDate").value=d;render()}});
 })();
