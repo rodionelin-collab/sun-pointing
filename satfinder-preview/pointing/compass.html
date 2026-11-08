@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Наведение по компасу</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preload" href="fonts/raleway-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/raleway-cyrillic-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="dtk.css">
+<script>window.__spFontsReady=(function(){if(!document.fonts||!document.fonts.load)return Promise.resolve();var s="Азимут 0123 °",w=["400","500","600","700"];return Promise.race([Promise.all(w.map(function(x){return document.fonts.load(x+" 16px Raleway",s)})),new Promise(function(r){setTimeout(r,3000)})]).catch(function(){})})();</script>
+<style>
+/* Layout: header (title, readout, controls) → 3D stage → caption + step chips → four synchronized 2D views → signal meter. Same light technical-schematic look as the sun page. */
+:root{
+  --bg:#f4f5f8; --card:#ffffff; --grid:#e8ebf2; --line:#dce1e9; --ink:#202737; --muted:#606b7e;
+  --cyan:#0a8fb3; --ui:#3732b5; --ui-soft:#eeedfc; --amber:#d98a00; --warn:#e0650b; --green:#1f9d63; --red:#d23b2f; --shd:#8597a3;
+  --f-body:Raleway,Arial,sans-serif;
+  --f-mono:Raleway,Arial,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body)}
+.sp-wrap{max-width:1100px;margin:0 auto;padding-block:18px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+.sp-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.sp-head h1{font-size:20px;margin:0;font-weight:600;flex:1 1 260px;text-wrap:balance}
+.sp-link{font:600 13px var(--f-body);color:var(--ui);text-decoration:none;border-bottom:1px solid currentColor}
+.sp-read{font-family:var(--f-mono);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.sp-read small{display:block;font-size:11px;color:var(--muted);font-weight:400;letter-spacing:.12em}
+.sp-read #readout{display:block}
+.sp-corr{display:block;font:500 12.5px var(--f-body);color:var(--muted);max-width:34ch;line-height:1.35;margin-top:3px}
+.sp button{font:600 14px var(--f-body);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:9px 14px;min-height:44px;cursor:pointer}
+.sp button:hover{background:#f1f3f7}
+.sp button:hover{border-color:var(--ui);color:var(--ui)}
+.sp button:focus-visible{outline:2px solid var(--ui);outline-offset:2px}
+.sp-stage{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#eef3f6;aspect-ratio:16/8;max-width:100%}
+.sp-stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.sp-tag{position:absolute;left:14px;top:12px;font:12px var(--f-mono);color:var(--muted);letter-spacing:.12em;pointer-events:none}
+.sp-hint{position:absolute;left:14px;right:14px;bottom:10px;font-size:13px;line-height:1.4;color:var(--muted);pointer-events:none}
+.sp-reset{position:absolute;right:12px;top:10px}
+.sp-nogl{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:14px;padding:20px;text-align:center}
+.sp-cap{display:grid;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.sp-cap p{margin:0;font-size:15.5px;line-height:1.5;max-width:75ch;min-height:2.9em}
+.sp-cap p b{color:var(--ui);font-family:var(--f-mono);margin-right:8px}
+.sp-chips{display:flex;flex-wrap:wrap;gap:6px}
+.sp-chips button{font-weight:500;color:var(--muted)}
+.sp-chips button[aria-current="step"]{background:var(--ui);border-color:var(--ui);color:var(--card);font-weight:600}
+.sp-chips button.done{color:var(--green);border-color:#bfe3d1}
+.sp-track{height:3px;background:var(--grid);border-radius:2px;overflow:hidden}
+.sp-track i{display:block;height:100%;width:0;background:var(--ui)}
+.sp-views{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px}
+.sp-view{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.sp-view h2{margin:0;padding:10px 14px 0;font:600 12px var(--f-mono);letter-spacing:.12em;color:var(--muted)}
+.sp-view p{margin:0;padding:0 14px 12px;font-size:13px;color:var(--muted);line-height:1.45}
+.sp-view svg{display:block;width:100%;height:auto}
+.sp-view svg text{font-family:var(--f-mono)}
+.sp-meter{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.sp-meter span{font:12px var(--f-mono);letter-spacing:.12em;color:var(--muted)}
+.sp-bars{display:flex;gap:4px;flex:1 1 240px}
+.sp-bars i{flex:1;height:18px;border-radius:2px;background:var(--grid)}
+.sp-meter.in{border:0;border-radius:0;background:none;padding:2px 14px 12px;gap:10px}
+.sp-meter.in span{font-size:10px}
+.sp-meter.in .sp-bars{flex:1 1 140px;gap:3px}
+.sp-meter.in .sp-bars i{height:14px}
+.sp-phone h2{margin:0;font-size:16px;font-weight:600}
+.sp-phone ol{margin:0;padding-left:22px;display:grid;gap:8px;font-size:14.5px;line-height:1.5;max-width:80ch}
+.sp-phone p{min-height:0}
+.sp-phone a{color:var(--cyan)}
+.sp-note{font-size:13.5px!important;color:var(--muted)}
+#sigTxt{font:600 13px var(--f-mono);min-width:13ch;text-align:right}
+@media (max-width:640px){.sp-stage{aspect-ratio:4/3}.sp-hint{font-size:12px}}
+.sp-nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.sp-back{font:600 13px var(--f-body);color:var(--ui);text-decoration:none}
+.sp-back:hover{text-decoration:underline}
+.sp-tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--grid);border-radius:10px;padding:4px}
+.sp-tabs a{font:600 13.5px var(--f-body);color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:7px}
+.sp-tabs a:hover{color:var(--ink)}
+.sp-tabs a[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,35,45,.12)}
+.sp-ctx{font-size:13.5px;color:var(--muted)}
+.sp-ctx b{color:var(--ink);font-weight:600}
+.sp-ctx a{color:var(--ui)}
+.sp-date-in{font:600 13.5px var(--f-body);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:1px 6px;background:var(--card);cursor:pointer}
+.sp-date-in:hover{border-color:var(--ui)}
+.sp-demo{font-size:13.5px;color:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:8px 12px}
+</style>
+</head>
+<body style="margin:0">
+<script>if(/[?&]rec=1(&|$)/.test(location.search))document.documentElement.classList.add("rec");</script>
+
+
+<a class="sf-skip" href="#sp">К содержимому</a>
+<header class="sf-header">
+  <div class="sf-header-inner">
+    <a class="sf-brand" href="index.html" aria-label="Помощник установщика антенны, на главную"><svg viewBox="0 0 40 40" width="40" height="40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="5" fill="currentColor"></circle><ellipse cx="20" cy="20" rx="18" ry="9" transform="rotate(-40 20 20)" stroke="currentColor" stroke-width="1.8"></ellipse><circle cx="7" cy="30" r="3" fill="currentColor"></circle></svg></a>
+    <div class="sf-intro">
+      <p class="sf-eyebrow">СПУТНИКОВАЯ СВЯЗЬ / НАВЕДЕНИЕ АНТЕННЫ</p>
+      <p class="sf-title">Помощник установщика антенны</p>
+      <p class="sf-desc">Анимация: наведение антенны по компасу в телефоне.</p>
+    </div>
+    <nav class="sf-nav" aria-label="Разделы"><a href="../">Карта</a><a href="index.html">Расчёт</a><a href="sun.html">По солнцу</a><a href="compass.html" aria-current="page">Компас в телефоне</a><a href="magnetic.html">Магнитный компас</a><a href="video.html">Видео для клиента</a></nav>
+  </div>
+</header>
+<main class="sp-wrap sp" id="sp">
+
+  <div class="sp-ctx" id="ctx">Точка: <b>{PLACE}</b> · спутник <b>{SAT}</b> · азимут <b>{AZ}°</b>, угол места <b>{EL}°</b></div>
+  <div class="sp-demo" id="demo" hidden></div>
+
+  <div class="sp-head">
+    <h1>Наведение антенны по компасу</h1>
+    <div class="sp-read"><small>НА ЭКРАНЕ ТЕЛЕФОНА</small><span id="readout">0°</span><span class="sp-corr">{CORR}. Если в телефоне включён «Истинный север» — ищите {AZ}°.</span></div>
+    <button id="btnPlay" type="button">Пауза</button>
+    <button id="btnRestart" type="button">С начала</button>
+  </div>
+
+  <div class="sp-stage" id="stage">
+    <canvas id="gl" aria-label="Трёхмерная анимация наведения антенны по компасу"></canvas>
+    <span class="sp-tag">3D · ВИД СБОКУ</span>
+    <span class="sp-hint" id="glHint">Зажмите левую кнопку мыши и ведите — сцена повернётся. Колёсико мыши — ближе / дальше.</span>
+    <button class="sp-reset" id="camReset" type="button" hidden>Вернуть вид</button>
+  </div>
+
+  <div class="sp-cap">
+    <p id="cap" aria-live="polite"></p>
+    <div class="sp-chips" id="chips"></div>
+    <div class="sp-track"><i id="prog"></i></div>
+  </div>
+
+  <div class="sp-views">
+    <div class="sp-view"><h2>КОМПАС В ТЕЛЕФОНЕ</h2><svg id="vComp" viewBox="0 0 320 260" role="img" aria-label="Компас в телефоне: число на экране и картушка"></svg><p>На экране — направление, куда смотрит верхний край телефона. Поворачиваемся, пока не будет {MAG}°: тогда верх телефона смотрит на спутник.</p></div>
+    <div class="sp-view"><h2>ВИД СВЕРХУ</h2><svg id="vTop" viewBox="0 0 320 260" role="img" aria-label="Вид сверху: компас, линия на ориентир, антенна"></svg><p>Компас телефона отсчитывает от магнитного севера, а {DECLNOTE}. Линия от телефона через антенну идёт к вешке, на неё и разворачиваем антенну.</p></div>
+    <div class="sp-view"><h2>ДОНАВЕДЕНИЕ «ЗМЕЙКОЙ»</h2><svg id="vSnake" viewBox="0 0 320 260" role="img" aria-label="Траектория донаведения змейкой по карте сигнала"></svg><div class="sp-meter in"><span>СИГНАЛ МОДЕМА</span><div class="sp-bars" id="bars"></div><b id="sigTxt">нет</b></div><p>Медленно и плавно, без рывков, водите антенной примерно на 30° влево и на 30° вправо от направления на спутник. Затем поднимайте зеркало антенны на 0,5–1 градуса и снова водите антенной на 30° влево и на 30° вправо от этого направления на спутник. Следя за уровнем сигнала приёма, вам нужно «пропилить» методом «змейка» предполагаемый квадрат области на небе, где находится спутник, в поиске максимального уровня сигнала приёма. Когда сигнал на очередном проходе стал слабее, чем на предыдущем, — максимум, скорее всего, пройден. Для уверенности сделайте ещё два прохода выше: если сигнал продолжает падать, опустите зеркало до прохода с самым сильным сигналом и по нему вернитесь в точку максимума.</p></div>
+    <div class="sp-view"><h2>ВИД СЗАДИ ЗЕРКАЛА АНТЕННЫ</h2><svg id="vBack" viewBox="0 0 320 260" role="img" aria-label="Вид из-за антенны глазами установщика"></svg><p>Так видит установщик: верх вешки должен оказаться точно над центром зеркала. Низ вешки, штанга и приёмопередатчик за зеркалом показаны пунктиром.</p></div>
+  </div>
+
+  <div class="sp-cap sp-phone">
+    <h2>Инструкция: наведение по компасу в смартфоне</h2>
+    <ol>
+      <li><b>Узнайте азимут и угол места.</b> Откройте «<a href="index.html">Помощник установщика</a>», выберите точку и спутник. Запишите азимут (для выбранной точки — {AZ}°), склонение ({DECLS}) и угол места ({EL}°).</li>
+      <li><b>Посчитайте число для телефона.</b> Если в настройках компаса включён «Истинный север» (на iPhone: Настройки → Компас), ищем сам азимут — {AZ}°. Если нет, телефон отсчитывает от магнитного севера: вычтите склонение из азимута. Для выбранной точки: {AZ} − ({DECLS}) = <b>{MAG}°</b>.</li>
+      <li><b>Подготовьте антенну.</b> Соберите её на треноге, выставьте угол места по шкале кронштейна, затяните болты угла места. Болты поворота по азимуту ослабьте, чтобы антенна поворачивалась рукой.</li>
+      <li><b>Подготовьте телефон.</b> Снимите чехол с магнитом. Откройте приложение «Компас» и поводите телефоном в воздухе «восьмёркой» — это калибровка.</li>
+      <li><b>Отойдите от металла.</b> Встаньте в 3–5 шагах позади антенны, со стороны, противоположной спутнику, подальше от треноги, машины и вагончиков. Держите телефон ровно, экраном вверх.</li>
+      <li><b>Найдите направление.</b> Медленно поворачивайтесь всем телом, пока на экране не будет нужное число. Верхний край телефона смотрит на спутник. Посмотрите вдоль него и попросите помощника поставить вешку в 10–20 м за антенной на этой линии. Можно выбрать и дальний ориентир: дерево, столб.</li>
+      <li><b>Разверните антенну.</b> Встаньте за зеркалом и поворачивайте антенну, пока верх вешки не окажется точно над центром зеркала, а штанга конвертора не будет смотреть прямо на вешку. Затяните болты азимута.</li>
+      <li><b>Донаведите «змейкой».</b> Включите модем. Ослабив болты, на каждом положении угла места медленно поводите антенну на 30° влево и 30° вправо от предполагаемого направления на спутник, затем измените угол места на 0,5–1° и пройдите обратно. Найдя максимум сигнала, верните антенну в эту точку и затяните все болты.</li>
+    </ol>
+    <p class="sp-note">Рядом с большими металлическими конструкциями — вышками, ёмкостями, вагончиками — компас телефона может ошибаться на 5–10°. В солнечный день надёжнее <a href="sun.html">наведение по солнцу</a>.</p>
+  </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* start once Raleway is loaded, so text drawn into canvases (3D labels, compass dial) uses the site font */
+(window.__spFontsReady||Promise.resolve()).then(function(){
+"use strict";
+/* ================= model & timeline ================= */
+var D=Math.PI/180;
+/* ================= site parameters: point & satellite chosen in «Помощник установщика» ================= */
+/* rec=1: page is driven frame by frame by video.html (no animation loop, all panels rendered) */
+var REC=/[?&]rec=1(&|$)/.test(location.search);
+var PRM=(function(){
+  var d={lat:52.2869,lon:104.305,tz:8,satLon:145,satName:"Экспресс-АМУ7",decl:-4.8,place:"Иркутск",date:""};
+  try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null");if(s)for(var k in d)if(s[k]!==undefined&&s[k]!==null&&s[k]!=="")d[k]=s[k]}catch(e){}
+  try{var q=new URLSearchParams(location.search);["lat","lon","tz","satLon","decl"].forEach(function(k){var v=parseFloat(q.get(k));if(!isNaN(v))d[k]=v});
+    if(q.get("sat"))d.satName=q.get("sat");if(q.get("place"))d.place=q.get("place");if(/^\d{4}-\d{2}-\d{2}$/.test(q.get("date")||""))d.date=q.get("date")}catch(e){}
+  if(d.date&&!/^\d{4}-\d{2}-\d{2}$/.test(d.date))d.date="";
+  if(d.date&&!(location.search.indexOf("date=")>=0)){var nn=new Date(Date.now()+d.tz*3600000).toISOString().slice(0,10);if(d.date<nn)d.date=""}
+  if(!d.satName)d.satName="позиция "+Math.abs(d.satLon)+"°"+(d.satLon>=0?" в.д.":" з.д.");
+  return d;
+})();
+/* chosen day: local midnight at the site, in UTC milliseconds */
+var DAY0=(function(){var y,m,dd;if(PRM.date){var p=PRM.date.split("-");y=+p[0];m=p[1]-1;dd=+p[2]}else{var n=new Date(Date.now()+PRM.tz*3600000);y=n.getUTCFullYear();m=n.getUTCMonth();dd=n.getUTCDate()}return Date.UTC(y,m,dd)-PRM.tz*3600000})();
+function lookAngles(lat,lon,satLon){
+  var R2=180/Math.PI,a=6378.137,e2=0.00669437999014,Rs=42164.17,p=lat/R2,l=lon/R2,sl=satLon/R2;
+  var N=a/Math.sqrt(1-e2*Math.sin(p)*Math.sin(p)),O=[N*Math.cos(p)*Math.cos(l),N*Math.cos(p)*Math.sin(l),N*(1-e2)*Math.sin(p)];
+  var d=[Rs*Math.cos(sl)-O[0],Rs*Math.sin(sl)-O[1],-O[2]];
+  var E=-Math.sin(l)*d[0]+Math.cos(l)*d[1],Nn=-Math.sin(p)*Math.cos(l)*d[0]-Math.sin(p)*Math.sin(l)*d[1]+Math.cos(p)*d[2],U=Math.cos(p)*Math.cos(l)*d[0]+Math.cos(p)*Math.sin(l)*d[1]+Math.sin(p)*d[2];
+  return {az:(Math.atan2(E,Nn)*R2+360)%360,el:Math.atan2(U,Math.hypot(E,Nn))*R2};
+}
+function sunPos(date,lat,lon){
+  var R2=180/Math.PI,jd=date.getTime()/86400000+2440587.5,T=(jd-2451545)/36525;
+  var L0=(280.46646+T*(36000.76983+T*0.0003032))%360,M=357.52911+T*(35999.05029-0.0001537*T),e=0.016708634-T*(0.000042037+0.0000001267*T),Mr=M/R2;
+  var C=Math.sin(Mr)*(1.914602-T*(0.004817+0.000014*T))+Math.sin(2*Mr)*(0.019993-0.000101*T)+Math.sin(3*Mr)*0.000289;
+  var om=(125.04-1934.136*T)/R2,lam=(L0+C-0.00569-0.00478*Math.sin(om))/R2;
+  var eps=(23+(26+(21.448-T*(46.815+T*(0.00059-T*0.001813)))/60)/60+0.00256*Math.cos(om))/R2,dec=Math.asin(Math.sin(eps)*Math.sin(lam));
+  var y=Math.pow(Math.tan(eps/2),2),L0r=L0/R2,eot=4*R2*(y*Math.sin(2*L0r)-2*e*Math.sin(Mr)+4*e*y*Math.sin(Mr)*Math.cos(2*L0r)-0.5*y*y*Math.sin(4*L0r)-1.25*e*e*Math.sin(2*Mr));
+  var mins=date.getUTCHours()*60+date.getUTCMinutes()+date.getUTCSeconds()/60,tst=((mins+eot+4*lon)%1440+1440)%1440,H=(tst/4-180)/R2,ph=lat/R2;
+  var cz=Math.max(-1,Math.min(1,Math.sin(ph)*Math.sin(dec)+Math.cos(ph)*Math.cos(dec)*Math.cos(H)));
+  return {az:(Math.atan2(Math.sin(H),Math.cos(H)*Math.sin(ph)-Math.tan(dec)*Math.cos(ph))*R2+540)%360,el:90-Math.acos(cz)*R2};
+}
+function w180(x){x=((x%360)+360)%360;return x>180?x-360:x}
+var LK=lookAngles(PRM.lat,PRM.lon,PRM.satLon);
+var DEMO=LK.el<5?"Спутник «"+PRM.satName+"» из этой точки не виден или стоит слишком низко — показан пример.":"";
+var AZ=DEMO?150:Math.round(LK.az*10)/10, ELV=DEMO?32:Math.round(LK.el*10)/10, DECLR=DEMO?-5:Math.round(PRM.decl*10)/10;
+var MAGR=Math.round((((AZ-DECLR)%360+360)%360)*10)/10;
+function F1(x){return (Math.round(x*10)/10).toFixed(1).replace(".",",")}
+/* sun: today's moment when the sun azimuth equals the satellite azimuth */
+var SUNM=(function(){
+  if(DEMO)return null;
+  var day=DAY0,prev=null,pt=0;
+  for(var m=0;m<=1440;m+=2){var t=day+m*60000,df=w180(sunPos(new Date(t),PRM.lat,PRM.lon).az-AZ);
+    if(prev!==null&&Math.sign(df)!==Math.sign(prev)&&Math.abs(df)<30&&Math.abs(prev)<30){var a=pt,b=t;for(var i=0;i<30;i++){var c=(a+b)/2;if(Math.sign(w180(sunPos(new Date(c),PRM.lat,PRM.lon).az-AZ))===Math.sign(prev))a=c;else b=c}
+      var tt=(a+b)/2,se=sunPos(new Date(tt),PRM.lat,PRM.lon).el;if(se>3)return {t:tt,el:se,az0:sunPos(new Date(tt-24*60000),PRM.lat,PRM.lon).az}}
+    prev=df;pt=t}
+  return null;
+})();
+function hhmm(ms,sec){var d=new Date(ms+PRM.tz*3600000),p=function(n){return String(n).padStart(2,"0")};return p(d.getUTCHours())+":"+p(d.getUTCMinutes())+(sec?":"+p(d.getUTCSeconds()):"")}
+var TOK={AZ:F1(AZ),MAG:F1(MAGR),EL:F1(ELV),D:F1(Math.abs(DECLR)),SAT:PRM.satName,PLACE:PRM.place,LAT:PRM.lat,LON:PRM.lon,SATLON:PRM.satLon,
+  DECLS:(DECLR>0?"+":DECLR<0?"−":"")+F1(Math.abs(DECLR))+"°",
+  SIDE:DECLR<0?"левее":"правее",
+  CALC:DECLR===0?F1(AZ):DECLR<0?F1(AZ)+" + "+F1(Math.abs(DECLR))+" = "+F1(MAGR):F1(AZ)+" − "+F1(Math.abs(DECLR))+" = "+F1(MAGR),
+  DECLNOTE:DECLR===0?"здесь магнитный и настоящий север почти совпадают":"он здесь на "+F1(Math.abs(DECLR))+"° "+(DECLR<0?"левее":"правее")+" настоящего"};
+TOK.DATE=(function(){var n=new Date(DAY0+PRM.tz*3600000),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return n.getUTCDate()+" "+m[n.getUTCMonth()]+" "+n.getUTCFullYear()})();
+TOK.CORR=DECLR===0?"магнитное склонение здесь ≈ 0°, поправка не нужна":
+  F1(AZ)+"° (азимут) "+(DECLR<0?"+ ":"− ")+F1(Math.abs(DECLR))+"° — поправка на магнитное склонение в месте установки ("+TOK.DECLS+", "+(DECLR<0?"западное":"восточное")+")";
+function fmt(s){return String(s).replace(/\{([A-Z]+)\}/g,function(m,k){return TOK[k]!==undefined?TOK[k]:m})}
+function fmtDom(root){var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),n,list=[];while((n=w.nextNode()))if(/\{[A-Z]+\}/.test(n.nodeValue))list.push(n);list.forEach(function(n){n.nodeValue=fmt(n.nodeValue)})}
+
+fmtDom(document.getElementById("sp"));
+(function(){var di=document.getElementById("dateIn");if(!di)return;di.value=new Date(DAY0+PRM.tz*3600000).toISOString().slice(0,10);
+  di.addEventListener("change",function(){if(!di.value)return;var q=new URLSearchParams(location.search);
+    if(!q.get("lat")){q.set("lat",PRM.lat);q.set("lon",PRM.lon);q.set("tz",PRM.tz);q.set("satLon",PRM.satLon);q.set("decl",PRM.decl);q.set("sat",PRM.satName);q.set("place",PRM.place)}
+    q.set("date",di.value);setStoredDate(di.value);location.replace(location.pathname+"?"+q.toString())})
+  /* back/forward cache: if the date was changed on another page meanwhile, reload with it */
+  window.addEventListener("pageshow",function(e){if(!e.persisted)return;try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null");
+    if(s&&/^\d{4}-\d{2}-\d{2}$/.test(s.date||"")&&s.date!==di.value){var q=new URLSearchParams(location.search);q.set("date",s.date);location.replace(location.pathname+"?"+q.toString())}}catch(e){}});
+  if(/date=/.test(location.search))setStoredDate(di.value)})();
+function setStoredDate(v){try{var s=JSON.parse(localStorage.getItem("installer-helper")||"null")||{};s.date=v;localStorage.setItem("installer-helper",JSON.stringify(s))}catch(e){}}
+(function(){var msg=DEMO||(typeof DEMO_SUN!=="undefined"?DEMO_SUN:"");if(msg){var e=document.getElementById("demo");e.textContent=msg;e.hidden=false}
+  if(location.search)document.querySelectorAll(".sp-tabs a,.sf-nav a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+location.search)})})();
+var SAT_AZ=AZ, SAT_EL=ELV, TILT=Math.max(-15,Math.min(40,ELV-24)), T_END=47;
+var DECL=DECLR;                 /* magnetic declination, west negative */
+var MAG_AZ=((SAT_AZ-DECL)%360+360)%360;      /* azimuth set on the compass: 155 */
+var ERR=1.2;                 /* typical compass error, degrees */
+var LINE_AZ=SAT_AZ+ERR;      /* true direction of the sight line actually laid out */
+var STARTS=[0,4.5,9,12.5,17];
+var STEPS=[
+  ["Какое число искать","Азимут — угол на спутник, отсчитанный от севера по часовой стрелке. «Помощник установщика» дал {AZ}°. Компас в телефоне обычно показывает магнитный север, а {DECLNOTE}. Поэтому на экране ищем {CALC}°. Если в настройках компаса включён «Истинный север», ищем сразу {AZ}°."],
+  ["Калибровка и отход от металла","Снимаем чехол с магнитом и поводим телефоном «восьмёркой» — это калибровка. Рядом с антенной, треногой и машиной число на экране скачет, поэтому отходим на 3–5 шагов за антенну."],
+  ["{MAG}° на экране — ставим вешку","Держим телефон ровно, экраном вверх, и медленно поворачиваемся всем телом, пока на экране не будет {MAG}°. Верхний край телефона теперь смотрит на спутник. В этом направлении, за антенной, ставим вешку или замечаем дальний ориентир: дерево, столб."],
+  ["Поворачиваем антенну на вешку","Встаём за зеркалом и разворачиваем антенну, пока верх вешки не окажется точно над центром зеркала, а штанга конвертора не будет смотреть прямо на неё. Затягиваем болты азимута."],
+  ["Донаводим «змейкой»","Компас телефона даёт лишь примерное направление, а угол места выставлен по шкале. На каждом положении угла места медленно поводим антенну на 30° влево и 30° вправо от предполагаемого направления на спутник, меняем угол места на 0,5–1° и идём обратно. Нашли максимум сигнала — затягиваем все болты."]
+];
+STEPS=STEPS.map(function(x){return [fmt(x[0]),fmt(x[1])]});
+function clamp(x){return x<0?0:x>1?1:x}
+function ease(x){x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2}
+function dirv(az,el){return [Math.sin(az*D)*Math.cos(el*D),Math.cos(az*D)*Math.cos(el*D),Math.sin(el*D)]}
+function wrap(a){a=((a%360)+360)%360;return a>180?a-360:a}
+var bw=[Math.sin(LINE_AZ*D),Math.cos(LINE_AZ*D)],bp=[bw[1],-bw[0]];
+var COMP0=[-0.9*bw[0]+0.75*bp[0],-0.9*bw[1]+0.75*bp[1]],COMP1=[-4.2*bw[0],-4.2*bw[1]];
+var STAKE=[7*bw[0],7*bw[1]],STAKE_H=3;
+/* snake around the final error */
+var SN_T0=17.3,SN_T1=45.3;
+/* fine pointing: passes of ±30° in azimuth, 0.5° up until the signal drops, then back to the best point in two straight moves */
+var SN_AMP=30;
+var SN_PTS=(function(){var p=[[ERR,-3.5],[-SN_AMP,-3.5],[SN_AMP,-3.5]],el=-3.5,side=1;
+  for(var r=1;r<11;r++){el+=0.5;p.push([side*SN_AMP,el]);side=-side;p.push([side*SN_AMP,el])}
+  p.push([side*SN_AMP,0]);p.push([0,0]);return p})();
+var SN_LEN=[0];for(var q=1;q<SN_PTS.length;q++)SN_LEN.push(SN_LEN[q-1]+Math.hypot(SN_PTS[q][0]-SN_PTS[q-1][0],(SN_PTS[q][1]-SN_PTS[q-1][1])*12));
+function sig(dAz,dEl){return Math.exp(-(dAz*dAz)/(2*1.6*1.6)-(dEl*dEl)/(2*0.6*0.6))}
+/* slow-down: inside the signal zone (sig>0.1) the antenna moves 4x slower; outside speed unchanged */
+var SN_TAB=(function(){var tot=SN_LEN[SN_LEN.length-1],N=6000,c=[0],cost=0;
+  for(var j=1;j<=N;j++){var L=tot*(j-0.5)/N,i=1;while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;
+    var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));
+    cost+=(tot/N)*(sig(a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k)>0.1?4:1);c.push(cost)}
+  return c})();
+(function(){var r=SN_TAB[SN_TAB.length-1]/SN_LEN[SN_LEN.length-1],gap=T_END-SN_T1;SN_T1=SN_T0+(SN_T1-SN_T0)*r;T_END=SN_T1+gap})();
+window.__spDbg=function(){return {T0:SN_T0,T1:SN_T1,TE:T_END,snakeAt:snakeAt,sig:sig}};
+function snPtAtG(L){var i=1;while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));return [a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k]}
+function snLenAt(t){return snCostToLen(clamp((t-SN_T0)/(SN_T1-SN_T0)))}
+function snCostToLen(p){var C=SN_TAB,g=p*C[C.length-1],lo=0,hi=C.length-1;while(hi-lo>1){var m=(lo+hi)>>1;if(C[m]<g)lo=m;else hi=m}
+  var k=(g-C[lo])/((C[hi]-C[lo])||1);return (lo+k)/(C.length-1)*SN_LEN[SN_LEN.length-1]}
+function snakeAt(t){
+  var p=clamp((t-SN_T0)/(SN_T1-SN_T0)),L=snCostToLen(p),i=1;
+  while(i<SN_LEN.length-1&&SN_LEN[i]<L)i++;
+  var a=SN_PTS[i-1],b=SN_PTS[i],k=clamp((L-SN_LEN[i-1])/((SN_LEN[i]-SN_LEN[i-1])||1));
+  return {az:a[0]+(b[0]-a[0])*k,el:a[1]+(b[1]-a[1])*k,p:p,idx:i};
+}
+function state(t){
+  var step=0;for(var i=0;i<STARTS.length;i++)if(t>=STARTS[i])step=i;
+  var mv=ease((t-4.8)/3.2),cp=[COMP0[0]+(COMP1[0]-COMP0[0])*mv,COMP0[1]+(COMP1[1]-COMP0[1])*mv];
+  var defl=28*(1-mv)+(t>4.8&&t<9.5?Math.sin((t-4.8)*6)*7*Math.exp(-(t-4.8)*0.9)*(mv<1?1:0.6):0);
+  var heading=100+(LINE_AZ-100)*ease((t-9.2)/2.2);
+  var noise=t<9.2?Math.sin(t*7.3)*3*(1-mv)+Math.sin(t*3.1)*1.5:0;
+  var display=((heading-DECL-defl-noise-ERR)%360+360)%360;   /* what the phone shows (magnetic, with sensor error) */
+  var calib=clamp((t-5)/2.6);
+  var needle=DECL+defl;
+  var inN=Math.abs(wrap(display-MAG_AZ))<1&&t>=11;
+  var line=clamp((t-11.2)/0.8),stake=clamp((t-11.6)/0.9);
+  var rot=ease((t-12.9)/3.4),sn=snakeAt(t);
+  var dishAz=104+(SAT_AZ+ERR-104)*rot+(t>=SN_T0?sn.az-ERR:0),dEl=t>=SN_T0?sn.el:SN_PTS[0][1];
+  var dAz=Math.abs(dishAz-LINE_AZ);
+  var gv=t>=12.5?clamp((t-12.5)/0.5)*(1-clamp((t-17)/0.6)):0;
+  var ok=t>=15.8&&dAz<0.6;
+  var lvl=t<15.5?0:sig(dishAz-SAT_AZ,dEl);
+  return {t:t,step:step,display:display,calib:calib,cp:cp,defl:defl,heading:heading,needle:needle,inN:inN,line:line,stake:stake,dishAz:dishAz,dEl:dEl,dAz:dAz,gv:gv,ok:ok,sn:sn,lvl:Math.max(0,Math.min(1,lvl)),near:1-mv};
+}
+/* antenna geometry (world: x east, y north, z up; metres) */
+var MAST_H=0.95;
+function dishGeom(az,dEl){
+  var s=Math.sin(az*D),c=Math.cos(az*D),T=(TILT+(dEl||0))*D;
+  var n=[s*Math.cos(T),c*Math.cos(T),Math.sin(T)],u1=[c,-s,0];
+  var u2=[n[1]*u1[2]-n[2]*u1[1],n[2]*u1[0]-n[0]*u1[2],n[0]*u1[1]-n[1]*u1[0]];
+  if(u2[2]<0)u2=u2.map(function(v){return -v});
+  var C=[0.16*s,0.16*c,1.0],R=0.58,rim=[];
+  function at(a,b,k){return [C[0]+a*u1[0]+b*u2[0]+k*n[0],C[1]+a*u1[1]+b*u2[1]+k*n[1],C[2]+a*u1[2]+b*u2[2]+k*n[2]]}
+  for(var k=0;k<40;k++){var t=k/40*2*Math.PI;rim.push(at(R*Math.cos(t),R*Math.sin(t),0))}
+  return {C:C,n:n,R:R,rim:rim,root:at(0,-0.92*R,0.02),lnb:at(0,-0.25,0.95),strutL:at(-0.92*R,0.1,0),strutR:at(0.92*R,0.1,0),armMid:at(0,-0.35,0.5)};
+}
+var TRI=(function(){
+  var legs=[],braces=[],feet=[];
+  [30,150,270].forEach(function(a){
+    var sx=Math.sin(a*D),cy=Math.cos(a*D),top=[0.05*sx,0.05*cy,0.46],foot=[0.98*sx,0.98*cy,0.03];
+    legs.push([top,foot]);
+    braces.push([[0.03*sx,0.03*cy,0.17],[top[0]+(foot[0]-top[0])*.42,top[1]+(foot[1]-top[1])*.42,top[2]+(foot[2]-top[2])*.42]]);
+    var px=-cy,py=sx,L=0.13,Wd=0.08,cx=1.02*sx,cc=1.02*cy;
+    feet.push([[cx-sx*L-px*Wd,cc-cy*L-py*Wd,0.01],[cx+sx*L-px*Wd,cc+cy*L-py*Wd,0.01],[cx+sx*L+px*Wd,cc+cy*L+py*Wd,0.01],[cx-sx*L+px*Wd,cc-cy*L+py*Wd,0.01]]);
+  });
+  return {legs:legs,braces:braces,feet:feet,angles:[30,150,270]};
+})();
+
+/* ================= DOM ================= */
+var $=function(id){return document.getElementById(id)};
+var chips=[];STEPS.forEach(function(s,i){var b=document.createElement("button");b.type="button";b.textContent=(i+1)+". "+s[0];b.addEventListener("click",function(){jump(STARTS[i])});$("chips").appendChild(b);chips.push(b)});
+var barEls=[];for(var i=0;i<16;i++){var e=document.createElement("i");$("bars").appendChild(e);barEls.push(e)}
+var NS="http://www.w3.org/2000/svg";
+function mk(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function setA(e,a){for(var k in a)e.setAttribute(k,typeof a[k]==="number"?a[k].toFixed(1):a[k])}
+function ptsStr(a){return a.map(function(p){return p[0].toFixed(1)+","+p[1].toFixed(1)}).join(" ")}
+function tr(x,y,r,s){return "translate("+x.toFixed(1)+" "+y.toFixed(1)+")"+(r!==undefined?" rotate("+r.toFixed(1)+")":"")+(s!==undefined?" scale("+s+")":"")}
+
+function mkPanelCanvas(svg,before,w,h){w=w||320;h=h||260;var fo=document.createElementNS(NS,"foreignObject");fo.setAttribute("x",0);fo.setAttribute("y",0);fo.setAttribute("width",w);fo.setAttribute("height",h);
+  var cv=document.createElementNS("http://www.w3.org/1999/xhtml","canvas");cv.width=2*w;cv.height=2*h;cv.setAttribute("style","width:"+w+"px;height:"+h+"px;display:block");fo.appendChild(cv);
+  if(before)svg.insertBefore(fo,before);else svg.appendChild(fo);return cv}
+/* ================= panel 1: the phone compass (phone upright, rose turns) ================= */
+var COMPV=(function(){
+  var svg=$("vComp"),cx=160,cy=126;
+  mk("rect",{x:cx-62,y:cy-112,width:124,height:226,rx:18,fill:"#1d262c"},svg);
+  mk("rect",{x:cx-55,y:cy-98,width:110,height:196,rx:6,fill:"#ffffff"},svg);
+  mk("rect",{x:cx-14,y:cy-107,width:28,height:4,rx:2,fill:"#4a5660"},svg);
+  var num=mk("text",{x:cx,y:cy-62,"font-size":28,"font-weight":600,"text-anchor":"middle",fill:"var(--ink)"},svg);
+  var hint=mk("text",{x:cx,y:cy-46,"font-size":9,"text-anchor":"middle",fill:"var(--muted)"},svg);hint.textContent="нужно "+F1(MAGR)+"°";
+  var rcx=cx,rcy=cy+22,RR=46;
+  var rose=mk("g",{},svg);
+  mk("circle",{r:RR,fill:"#f4f7f9",stroke:"#90a4b1","stroke-width":1.5},rose);
+  for(var a=0;a<360;a+=10){var r1=a%30===0?RR-8:RR-4;mk("line",{x1:RR*Math.sin(a*D),y1:-RR*Math.cos(a*D),x2:r1*Math.sin(a*D),y2:-r1*Math.cos(a*D),stroke:"#5f7380","stroke-width":a%30===0?1.3:.7},rose)}
+  [["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){mk("text",{x:(RR-16)*Math.sin(q[1]*D),y:-(RR-16)*Math.cos(q[1]*D)+4,"font-size":11,"font-weight":600,"text-anchor":"middle",fill:q[2]},rose).textContent=q[0]});
+  var tgt=mk("path",{d:"M0 "+(-RR-1)+"l-4 -7h8z",fill:"var(--cyan)"},rose);
+  mk("line",{x1:rcx,y1:rcy-RR-10,x2:rcx,y2:rcy-RR+10,stroke:"var(--ink)","stroke-width":2.5},svg);
+  mk("path",{d:"M"+cx+" "+(cy-125)+"l-8 12h16z",fill:"var(--cyan)"},svg);
+  mk("text",{x:cx+14,y:cy-114,"font-size":9.5,fill:"var(--cyan)"},svg).textContent="верх телефона";
+  /* calibration figure-eight */
+  var cal=mk("g",{opacity:0},svg);
+  mk("path",{d:"M30 128c0-24 40-24 40 0s40 24 40 0s-40-24-40 0s-40 24-40 0",fill:"none",stroke:"var(--cyan)","stroke-width":1.5,"stroke-dasharray":"3 3",transform:"translate(-20 0) scale(0.75)"},cal);
+  var calDot=mk("rect",{width:8,height:14,rx:2,fill:"#1d262c"},cal);
+  mk("text",{x:8,y:160,"font-size":9.5,fill:"var(--cyan)"},cal).textContent="калибровка";
+  mk("text",{x:8,y:171,"font-size":9.5,fill:"var(--cyan)"},cal).textContent="«восьмёркой»";
+  var stat=mk("text",{x:160,y:254,"font-size":10.5,"font-weight":600,"text-anchor":"middle"},svg);
+  function fig8(p){var t=p*2*Math.PI*2;return [(70+40*Math.sin(t))*0.75-20,(128+16*Math.sin(2*t))*0.75]}
+  return {draw:function(S){
+    setA(rose,{transform:tr(rcx,rcy,-S.display)});
+    setA(tgt,{transform:"rotate("+MAG_AZ+")"});
+    num.textContent=F1(S.display)+"°";setA(num,{fill:S.inN?"var(--green)":"var(--ink)"});
+    var showCal=S.t>=4.8&&S.t<7.8;setA(cal,{opacity:showCal?1:0});
+    if(showCal){var q=fig8(S.calib);setA(calDot,{x:q[0]-4,y:q[1]-7})}
+    var msg,col="var(--muted)";
+    if(S.t<4.5)msg=fmt("ищем на экране {MAG}° ({AZ}° с поправкой {DECLS})");
+    else if(S.t<9)msg=S.defl>6?"рядом металл — число скачет":"показания успокоились";
+    else if(!S.inN)msg="поворачиваемся с телефоном…";
+    else {msg="✓ "+F1(MAGR)+"° — верх телефона смотрит на спутник";col="var(--green)"}
+    if(S.t>=4.5&&S.t<9&&S.defl>6)col="var(--warn)";
+    stat.textContent=msg;setA(stat,{fill:col});
+  }};
+})();
+
+/* ================= panel 2: top view ================= */
+var TOPV=(function(){
+  var svg=$("vTop"),k=17,AS=2.6,cen=[1.4*bw[0],1.4*bw[1]],ox=160,oy=140;
+  function P(p){return [ox+(p[0]-cen[0])*k,oy-(p[1]-cen[1])*k]}
+  function PA(p){return P([p[0]*AS,p[1]*AS])}            /* antenna drawn 1.8× larger for legibility */
+  var cv=mkPanelCanvas(svg);
+  var sight=mk("line",{stroke:"var(--cyan)","stroke-width":2,"stroke-dasharray":"7 5"},svg);
+  var guide=mk("line",{"stroke-width":3.5,"stroke-linecap":"round",opacity:0},svg);
+  var frame=mk("path",{fill:"none",stroke:"#5d7a8e","stroke-width":2,"stroke-linejoin":"round"},svg);
+  var dish=mk("polygon",{fill:"#d5e1e8",stroke:"var(--cyan)","stroke-width":1.5},svg);
+  var arm=mk("line",{stroke:"#7b8d99","stroke-width":2.5,"stroke-linecap":"round"},svg);
+  var lnb=mk("g",{},svg);
+  mk("path",{d:"M-5 -2.6L-13 -5.5L-13 5.5L-5 2.6Z",fill:"#3a444b"},lnb);
+  mk("rect",{x:-5,y:-4.5,width:15,height:9,rx:1.2,fill:"#3a444b"},lnb);
+  mk("path",{d:"M-1.5 -7V7M2 -7V7M5.5 -7V7M9 -6V6",stroke:"#3a444b","stroke-width":1.6},lnb);
+  mk("rect",{x:9,y:-2,width:4,height:4,fill:"#6b7882"},lnb);
+  var mast=mk("circle",{r:3,fill:"#4e6676"},svg);
+  var stakeG=mk("g",{},svg);mk("circle",{r:5,fill:"var(--warn)"},stakeG);mk("circle",{r:2,fill:"#fff"},stakeG);
+  var stakeT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);mk("tspan",{x:0,dy:0},stakeT).textContent="вешка или визуальный";mk("tspan",{x:0,dy:12},stakeT).textContent="ориентир по направлению";mk("tspan",{x:0,dy:12},stakeT).textContent="на спутник";
+  var comp=mk("g",{},svg);mk("rect",{x:-5,y:-9,width:10,height:18,rx:2,fill:"#1d262c"},comp);mk("path",{d:"M0 -15l-3 5h6z",fill:"var(--cyan)"},comp);var cn=mk("g",{},svg);
+  var compT=mk("text",{"font-size":10,fill:"var(--ink)"},svg);compT.textContent="телефон";
+  var tN=mk("line",{stroke:"var(--ink)","stroke-width":1.4},svg),mN=mk("line",{stroke:"var(--red)","stroke-width":1.4,"stroke-dasharray":"3 2"},svg);
+  var tNT=mk("text",{"font-size":9,fill:"var(--ink)","text-anchor":"middle"},svg);tNT.textContent="С ист.";
+  var mNT=mk("text",{"font-size":9,fill:"var(--red)","text-anchor":"end"},svg);mNT.textContent="С магн.";
+  
+  var lab=mk("text",{x:12,y:254,"font-size":12,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
+  return {cv:cv,camArgs:[ox-cen[0]*k,oy+cen[1]*k,k],AS:AS,hide:[frame,dish,arm,lnb,mast],draw:function(S,g){
+    var c=P(S.cp);setA(comp,{transform:tr(c[0],c[1],S.heading)});setA(compT,{x:c[0]+12,y:c[1]+4});
+    setA(tN,{x1:c[0],y1:c[1]-10,x2:c[0],y2:c[1]-34});setA(tNT,{x:c[0],y:c[1]-37});
+    var mx=c[0]+24*Math.sin(DECL*D),my=c[1]-24*Math.cos(DECL*D);setA(mN,{x1:c[0]+10*Math.sin(DECL*D),y1:c[1]-10*Math.cos(DECL*D),x2:mx,y2:my});setA(mNT,{x:mx-3,y:my-2});
+    var st=P(STAKE),c1=P(COMP1);
+    var lx=c1[0]+(st[0]-c1[0])*S.line,ly=c1[1]+(st[1]-c1[1])*S.line;setA(sight,{x1:c1[0],y1:c1[1],x2:lx,y2:ly,opacity:S.line>0?1:0});
+    setA(stakeG,{transform:tr(st[0],st[1]),opacity:S.stake});var lft=st[0]>185,sx=lft?st[0]-12:st[0]+12;setA(stakeT,{x:sx,y:st[1]-20,"text-anchor":lft?"end":"start",opacity:S.stake});stakeT.querySelectorAll("tspan").forEach(function(t){t.setAttribute("x",sx.toFixed(1))});
+    var d="";TRI.legs.concat(TRI.braces).forEach(function(sg){var a=PA(sg[0]),b=PA(sg[1]);d+="M"+a[0].toFixed(1)+" "+a[1].toFixed(1)+"L"+b[0].toFixed(1)+" "+b[1].toFixed(1)});frame.setAttribute("d",d);
+    dish.setAttribute("points",ptsStr(g.rim.map(PA)));
+    var r0=PA(g.root),l0=PA(g.lnb);setA(arm,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});var cc=PA(g.C),la=Math.atan2(l0[1]-cc[1],l0[0]-cc[0])/D;lnb.setAttribute("transform","translate("+l0[0].toFixed(1)+" "+l0[1].toFixed(1)+") rotate("+la.toFixed(1)+") scale(0.8)");
+    var m0=PA([0,0,0]);setA(mast,{cx:m0[0],cy:m0[1]});
+    var ge=[m0[0]+Math.sin(S.dishAz*D)*95,m0[1]-Math.cos(S.dishAz*D)*95];
+    var col=S.ok?"var(--green)":"var(--warn)";setA(guide,{x1:m0[0],y1:m0[1],x2:ge[0],y2:ge[1],stroke:col,opacity:S.gv});
+    
+    lab.textContent=S.ok?"✓ антенна смотрит на ориентир":"угол антенна — ориентир "+Math.max(1,Math.round(S.dAz))+"°";setA(lab,{fill:col,opacity:S.gv});
+  }};
+})();
+
+/* ================= panel 3: snake ================= */
+var SNK=(function(){
+  var svg=$("vSnake"),cx=160,cy=92,kx=118/SN_AMP,ky=26;
+  function P(a,e){return [cx+a*kx,cy-e*ky]}
+  [0.1,0.3,0.5,0.7,0.9].forEach(function(lv){var m=Math.sqrt(-2*Math.log(lv));mk("ellipse",{cx:cx,cy:cy,rx:1.6*kx*m,ry:0.6*ky*m,fill:"var(--muted)","fill-opacity":0.07,stroke:"var(--muted)","stroke-opacity":.4},svg)});
+  mk("line",{x1:16,y1:cy,x2:304,y2:cy,stroke:"var(--line)"},svg);mk("line",{x1:cx,y1:30,x2:cx,y2:200,stroke:"var(--line)"},svg);
+  for(var a=-SN_AMP;a<=SN_AMP;a+=SN_AMP/3){var pp=P(a,0);mk("line",{x1:pp[0],y1:cy-3,x2:pp[0],y2:cy+3,stroke:"var(--muted)"},svg)}
+  for(var e=-3.5;e<=1.51;e+=0.5){var pq=P(0,e);mk("line",{x1:cx-(e%1===0?4:2),y1:pq[1],x2:cx+(e%1===0?4:2),y2:pq[1],stroke:"var(--muted)"},svg)}
+  [[-SN_AMP,"−"+SN_AMP+"°"],[SN_AMP,"+"+SN_AMP+"°"]].forEach(function(q){var pp=P(q[0],0);mk("text",{x:pp[0],y:cy+4,"font-size":10,"font-weight":600,"text-anchor":q[0]<0?"end":"start",dx:q[0]<0?-6:6,fill:"var(--ink)","paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg).textContent=q[1]});
+  mk("text",{x:304,y:20,"font-size":10,"text-anchor":"end",fill:"var(--muted)"},svg).textContent="← азимут →";
+  mk("text",{x:cx-6,y:20,"font-size":10,"text-anchor":"end",fill:"var(--muted)"},svg).textContent="↑↓ угол места";
+  mk("text",{x:160,y:226,"font-size":10,"text-anchor":"middle",fill:"var(--ink)"},svg).textContent="±"+SN_AMP+"° по азимуту, шаг 0,5–1° вверх до спада сигнала";
+  var bpt=P(0,0);
+  mk("polyline",{points:ptsStr(SN_PTS.map(function(q){return P(q[0],q[1])})),fill:"none",stroke:"var(--muted)","stroke-width":1.2,"stroke-dasharray":"3 4",opacity:.6},svg);
+  /* the satellite at the centre of the beam (signal maximum) */
+  var sg=mk("g",{transform:"translate("+bpt[0]+" "+bpt[1]+")"},svg);mk("rect",{x:-4,y:-3.5,width:8,height:7,fill:"var(--cyan)"},sg);mk("rect",{x:-14,y:-2,width:9,height:4,fill:"var(--card)",stroke:"var(--cyan)","stroke-width":1.2},sg);mk("rect",{x:5,y:-2,width:9,height:4,fill:"var(--card)",stroke:"var(--cyan)","stroke-width":1.2},sg);
+  var done=mk("polyline",{fill:"none",stroke:"var(--amber)","stroke-width":2.5,"stroke-linejoin":"round","stroke-linecap":"round"},svg);
+  var best=mk("g",{opacity:0},svg);mk("circle",{r:9,fill:"none",stroke:"var(--green)","stroke-width":2},best);
+  var cur=mk("g",{},svg);mk("circle",{r:6,fill:"var(--card)",stroke:"var(--ink)","stroke-width":2},cur);mk("path",{d:"M-11 0H-6M6 0H11M0 -11V-6M0 6V11",stroke:"var(--ink)","stroke-width":1.5},cur);
+  var txt=mk("text",{x:14,y:250,"font-size":12,"font-weight":600,fill:"var(--muted)"},svg);txt.setAttribute("display","none");
+  var note=mk("text",{x:160,y:246,"font-size":10,"text-anchor":"middle",fill:"var(--muted)"},svg);
+  return {draw:function(S){
+    var sn=S.sn,c=P(Math.max(-SN_AMP*1.08,Math.min(SN_AMP*1.08,S.dishAz-SAT_AZ)),S.dEl);
+    setA(cur,{transform:tr(c[0],c[1]),opacity:S.t>=15.5?1:0.35});
+    var pts=[];if(S.t>=SN_T0){for(var i=0;i<sn.idx;i++)pts.push(P(SN_PTS[i][0],SN_PTS[i][1]));pts.push(P(sn.az,sn.el))}
+    done.setAttribute("points",ptsStr(pts));
+    setA(best,{transform:tr(bpt[0],bpt[1]),opacity:sn.p>=1?1:0});
+    note.textContent=S.t<SN_T0?(S.t>=15.5?"после наведения по компасу":"антенна ещё не наведена"):(sn.p>=1?"лучшая точка, болты затянуты":"идём змейкой…");
+    txt.textContent="сигнал "+Math.round(S.lvl*100)+"%";setA(txt,{fill:S.lvl>0.93?"var(--green)":"var(--muted)"});
+  }};
+})();
+
+/* ================= panel 4: behind the antenna ================= */
+var BACKV=(function(){
+  var bh=[Math.sin(SAT_AZ*D),Math.cos(SAT_AZ*D)],fw0=[bh[0],bh[1],0],right=[bh[1],-bh[0],0],pitch=6*D;
+  var fw=[fw0[0]*Math.cos(pitch),fw0[1]*Math.cos(pitch),Math.sin(pitch)],up=[-fw0[0]*Math.sin(pitch),-fw0[1]*Math.sin(pitch),Math.cos(pitch)];
+  var eye=[-bh[0]*3.1+right[0]*0.1,-bh[1]*3.1+right[1]*0.1,1.6],f=170,cx=160,cy=118;
+  function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]}
+  function P(p){var d=[p[0]-eye[0],p[1]-eye[1],p[2]-eye[2]],z=Math.max(0.05,dot(d,fw));return [cx+f*dot(d,right)/z,cy-f*dot(d,up)/z]}
+  function Pd(d){var z=dot(d,fw);return z<=0.05?null:[cx+f*dot(d,right)/z,cy-f*dot(d,up)/z]}
+  var svg=$("vBack"),hy=cy-f*dot(fw0,up)/dot(fw0,fw);
+  mk("rect",{x:0,y:hy,width:320,height:260-hy,fill:"#e6edf2"},svg);
+  mk("line",{x1:0,y1:hy,x2:320,y2:hy,stroke:"var(--line)","stroke-width":1.2},svg);
+  mk("text",{x:8,y:hy-6,"font-size":10,fill:"var(--muted)"},svg).textContent="линия горизонта";
+  var sight=mk("line",{stroke:"var(--cyan)","stroke-width":1.6,"stroke-dasharray":"6 4",display:"none"},svg); /* sight line hidden in the behind-antenna view: it confused readers */
+  var stake=mk("g",{},svg);var sPole=mk("line",{stroke:"var(--warn)","stroke-width":3},stake);var sFlag=mk("path",{fill:"var(--warn)"},stake);var sLbl=mk("text",{"font-size":9.5,fill:"var(--ink)"},stake);mk("tspan",{x:0,dy:0},sLbl).textContent="вешка или визуальный";mk("tspan",{x:0,dy:12},sLbl).textContent="ориентир по направлению";mk("tspan",{x:0,dy:12},sLbl).textContent="на спутник";
+  var satG=mk("g",{},svg);mk("rect",{x:-4,y:-3.5,width:8,height:7,fill:"var(--cyan)"},satG);mk("rect",{x:-14,y:-2,width:9,height:4,fill:"none",stroke:"var(--cyan)","stroke-width":1.2},satG);mk("rect",{x:5,y:-2,width:9,height:4,fill:"none",stroke:"var(--cyan)","stroke-width":1.2},satG);
+  var satRay=mk("line",{stroke:"var(--cyan)","stroke-width":1.3,"stroke-dasharray":"6 5"},svg);
+  var cv=mkPanelCanvas(svg);
+  var dish=mk("polygon",{fill:"#d5e1e8",stroke:"var(--cyan)","stroke-width":1.6},svg);
+  var frame=mk("path",{fill:"none",stroke:"#5d7a8e","stroke-width":2.5,"stroke-linejoin":"round"},svg);
+  var mast=mk("line",{stroke:"#4e6676","stroke-width":4,"stroke-linecap":"round"},svg);
+  var defs=mk("defs",{},svg);
+  var cIn=mk("clipPath",{id:"cbIn"},defs),pIn=mk("polygon",{},cIn);
+  var mOut=mk("mask",{id:"cbOut",maskUnits:"userSpaceOnUse",x:0,y:0,width:320,height:260},defs);mk("rect",{x:0,y:0,width:320,height:260,fill:"#fff"},mOut);var pOut=mk("polygon",{fill:"#000"},mOut);
+  var gOut=mk("g",{mask:"url(#cbOut)"},svg),gIn=mk("g",{"clip-path":"url(#cbIn)"},svg);
+  var armO=mk("line",{stroke:"#7b8d99","stroke-width":3,"stroke-linecap":"round"},gOut),lnbO=mk("circle",{r:7,fill:"#3a444b"},gOut);
+  var stakeIn=mk("line",{stroke:"var(--warn)","stroke-width":1.4,"stroke-dasharray":"3 3"},gIn);
+  var armI=mk("line",{stroke:"#3a444b","stroke-width":1.4,"stroke-dasharray":"4 3"},gIn),armI2=mk("line",{stroke:"#3a444b","stroke-width":1.4,"stroke-dasharray":"4 3"},gIn);
+  var lnbI=mk("circle",{r:7,fill:"none",stroke:"#3a444b","stroke-width":1.4,"stroke-dasharray":"3 2.5"},gIn);
+  var cross=mk("line",{x1:160,y1:14,x2:160,y2:250,stroke:"var(--green)","stroke-width":1,"stroke-dasharray":"3 4",opacity:0},svg);
+  var lab=mk("text",{x:12,y:22,"font-size":11,"font-weight":600,"paint-order":"stroke",stroke:"var(--card)","stroke-width":4},svg);
+  /* contrail of the converter during the snake (about two passes, fading); the first pass stays put, each next 0,5° pass is drawn BT_GAP px higher */
+  var BT_N=160,BT_LEN=150,BT_GAP=1.8,btl=[];for(var bi=0;bi<BT_N;bi++)btl.push(mk("line",{stroke:"#e0650b","stroke-width":1.3,"stroke-linecap":"round",opacity:0},svg));
+  function backTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),prev=null,L0=snLenAt(S.t);
+    for(var i=0;i<=BT_N;i++){var L=L0-BT_LEN*i/BT_N,p=null;
+      if(on&&L>=0){var q=snPtAtG(L);p=P(dishGeom(SAT_AZ+q[0],SN_PTS[0][1]).lnb);p=[p[0],p[1]-(q[1]-SN_PTS[0][1])/0.5*BT_GAP]}
+      if(i>0){var ln=btl[i-1],k=1-i/BT_N;if(p&&prev)setA(ln,{x1:prev[0],y1:prev[1],x2:p[0],y2:p[1],opacity:(0.95*k*k*fade).toFixed(3)});else setA(ln,{opacity:0})}
+      prev=p}}
+  return {cv:cv,cam:{eye:eye,fw:fw,up:up,f:f,cx:cx,cy:cy},hide:[dish,frame,mast,gOut],draw:function(S,g){
+    var sd=Pd(dirv(SAT_AZ,SAT_EL)),c=P(g.C);
+    if(sd){setA(satG,{transform:tr(sd[0],Math.max(14,sd[1]))});setA(satRay,{x1:c[0],y1:c[1],x2:sd[0],y2:Math.max(14,sd[1])})}
+    var b0=P([STAKE[0],STAKE[1],0]),b1=P([STAKE[0],STAKE[1],STAKE_H]);
+    setA(sPole,{x1:b0[0],y1:b0[1],x2:b1[0],y2:b1[1]});sFlag.setAttribute("d","M"+b1[0].toFixed(1)+" "+b1[1].toFixed(1)+"l14 4l-14 4z");(function(){var lx=Math.min(b1[0]+22,180),ly=b1[1]+8;sLbl.setAttribute("transform","translate("+lx.toFixed(1)+" "+ly.toFixed(1)+")")})();
+    setA(stake,{opacity:S.stake});setA(stakeIn,{x1:b0[0],y1:b0[1],x2:b1[0],y2:b1[1],opacity:S.stake});
+    var c1=P([COMP1[0],COMP1[1],0]);setA(sight,{x1:Math.max(-50,Math.min(370,c1[0])),y1:Math.min(300,c1[1]),x2:b0[0],y2:b0[1],opacity:S.line});
+    var pts=ptsStr(g.rim.map(P));dish.setAttribute("points",pts);pIn.setAttribute("points",pts);pOut.setAttribute("points",pts);
+    var d="";TRI.legs.concat(TRI.braces).forEach(function(sg){var a=P(sg[0]),b=P(sg[1]);d+="M"+a[0].toFixed(1)+" "+a[1].toFixed(1)+"L"+b[0].toFixed(1)+" "+b[1].toFixed(1)});frame.setAttribute("d",d);
+    var m0=P([0,0,0]),m1=P([0,0,MAST_H]);setA(mast,{x1:m0[0],y1:m0[1],x2:m1[0],y2:m1[1]});
+    var r0=P(g.root),l0=P(g.lnb),dx=l0[0]-r0[0],dy=l0[1]-r0[1],L=Math.hypot(dx,dy)||1,nx=-dy/L*3.6,ny=dx/L*3.6;
+    setA(armO,{x1:r0[0],y1:r0[1],x2:l0[0],y2:l0[1]});setA(lnbO,{cx:l0[0],cy:l0[1]});
+    setA(armI,{x1:r0[0]+nx,y1:r0[1]+ny,x2:l0[0]+nx,y2:l0[1]+ny});setA(armI2,{x1:r0[0]-nx,y1:r0[1]-ny,x2:l0[0]-nx,y2:l0[1]-ny});setA(lnbI,{cx:l0[0],cy:l0[1]});
+    backTrail(S);
+    setA(cross,{opacity:S.ok&&S.t<SN_T0?1:0});
+    lab.textContent="";setA(lab,{fill:S.ok?"var(--green)":"var(--warn)"});
+  }};
+})();
+
+/* ================= 3D ================= */
+var G=null;
+(function init3D(){
+  var canvas=$("gl"),stage=$("stage");
+  function fail(){canvas.hidden=true;$("glHint").hidden=true;var d=document.createElement("div");d.className="sp-nogl";d.textContent="3D-вид недоступен в этом браузере. Ниже работают плоские виды.";stage.appendChild(d)}
+  if(!window.THREE){fail();return}
+  var renderer;try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,preserveDrawingBuffer:REC});(window.__spGLs=window.__spGLs||[]).push(renderer)}catch(e){fail();return}
+  renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  if(THREE.sRGBEncoding)renderer.outputEncoding=THREE.sRGBEncoding;
+  var scene=new THREE.Scene();scene.background=new THREE.Color(0xeef3f6);scene.fog=new THREE.Fog(0xeef3f6,16,32);
+  var camera=new THREE.PerspectiveCamera(42,2,0.1,100);
+  function W(x,y,z){return new THREE.Vector3(x,z,-y)}
+  function V(p){return W(p[0],p[1],p[2])}
+  scene.add(new THREE.HemisphereLight(0xffffff,0xaebdc7,0.8));
+  var L=new THREE.DirectionalLight(0xffffff,0.85);L.castShadow=true;L.shadow.mapSize.set(2048,2048);
+  var sc=L.shadow.camera;sc.left=-9;sc.right=9;sc.top=9;sc.bottom=-9;sc.near=1;sc.far=50;L.shadow.bias=-0.0006;
+  var ld=dirv(210,48);L.position.copy(W(ld[0]*20,ld[1]*20,ld[2]*20));scene.add(L);scene.add(L.target);
+  var ground=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.MeshLambertMaterial({color:0xe2eaef}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+  var grid=new THREE.GridHelper(30,60,0xb3c4cf,0xcbd7df);grid.position.y=0.003;scene.add(grid);
+  function label(text,color,scale){var c=document.createElement("canvas");c.width=512;c.height=128;var x=c.getContext("2d");x.font="300 46px Raleway, system-ui, sans-serif";x.fillStyle=color;x.textAlign="center";x.textBaseline="middle";x.fillText(text,256,64);
+    var s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));s.scale.set(2*(scale||1),0.5*(scale||1),1);return s}
+  [["С",0],["В",90],["Ю",180],["З",270]].forEach(function(q){var s=label(q[0],"#111111",0.9);s.position.copy(W(5.5*Math.sin(q[1]*D),5.5*Math.cos(q[1]*D),0.25));scene.add(s)});
+  var steel=new THREE.MeshStandardMaterial({color:0x5f6f7a,metalness:.45,roughness:.55});
+  var dishM=new THREE.MeshStandardMaterial({color:0xa9b6bf,metalness:.35,roughness:.5,side:THREE.DoubleSide});
+  var legM=new THREE.MeshStandardMaterial({color:0xb4c0c8,metalness:.3,roughness:.55});
+  var trx=new THREE.MeshStandardMaterial({color:0x3a444b,metalness:.35,roughness:.5});
+  function rod(a,b,r,mat){var d=new THREE.Vector3().subVectors(b,a),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,d.length(),10),mat);m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());m.castShadow=true;return m}
+  var ANT0=scene.children.length;
+  /* tripod */
+  scene.add(rod(W(0,0,0.08),W(0,0,MAST_H),0.045,legM));
+  TRI.legs.forEach(function(sg){scene.add(rod(V(sg[0]),V(sg[1]),0.022,legM))});
+  TRI.braces.forEach(function(sg){scene.add(rod(V(sg[0]),V(sg[1]),0.014,legM))});
+  TRI.angles.forEach(function(a){var pl=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.012,0.26),legM);pl.position.copy(W(1.02*Math.sin(a*D),1.02*Math.cos(a*D),0.006));pl.rotation.y=-a*D;pl.castShadow=true;scene.add(pl)});
+  /* rotating, tilting head */
+  var head=new THREE.Group();scene.add(head);var g0=dishGeom(0);
+  var capR=1.8,capT=Math.asin(g0.R/capR);
+  var cap=new THREE.Mesh(new THREE.SphereGeometry(capR,48,16,0,Math.PI*2,Math.PI-capT,capT),dishM);cap.position.y=capR;cap.castShadow=true;
+  var capH=new THREE.Group();capH.add(cap);capH.position.copy(V(g0.C));capH.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),V(g0.n).normalize());
+  var tiltP=new THREE.Group();tiltP.position.copy(V(g0.C));head.add(tiltP);var tiltI=new THREE.Group();tiltI.position.copy(V(g0.C)).multiplyScalar(-1);tiltP.add(tiltI);
+  tiltI.add(capH);
+  var rim=new THREE.Mesh(new THREE.TorusGeometry(g0.R,0.018,8,64),dishM);rim.castShadow=true;var rimH=new THREE.Group();rimH.add(rim);rim.rotation.x=Math.PI/2;rim.position.y=capR*(1-Math.cos(capT));rimH.position.copy(V(g0.C));rimH.quaternion.copy(capH.quaternion);tiltI.add(rimH);
+  tiltI.add(rod(V(g0.root),V(g0.lnb),0.028,steel));tiltI.add(rod(V(g0.strutL),V(g0.armMid),0.012,steel));tiltI.add(rod(V(g0.strutR),V(g0.armMid),0.012,steel));
+  head.add(rod(W(0,0,MAST_H),V(g0.C),0.04,steel));
+  var lnb=new THREE.Group();lnb.position.copy(V(g0.lnb));
+  var buc=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.1,0.22),trx);buc.castShadow=true;lnb.add(buc);
+  for(var f=-3;f<=3;f++){var fin=new THREE.Mesh(new THREE.BoxGeometry(0.17,0.12,0.012),trx);fin.position.z=f*0.03;lnb.add(fin)}
+  var horn=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.03,0.12,16),trx);horn.position.copy(V([g0.C[0]-g0.lnb[0],g0.C[1]-g0.lnb[1],g0.C[2]-g0.lnb[2]]).normalize().multiplyScalar(0.12));horn.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),horn.position.clone().normalize());lnb.add(horn);
+  tiltI.add(lnb);
+  var ANT1=scene.children.length;
+  /* satellite */
+  var sat=new THREE.Group(),cyanM=new THREE.MeshBasicMaterial({color:0x0a8fb3});sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.22,0.22,0.22),cyanM));
+  [-1,1].forEach(function(s){var p=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.02,0.18),new THREE.MeshBasicMaterial({color:0x2d6f8a}));p.position.x=s*0.38;sat.add(p)});
+  var sd=dirv(SAT_AZ,SAT_EL);sat.position.copy(W(sd[0]*8,sd[1]*8,1+sd[2]*8));scene.add(sat);
+  var satLbl=label("спутник","#111111",0.8);satLbl.position.copy(sat.position).add(new THREE.Vector3(0,0.45,0));scene.add(satLbl);
+  var satLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(dishGeom(SAT_AZ).C),sat.position.clone()]),new THREE.LineDashedMaterial({color:0x0a8fb3,dashSize:.18,gapSize:.12}));satLine.computeLineDistances();scene.add(satLine);
+  /* phone on a small stand (held level, screen up) */
+  var comp=new THREE.Group();scene.add(comp);
+  comp.add(rod(W(0,0,0),W(0,0,0.95),0.012,new THREE.MeshStandardMaterial({color:0x8b6a45,roughness:.9})));
+  var phoneG=new THREE.Group();phoneG.scale.set(1.7,1,1.7);comp.add(phoneG);
+  var body=new THREE.Mesh(new THREE.BoxGeometry(0.24,0.025,0.48),new THREE.MeshStandardMaterial({color:0x1d262c,roughness:.4}));body.position.y=0.97;body.castShadow=true;phoneG.add(body);
+  var scC=document.createElement("canvas");scC.width=256;scC.height=512;var scX=scC.getContext("2d"),scT=new THREE.CanvasTexture(scC);
+  var screen=new THREE.Mesh(new THREE.PlaneGeometry(0.21,0.44),new THREE.MeshBasicMaterial({map:scT}));screen.rotation.x=-Math.PI/2;screen.position.y=0.984;phoneG.add(screen);
+  function flatArrow(len,wid,thick,color){var sh=new THREE.Shape();sh.moveTo(0,len/2);sh.lineTo(-wid/2,-len/2);sh.lineTo(wid/2,-len/2);sh.lineTo(0,len/2);
+    var g=new THREE.ExtrudeGeometry(sh,{depth:thick,bevelEnabled:false});var m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:color,roughness:.5}));m.rotation.x=-Math.PI/2;m.castShadow=true;return m}
+  var tipM=flatArrow(0.1,0.09,0.01,0x0a8fb3);tipM.position.set(0,0.972,-0.32);phoneG.add(tipM);
+  var lastShown=null;
+  function drawScreen(v,ok){var key=Math.round(v)+(ok?"g":"");if(key===lastShown)return;lastShown=key;var x=scX;x.fillStyle="#fff";x.fillRect(0,0,256,512);
+    x.fillStyle=ok?"#1f9d63":"#14232d";x.font="600 56px Raleway, monospace";x.textAlign="center";x.textBaseline="middle";x.fillText(F1(v)+"°",128,110);
+    x.save();x.translate(128,320);x.rotate(-v*D);x.strokeStyle="#90a4b1";x.lineWidth=4;x.beginPath();x.arc(0,0,105,0,7);x.stroke();
+    x.font="600 40px Raleway, sans-serif";[["С",0,"#d23b2f"],["В",90,"#14232d"],["Ю",180,"#14232d"],["З",270,"#14232d"]].forEach(function(q){x.fillStyle=q[2];x.fillText(q[0],70*Math.sin(q[1]*D),-70*Math.cos(q[1]*D))});x.restore();
+    x.fillStyle="#14232d";x.fillRect(124,200,8,30);scT.needsUpdate=true}
+  var compLbl=label("телефон","#111111",0.7);compLbl.position.y=1.45;comp.add(compLbl);
+  /* stake */
+  var stake=new THREE.Group();stake.position.copy(W(STAKE[0],STAKE[1],0));scene.add(stake);
+  var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,STAKE_H,10),new THREE.MeshStandardMaterial({color:0xe0650b}));pole.position.y=STAKE_H/2;pole.castShadow=true;stake.add(pole);
+  var flagGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,STAKE_H,0),new THREE.Vector3(0.32,STAKE_H-0.1,0),new THREE.Vector3(0,STAKE_H-0.2,0)]);
+  var flag=new THREE.Mesh(flagGeo,new THREE.MeshBasicMaterial({color:0xe0650b,side:THREE.DoubleSide}));stake.add(flag);
+  var stLbl=(function(){var c=document.createElement("canvas"),x=c.getContext("2d"),F="300 46px Raleway, system-ui, sans-serif";x.font=F;var cw=Math.ceil(Math.max(x.measureText("вешка или визуальный ориентир").width,x.measureText("по направлению на спутник").width)+16);c.width=cw;c.height=200;x=c.getContext("2d");x.font=F;x.fillStyle="#111111";x.textAlign="left";x.textBaseline="middle";x.fillText("вешка или визуальный ориентир",8,60);x.fillText("по направлению на спутник",8,140);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false}));sp.scale.set(c.width*0.0035,0.7,1);sp.center.set(-0.04,0.5);return sp})();stLbl.position.y=STAKE_H*0.62;stake.add(stLbl); /* label to the right of the stake, clear of the satellite label */
+  /* ground ribbons: sight line and antenna direction */
+  function ribbonGeo(w){var g=new THREE.PlaneGeometry(1,w);g.rotateX(-Math.PI/2);return g}
+  function placeRibbon(m,a,b,y){var dx=b.x-a.x,dz=b.z-a.z,Ln=Math.hypot(dx,dz)||1e-6;m.position.set((a.x+b.x)/2,y,(a.z+b.z)/2);m.rotation.y=Math.atan2(-dz,dx);m.scale.x=Ln}
+  var sMat=new THREE.MeshBasicMaterial({color:0x0a8fb3,transparent:true,opacity:0,depthWrite:false}),sight=new THREE.Mesh(ribbonGeo(0.06),sMat);scene.add(sight);
+  var gMat=new THREE.MeshBasicMaterial({color:0xe0650b,transparent:true,opacity:0,depthWrite:false}),guide=new THREE.Mesh(ribbonGeo(0.07),gMat);guide.renderOrder=2;scene.add(guide);
+  var lblCache={},stat=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,depthTest:false}));stat.scale.set(3.6,0.9,1);stat.renderOrder=5;scene.add(stat);
+  function setLbl(text,color){var key=text+color;if(!lblCache[key]){var c=document.createElement("canvas");c.width=1024;c.height=256;var x=c.getContext("2d");x.font="600 64px Raleway, system-ui, sans-serif";x.textAlign="center";x.textBaseline="middle";
+    x.fillStyle="rgba(255,255,255,.92)";var w=Math.min(1000,x.measureText(text).width+80);x.beginPath();x.roundRect?x.roundRect(512-w/2,48,w,160,36):x.rect(512-w/2,48,w,160);x.fill();x.lineWidth=6;x.strokeStyle=color;x.stroke();x.fillStyle=color;x.fillText(text,512,130);lblCache[key]=new THREE.CanvasTexture(c)}
+    if(stat.material.map!==lblCache[key]){stat.material.map=lblCache[key];stat.material.needsUpdate=true}}
+  var controls=null,userCam=false,target=W(-0.4*bw[0],-0.4*bw[1],0.9);
+  if(THREE.OrbitControls){controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=4;controls.maxDistance=22;controls.maxPolarAngle=Math.PI/2-0.05;controls.target.copy(target);
+    controls.addEventListener("start",function(){userCam=true;$("camReset").hidden=false})}else $("glHint").hidden=true;
+  if(window.matchMedia&&window.matchMedia("(pointer: coarse)").matches)$("glHint").textContent="Ведите пальцем по картинке — сцена повернётся. Двумя пальцами — ближе / дальше.";
+  $("camReset").addEventListener("click",function(){userCam=false;this.hidden=true});
+  function resize(){var w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<1.3?58:42;camera.updateProjectionMatrix()}
+  if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);resize();
+  /* ===== the same 3D antenna, rendered into the flat views with matching projections ===== */
+  var PR=null,PANELS=[],PRS=760;
+  try{PR=new THREE.WebGLRenderer({antialias:true,alpha:true});(window.__spGLs=window.__spGLs||[]).push(PR);PR.setPixelRatio(1);PR.setSize(PRS,PRS,false);PR.shadowMap.enabled=true;PR.shadowMap.type=THREE.PCFSoftShadowMap;if(THREE.sRGBEncoding)PR.outputEncoding=THREE.sRGBEncoding;PR.setClearColor(0x000000,0);PR.toneMapping=THREE.LinearToneMapping;PR.toneMappingExposure=0.72}catch(e){PR=null}
+  function camTop(sx0,sy0,ks,w,h){w=w||320;h=h||260;var c=new THREE.OrthographicCamera(-sx0/ks,(w-sx0)/ks,sy0/ks,-(h-sy0)/ks,1,200);c.position.set(0,80,0);c.up.set(0,0,-1);c.lookAt(0,0,0);return c}
+  function camSide(bhv,cx,cy,k,w,h){w=w||320;h=h||260;var R=new THREE.Vector3(bhv[0],0,-bhv[1]),back=new THREE.Vector3().crossVectors(R,new THREE.Vector3(0,1,0)).normalize();
+    var c=new THREE.OrthographicCamera(-cx/k,(w-cx)/k,cy/k,-(h-cy)/k,1,200);c.position.copy(back.multiplyScalar(80));c.up.set(0,1,0);c.lookAt(0,0,0);return c}
+  function camBack(o,w,h){w=w||320;h=h||260;var c=new THREE.PerspectiveCamera(2*Math.atan(o.cy/o.f)*180/Math.PI,o.cx/o.cy,0.05,200);c.setViewOffset(2*o.cx,2*o.cy,0,0,w,h);
+    var e=W(o.eye[0],o.eye[1],o.eye[2]);c.position.copy(e);c.up.copy(W(o.up[0],o.up[1],o.up[2]));c.lookAt(e.clone().add(W(o.fw[0],o.fw[1],o.fw[2])));c.updateProjectionMatrix();return c}
+  function addPanel(cv,cam,obs){if(!PR||!cv)return;obs=obs||{};var p={cv:cv,ctx:cv.getContext("2d"),cam:cam,vis:true,scale:obs.scale||1,shadows:!!obs.shadows};
+    if(window.IntersectionObserver&&!REC){var io=new IntersectionObserver(function(en){p.vis=en[0].isIntersecting});io.observe(cv.closest(".sp-view")||cv)}PANELS.push(p)}window.__spPanels=PANELS;
+  var ANTSET=new Set();
+  function markAntenna(list){list.forEach(function(o){if(!o.isSprite)ANTSET.add(o)})}
+  var CATCH=new THREE.Mesh(new THREE.PlaneGeometry(60,60),new THREE.ShadowMaterial({opacity:0.22}));CATCH.rotation.x=-Math.PI/2;CATCH.position.y=0.002;CATCH.receiveShadow=true;CATCH.visible=false;scene.add(CATCH);
+  function renderPanels(){
+    if(!PR||!PANELS.length)return;
+    var saved=[];scene.children.forEach(function(o){if(o.isLight||o===CATCH)return;var on=ANTSET.has(o);if(o.visible!==on){saved.push([o,o.visible]);o.visible=on}});
+    var bg=scene.background,fog=scene.fog;scene.background=null;scene.fog=null;
+    PANELS.forEach(function(p){if(!p.vis)return;var cw=p.cv.width,ch=p.cv.height,sc=p.scale;
+      if(sc!==1)ANTSET.forEach(function(o){o.scale.multiplyScalar(sc);o.position.multiplyScalar(sc)});
+      CATCH.visible=p.shadows;PR.setViewport(0,0,cw,ch);PR.render(scene,p.cam);
+      p.ctx.clearRect(0,0,cw,ch);p.ctx.drawImage(PR.domElement,0,PRS-ch,cw,ch,0,0,cw,ch);
+      if(sc!==1)ANTSET.forEach(function(o){o.scale.multiplyScalar(1/sc);o.position.multiplyScalar(1/sc)});
+    });
+    CATCH.visible=false;scene.background=bg;scene.fog=fog;saved.forEach(function(s){s[0].visible=s[1]});
+  }
+  markAntenna(scene.children.slice(ANT0,ANT1));
+  addPanel(TOPV.cv,camTop.apply(null,TOPV.camArgs),{scale:TOPV.AS});
+  addPanel(BACKV.cv,camBack(BACKV.cam));
+  if(PR)TOPV.hide.concat(BACKV.hide).forEach(function(e){e.style.display="none"});
+  /* main 3D view only: the elevation offset is drawn 5x larger (the dish visibly rises pass by pass during the snake and ends on the satellite);
+     contrail of the converter, about two passes long, fading towards the tail; the panels keep the true elevation */
+  var EL_EX=5,TRAIL=[],TR_N=220,TR_LEN=150,trGeo=new THREE.SphereGeometry(0.02,8,6);
+  for(var ti=0;ti<TR_N;ti++){var tm=new THREE.Mesh(trGeo,new THREE.MeshBasicMaterial({color:0xe0650b,transparent:true,depthWrite:false}));tm.visible=false;scene.add(tm);TRAIL.push(tm)}
+  function drawTrail(S){var on=S.t>SN_T0&&S.t<SN_T1+0.8,fade=1-clamp((S.t-SN_T1)/0.8),L0=snLenAt(S.t);
+    TRAIL.forEach(function(m,i){var L=L0-TR_LEN*i/(TR_N-1);if(!on||L<0){m.visible=false;return}
+      var q=snPtAtG(L),g=dishGeom(SAT_AZ+q[0],q[1]*EL_EX),v=W(g.lnb[0],g.lnb[1],g.lnb[2]),k=1-i/TR_N;
+      m.position.copy(v);m.scale.setScalar(0.7+0.3*k);m.material.opacity=(0.95*Math.pow(k,1.5)*fade);m.visible=true})}
+  G={render:function(S){
+    head.rotation.y=-S.dishAz*D;tiltP.rotation.x=S.dEl*EL_EX*D;drawTrail(S);
+    comp.position.copy(W(S.cp[0],S.cp[1],0));
+    phoneG.rotation.y=-S.heading*D;drawScreen(S.display,S.inN);
+    stake.scale.set(1,Math.max(0.001,S.stake),1);stake.visible=S.stake>0;
+    var c1=W(COMP1[0],COMP1[1],0),st=W(STAKE[0],STAKE[1],0);placeRibbon(sight,c1,c1.clone().lerp(st,S.line),0.012);sMat.opacity=0.85*Math.min(1,S.line*3);
+    var m0=W(0,0,0),ge=W(Math.sin(S.dishAz*D)*5,Math.cos(S.dishAz*D)*5,0);placeRibbon(guide,m0,ge,0.016);gMat.color.setHex(S.ok?0x1f9d63:0xe0650b);gMat.opacity=0.9*S.gv;
+    var txt=null,col="#e0650b",pos=null;
+    if(S.t>=4.5&&S.t<9&&S.defl>6){txt="рядом металл — число скачет";pos=W(S.cp[0],S.cp[1],1.9)}
+    else if(S.t>=9&&S.t<12.5&&S.inN){txt="✓ на экране "+F1(MAGR)+"°";col="#1f9d63";pos=W(S.cp[0],S.cp[1],1.9)}
+    else if(S.gv>0){txt=S.ok?"✓ АНТЕННА НА ОРИЕНТИР":"угол антенна — ориентир "+Math.max(1,Math.round(S.dAz))+"°";col=S.ok?"#1f9d63":"#e0650b";pos=W(2.6*bw[0]-1.2*bp[0],2.6*bw[1]-1.2*bp[1],0.9)}
+    if(txt){setLbl(txt,col);stat.position.copy(pos);stat.material.opacity=1;stat.visible=true}else stat.visible=false;
+    if(!userCam){var up=ease((S.t-12.7)/1.6)-ease((S.t-17.2)/1.8),ca=(SAT_AZ+115+8*Math.sin(S.t/T_END*2*Math.PI))*D,R=9.8-2.6*up;
+      camera.position.copy(W(R*Math.sin(ca),R*Math.cos(ca),3+4*up));camera.lookAt(target);if(controls)controls.target.copy(target)}
+    if(controls&&userCam)controls.update();
+    (function(){var p=new THREE.Vector3(),r=new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld,0).multiplyScalar(stLbl.scale.x*1.05);stLbl.getWorldPosition(p);var q=p.clone().add(r);p.project(camera);q.project(camera);stLbl.center.set(q.x>0.97?1.04:-0.04,0.5)})(); /* keep the stake label inside the frame */
+    renderer.render(scene,camera);
+    tiltP.rotation.x=S.dEl*D;TRAIL.forEach(function(m){m.visible=false});   /* panels: true elevation, no 3D trail */
+    renderPanels();
+  }};
+})();
+
+/* ================= playback ================= */
+var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var T=reduce?16:0,playing=!reduce,last=null,lastStep=-1;
+function frame(t){
+  var S=state(t);LASTS=S;
+  $("readout").textContent=F1(S.display)+"°";
+  if(S.step!==lastStep){lastStep=S.step;$("cap").innerHTML="<b>"+(S.step+1)+"/5</b>"+STEPS[S.step][1];
+    chips.forEach(function(b,i){if(i===S.step)b.setAttribute("aria-current","step");else b.removeAttribute("aria-current");b.classList.toggle("done",i<S.step)})}
+  $("prog").style.width=(t/T_END*100).toFixed(2)+"%";
+  barEls.forEach(function(b,k){b.style.background=(k/16<S.lvl||(k===0&&S.lvl>0.01))?(S.lvl>0.93?"var(--green)":"var(--cyan)"):"var(--grid)"});
+  var st=$("sigTxt");st.textContent=Math.round(S.lvl*100)+"% · "+(S.lvl>0.93?"максимум":S.lvl>0.3?"есть":S.lvl>0.01?"слабый":"нет");st.style.color=S.lvl>0.93?"var(--green)":S.lvl>0.01?"var(--cyan)":"var(--muted)";
+  var g=dishGeom(S.dishAz,S.dEl);
+  COMPV.draw(S);TOPV.draw(S,g);SNK.draw(S);BACKV.draw(S,g);
+  if(G)G.render(S);
+}
+function loop(ts){if(playing){if(last!==null){T+=Math.min(0.1,(ts-last)/1000);if(T>T_END)T=0}last=ts}else last=null;frame(T);requestAnimationFrame(loop)}
+function jump(x){T=x;last=null}
+window.__spJump=function(x){T=x;frame(T)};
+$("btnPlay").addEventListener("click",function(){playing=!playing;this.textContent=playing?"Пауза":"Играть"});
+/* click (not drag) on the 3D stage or any view toggles play / pause */
+(function(){var down=null;document.querySelectorAll("#stage,.sp-view").forEach(function(el){el.style.cursor="pointer";
+  el.addEventListener("pointerdown",function(e){down=[e.clientX,e.clientY]});
+  el.addEventListener("click",function(e){if(e.target.closest("button,a,input,select,label"))return;if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])>6)return;$("btnPlay").click()})})})();
+$("btnRestart").addEventListener("click",function(){jump(0);playing=true;$("btnPlay").textContent="Пауза"});
+$("btnPlay").textContent=playing?"Пауза":"Играть";
+var LASTS=null;
+window.__spRec={dur:T_END,steps:STEPS.map(function(s){return s[0]}),texts:STEPS.map(function(s){return s[1]}),views:["vComp","vComp","vTop","vBack","vSnake"],tok:TOK,
+  set:function(t){T=t;frame(t);return LASTS},only:function(id){(window.__spPanels||[]).forEach(function(p){var s=p.cv.closest("svg");p.vis=!!s&&s.id===id})},head:function(){return {label:"НА ЭКРАНЕ ТЕЛЕФОНА",value:$("readout").textContent,ok:false,note:""}},gl:$("gl")};
+frame(T);if(!REC)requestAnimationFrame(loop);
+});
+</script>
+
+</body>
+</html>

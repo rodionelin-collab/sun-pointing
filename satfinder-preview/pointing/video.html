@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Видео для клиента</title>
+<link rel="preload" href="fonts/raleway-cyrillic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/raleway-cyrillic-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="dtk.css">
+<style>
+/* Builds one vertical (9:16) MP4 for a phone: intro card → each chosen pointing method, played frame by frame from its animation page in a hidden iframe → closing note. */
+:root{
+  --bg:#f4f5f8; --card:#ffffff; --grid:#e8ebf2; --line:#dce1e9; --ink:#202737; --muted:#606b7e;
+  --cyan:#3732b5; --warn:#e0650b; --green:#1f9d63;
+  --f-body:Raleway,Arial,sans-serif;
+  --f-mono:Raleway,Arial,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body)}
+.wrap{max-width:940px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-left,0px)) 40px;display:grid;gap:14px}
+nav{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
+.back{font:600 13px var(--f-body);color:var(--cyan);text-decoration:none}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--grid);border-radius:10px;padding:4px}
+.tabs a{font:600 13.5px var(--f-body);color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:7px}
+.tabs a:hover{color:var(--ink)}
+.tabs a[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,35,45,.12)}
+h1{font-size:22px;margin:4px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
+.ctx{font-size:14px;line-height:1.5;color:var(--muted)}
+.ctx b{color:var(--ink)}
+.ctx{line-height:2.4}
+#dateBox{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;vertical-align:middle;line-height:1.4}
+#dateBox[hidden]{display:none}
+#dateBox input{min-height:34px;padding:2px 4px 2px 6px;font:600 14px var(--f-body,Raleway,sans-serif);color:var(--ink);width:auto}
+label.k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;display:block;margin-bottom:4px}
+input[type=date]{font:600 15px var(--f-body);border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--card);color:var(--ink)}
+.methods{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:15px}
+.methods label{display:flex;gap:8px;align-items:center;cursor:pointer}
+.quals{display:flex;flex-wrap:wrap;gap:8px}
+.quals label{position:relative;cursor:pointer}
+.quals input{position:absolute;opacity:0;width:1px;height:1px}
+.quals span{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:44px;padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);font:600 14px var(--f-body,Raleway,sans-serif);color:var(--ink);line-height:1.2}
+.quals small{font-weight:400;font-size:12px;color:var(--muted)}
+.quals input:checked+span{border-color:#3732b5;background:#eeedfc;color:#3732b5}
+.quals input:focus-visible+span{outline:3px solid #3732b5;outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button,.btn{font:600 15px var(--f-body);border-radius:9px;padding:11px 18px;border:1px solid var(--cyan);background:var(--cyan);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+button.ghost,.btn.ghost{background:var(--card);color:var(--cyan)}
+button:disabled{opacity:.5;cursor:default}
+.hint{font-size:13.5px;color:var(--muted);margin:0;line-height:1.5}
+.warn{color:var(--warn);font-weight:600;font-size:14px;margin:0}
+.bar{height:10px;background:var(--grid);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .2s}
+.result{display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:16px;align-items:start}
+@media (max-width:640px){.result{grid-template-columns:1fr}}
+video,#preview{width:100%;max-width:300px;border-radius:12px;border:1px solid var(--line);background:#000;display:block}
+#preview{background:var(--bg)}
+/* the animation page is rendered off-screen at a fixed width so its canvases have a real size */
+iframe.stage{position:fixed;left:-20000px;top:0;width:760px;height:1600px;border:0;visibility:visible}
+</style>
+</head>
+<body>
+<a class="sf-skip" href="#main">К содержимому</a>
+<header class="sf-header">
+  <div class="sf-header-inner">
+    <a class="sf-brand" href="index.html" aria-label="Помощник установщика антенны, на главную"><svg viewBox="0 0 40 40" width="40" height="40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="5" fill="currentColor"></circle><ellipse cx="20" cy="20" rx="18" ry="9" transform="rotate(-40 20 20)" stroke="currentColor" stroke-width="1.8"></ellipse><circle cx="7" cy="30" r="3" fill="currentColor"></circle></svg></a>
+    <div class="sf-intro">
+      <p class="sf-eyebrow">СПУТНИКОВАЯ СВЯЗЬ / НАВЕДЕНИЕ АНТЕННЫ</p>
+      <p class="sf-title">Помощник установщика антенны</p>
+      <p class="sf-desc">Вертикальный ролик для клиента из анимаций наведения.</p>
+    </div>
+    <nav class="sf-nav" aria-label="Разделы"><a href="../">Карта</a><a href="index.html">Расчёт</a><a href="sun.html">По солнцу</a><a href="compass.html">Компас в телефоне</a><a href="magnetic.html">Магнитный компас</a><a href="video.html" aria-current="page">Видео для клиента</a></nav>
+  </div>
+</header>
+<main class="wrap" id="main">
+  <h1>Видео для клиента</h1>
+  <p class="hint">Соберём один вертикальный ролик для смартфона с анимациями наведения для выбранной точки, спутника и даты. Его можно скачать и отправить клиенту в мессенджер.</p>
+
+  <div class="card">
+    <div class="ctx"><span id="ctx">Точка и спутник берутся из Помощника установщика.</span><span id="dateBox">&nbsp;·&nbsp;<label for="dateIn">планируемая дата установки</label> <input type="date" id="dateIn"></span></div>
+    <p class="warn" id="dateWarn" hidden>Эта дата уже прошла — для способа «по солнцу» выберите сегодняшний или более поздний день.</p>
+    <div>
+      <span class="k" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Какие способы включить</span>
+      <div class="methods" style="margin-top:6px">
+        <label><input type="checkbox" value="sun" checked> По солнцу</label>
+        <label><input type="checkbox" value="compass" checked> Компас в телефоне</label>
+        <label><input type="checkbox" value="magnetic" checked> Магнитный компас</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="quals" role="radiogroup" aria-label="Качество видео">
+        <label><input type="radio" name="qual" value="max" checked><span>Максимальное<small id="qs-max">≈ 37 МБ</small></span></label>
+        <label><input type="radio" name="qual" value="mid"><span>Среднее<small id="qs-mid">≈ 18 МБ</small></span></label>
+        <label><input type="radio" name="qual" value="low"><span>Лёгкое<small id="qs-low">≈ 11 МБ</small></span></label>
+      </div>
+      <button type="button" id="go">Создать видео</button>
+      <button type="button" class="ghost" id="stop" hidden>Остановить</button>
+    </div>
+    <p class="hint" id="eta">Ролик длится около 5,5 минуты (все три способа). Сборка идёт прямо в браузере — не закрывайте и не сворачивайте вкладку. Чем ниже качество, тем меньше файл и быстрее сборка; размер указан для всех трёх способов.</p>
+    <div id="progWrap" hidden>
+      <div class="bar"><i id="prog"></i></div>
+      <p class="hint" id="progTxt" style="margin-top:6px"></p>
+    </div>
+  </div>
+
+  <div class="card" id="out" hidden>
+    <div class="result">
+      <video id="vid" controls playsinline></video>
+      <div style="display:grid;gap:10px;align-content:start">
+        <b id="outName"></b>
+        <span class="hint" id="outInfo"></span>
+        <div class="row">
+          <a class="btn" id="dl" download>Скачать видео</a>
+          <button type="button" class="ghost" id="share" hidden>Отправить…</button>
+        </div>
+        <p class="hint">На телефоне кнопка «Отправить» открывает меню «Поделиться» — можно сразу выбрать WhatsApp, Telegram или почту.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="prevCard" hidden>
+    <span class="k" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600">Так выглядит кадр</span>
+    <canvas id="preview" width="720" height="1280"></canvas>
+  </div>
+</main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js"></script>
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+/* video quality presets: the drawing is always laid out at 720×1280 and scaled down into the encoded frame */
+var QUAL={max:{w:720,h:1280,fps:25,br:2e6},mid:{w:540,h:960,fps:15,br:1e6},low:{w:432,h:768,fps:10,br:0.5e6}};
+var OW=720,OH=1280,W=720,H=1280,FPS=25,GH=420,SLOW=2,   /* animations play at half speed in the video */
+    BR=4e6,BRQ=(function(){var q=new URLSearchParams(location.search),b=parseFloat(q.get("br"));return /[?&]test=1/.test(location.search)&&b>0?b:0})();   /* 4 Mbit/s, keyframe every 2 s: browser hardware encoders blur thin lines and small text at low bitrates */
+var TEST=/[?&]test=1(&|$)/.test(location.search),TT=parseFloat(new URLSearchParams(location.search).get("tt"));if(isNaN(TT))TT=-1;   /* short clips for checking the pipeline */
+var METHODS={sun:{page:"sun.html",name:"По солнцу",lead:"Ловим момент, когда солнце стоит точно в стороне спутника, и разворачиваем антенну «лицом» к солнцу."},
+  compass:{page:"compass.html",name:"Компас в телефоне",lead:"Находим направление на спутник по компасу в телефоне, ставим вешку и разворачиваем на неё антенну."},
+  magnetic:{page:"magnetic.html",name:"Магнитный компас",lead:"Находим число на шкале компаса, поворачиваем компас, пока стрелка не ляжет на букву С, и ставим вешку в сторону этого числа."}};
+var ORDER=["sun","compass","magnetic"];
+
+/* ---------- shared parameters (same storage as the helper and the animation pages) ---------- */
+function stored(){try{return JSON.parse(localStorage.getItem("installer-helper")||"null")||{}}catch(e){return {}}}
+function today(tz){return new Date(Date.now()+tz*3600000).toISOString().slice(0,10)}
+var S0=stored(),Q=new URLSearchParams(location.search),TZ=parseFloat(Q.get("tz"));if(isNaN(TZ))TZ=S0.tz!=null?+S0.tz:8;
+var date=/^\d{4}-\d{2}-\d{2}$/.test(Q.get("date")||"")?Q.get("date"):(/^\d{4}-\d{2}-\d{2}$/.test(S0.date||"")&&S0.date>=today(TZ)?S0.date:today(TZ));
+$("dateIn").value=date;
+function setStoredDate(v){try{var s=stored();s.date=v;localStorage.setItem("installer-helper",JSON.stringify(s))}catch(e){}}
+function checkDate(){$("dateWarn").hidden=!($("dateIn").value<today(TZ))}
+$("dateIn").addEventListener("change",function(){if(!this.value)return;date=this.value;setStoredDate(date);checkDate();showCtx()});
+checkDate();
+function pageQuery(){var q=new URLSearchParams(location.search);q.delete("test");q.set("date",date);q.set("rec","1");return "?"+q.toString()}
+/* keep the navigation links pointing at the same point/satellite */
+(function(){var q=new URLSearchParams(location.search);q.delete("test");q.delete("rec");var s=q.toString();if(s)document.querySelectorAll(".tabs a").forEach(function(a){a.setAttribute("href",a.getAttribute("href").split("?")[0]+"?"+s)})})();
+
+var TOK=null;
+function sunOn(){var c=document.querySelector('.methods input[value="sun"]');return !c||c.checked}
+function showCtx(){$("dateBox").hidden=!sunOn();if(!sunOn())$("dateWarn").hidden=true;else checkDate();
+  if(!TOK){$("ctx").innerHTML="Точка и спутник берутся из Помощника установщика.";return}
+  $("ctx").innerHTML="Точка: <b>"+esc(TOK.PLACE)+"</b> · спутник <b>"+esc(TOK.SAT)+"</b> · азимут <b>"+TOK.AZ+"°</b> · угол места <b>"+TOK.EL+"°</b>";   /* the date field follows on the same line (sun method only) */
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function fmtDate(d){var p=d.split("-"),m=["января","февраля","марта","апреля","мая","июня","июля","августа","сентября","октября","ноября","декабря"];return (+p[2])+" "+m[+p[1]-1]+" "+p[0]}
+
+/* ---------- iframe driver ---------- */
+/* every page gets a fresh iframe; the previous one releases its WebGL contexts and is removed, so long builds don't run out of GPU contexts */
+var frameEl=null;
+function dropFrame(){if(!frameEl)return;try{(frameEl.contentWindow.__spGLs||[]).forEach(function(r){try{r.dispose();r.forceContextLoss()}catch(e){}})}catch(e){}
+  frameEl.remove();frameEl=null}
+function loadOnce(page){return new Promise(function(res,rej){
+  dropFrame();var fr=document.createElement("iframe");fr.className="stage";fr.setAttribute("aria-hidden","true");fr.tabIndex=-1;fr.title="Анимация для записи";frameEl=fr;
+  var to=setTimeout(function(){rej(new Error("Страница анимации не загрузилась"))},60000);
+  fr.onload=function(){var w=fr.contentWindow,n=0;(function wait(){if(fr!==frameEl)return;if(w.__spRec){clearTimeout(to);
+      var d=w.document,st=d.getElementById("stage");if(st){st.style.aspectRatio="auto";st.style.height=Math.round(st.clientWidth*GH/(W-32))+"px";w.dispatchEvent(new w.Event("resize"))}
+      (d.fonts&&d.fonts.ready?d.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){res(w)},200)})}
+    else if(++n>600){clearTimeout(to);rej(new Error("Анимация не запустилась (нужен WebGL)"))}else setTimeout(wait,50)})()};
+  fr.src=page+pageQuery();document.body.appendChild(fr)})}
+function loadPage(page){return loadOnce(page).catch(function(){return new Promise(function(r){setTimeout(r,1500)}).then(function(){return loadOnce(page)})})}
+TOKload();
+function TOKload(){loadPage("sun.html").then(function(w){TOK=w.__spRec.tok;showCtx()}).catch(function(){})}
+
+/* ---------- SVG view → canvas (CSS variables resolved, embedded 3D panel canvas drawn in its place) ---------- */
+function resolveVars(str,cs){return str.replace(/var\((--[a-z0-9-]+)\)/gi,function(m,k){var v=cs.getPropertyValue(k).trim().replace(/"/g,"'");return v||"#000"})}
+/* SVG drawn through an <img> cannot see the page's fonts, so Raleway is embedded into it as data: URLs */
+var FONTCSS="";
+var fontsReady=(function(){
+  function b64(u){return fetch(u).then(function(r){return r.blob()}).then(function(b){return new Promise(function(res){var fr=new FileReader();fr.onload=function(){res(fr.result)};fr.readAsDataURL(b)})})}
+  var CY="U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116",LA="U+0000-00FF,U+2000-206F,U+2191,U+2193,U+2212";
+  var faces=[[400,400],[500,400],[600,600],[700,600]],jobs=[];
+  faces.forEach(function(f){["cyrillic","latin"].forEach(function(s){jobs.push(b64("fonts/raleway-"+s+"-"+f[1]+"-normal.woff2").then(function(d){return "@font-face{font-family:Raleway;font-weight:"+f[0]+";src:url("+d+") format('woff2');unicode-range:"+(s==="cyrillic"?CY:LA)+"}"}))})});
+  var page=document.fonts&&document.fonts.load?Promise.all(["400","500","600","700"].map(function(w){return document.fonts.load(w+" 20px Raleway","Азимут 0123")})):Promise.resolve();
+  return Promise.all([Promise.all(jobs).then(function(a){FONTCSS=a.join("")}),page]).catch(function(){})})();
+var XS=new XMLSerializer();window.__vdbg=function(w,id,keep){var svg=w.document.getElementById(id);return svgPart(svg,w.getComputedStyle(w.document.documentElement),keep)};
+function svgPart(svg,cs,keep){
+  var c=svg.cloneNode(true),vb=svg.viewBox.baseVal;
+  c.setAttribute("xmlns","http://www.w3.org/2000/svg");c.setAttribute("width",vb.width);c.setAttribute("height",vb.height);
+  var fo=c.querySelector("foreignObject");
+  if(fo){var par=fo.parentNode,kids=Array.prototype.slice.call(par.childNodes),i=kids.indexOf(fo);
+    kids.forEach(function(n,j){if(n.nodeName==="defs"||n.nodeName==="clipPath"||n.nodeName==="mask")return;if(j===i||(keep==="before"?j>i:j<i))par.removeChild(n)})}
+  c.querySelectorAll("foreignObject").forEach(function(n){if(n.parentNode)n.parentNode.removeChild(n)});
+  /* labels in black for contrast on the white video (lines keep their colours) */
+  c.querySelectorAll("text,tspan").forEach(function(n){var re=/var\(--(ink|muted)\)/;if(re.test(n.getAttribute("fill")||""))n.setAttribute("fill","#000000");if(re.test(n.style.fill||""))n.style.fill="#000000"});
+  var st=document.createElementNS("http://www.w3.org/2000/svg","style");st.textContent=FONTCSS+"text{font-family:Raleway,Arial,sans-serif}";c.insertBefore(st,c.firstChild);
+  return resolveVars(XS.serializeToString(c),cs)}
+function toImg(str){return new Promise(function(res,rej){var u=URL.createObjectURL(new Blob([str],{type:"image/svg+xml"})),im=new Image();im.onload=function(){URL.revokeObjectURL(u);res(im)};im.onerror=function(e){URL.revokeObjectURL(u);rej(e)};im.src=u})}
+function drawSvg(ctx,w,id,x,y,s){
+  var svg=w.document.getElementById(id);if(!svg)return Promise.resolve();
+  var cs=w.getComputedStyle(w.document.documentElement),fo=svg.querySelector("foreignObject"),cv=fo&&fo.querySelector("canvas"),vb=svg.viewBox.baseVal;
+  if(!cv)return toImg(svgPart(svg,cs)).then(function(im){ctx.drawImage(im,x,y,vb.width*s,vb.height*s)});
+  var parts=[toImg(svgPart(svg,cs,"before")),toImg(svgPart(svg,cs,"after"))];
+  return Promise.all(parts).then(function(ims){ctx.drawImage(ims[0],x,y,vb.width*s,vb.height*s);
+    var fx=+fo.getAttribute("x")||0,fy=+fo.getAttribute("y")||0,fw=+fo.getAttribute("width")||vb.width,fh=+fo.getAttribute("height")||vb.height;
+    ctx.drawImage(cv,x+fx*s,y+fy*s,fw*s,fh*s);ctx.drawImage(ims[1],x,y,vb.width*s,vb.height*s)})}
+
+/* ---------- Да-Телеком branding: logos and tech-support contacts ---------- */
+var LOGO=new Image(),LOGOSQ=new Image();LOGO.src="img/dtk-logo.png";LOGOSQ.src="img/dtk-logo-sq.png";
+function imgReady(im){return im.complete&&im.naturalWidth?Promise.resolve():new Promise(function(r){im.onload=im.onerror=function(){r()}})}
+var SITE="www.da-tele.com";
+var SUPPORT=["Телефон: +7 (3952) 79-87-86, доб. 2","E-mail: support@da-tele.com","Мессенджеры MAX и Телеграм: +7 939 793-97-14"];
+function drawLogo(ctx,cx,y,w){if(!LOGO.naturalWidth)return 0;var h=w*LOGO.naturalHeight/LOGO.naturalWidth;ctx.drawImage(LOGO,cx-w/2,y,w,h);return h}
+function drawSq(ctx){if(!LOGOSQ.naturalWidth)return;var w=74,h=w*LOGOSQ.naturalHeight/LOGOSQ.naturalWidth;ctx.save();ctx.globalAlpha=.75;ctx.drawImage(LOGOSQ,W-w-24,18,w,h);ctx.restore()}
+function drawSupport(ctx,y){ /* centred block, returns bottom */
+  ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="600 26px "+FB;ctx.fillText("Техподдержка",W/2,y);y+=44;
+  ctx.font="400 28px "+FB;SUPPORT.forEach(function(s){ctx.fillStyle=C.ink;ctx.fillText(s,W/2,y);y+=40});ctx.textAlign="left";return y}
+
+var TD=parseFloat(new URLSearchParams(location.search).get("td"))||3;
+if(TEST)window.__vdraw=function(n){var c=$("preview").getContext("2d");$("prevCard").hidden=false;var L=["sun","compass","magnetic"];if(n==="intro")introCard(c,L);else if(n==="intro2")introCard(c,["compass","magnetic"]);else if(n==="support")supportCard(c);else if(n==="method")methodCard(c,"sun",0,3);else outroCard(c,L)};
+/* ---------- drawing helpers ---------- */
+var C={bg:"#f2f5f7",card:"#ffffff",line:"#cdd8e0",ink:"#000000",muted:"#000000",cyan:"#0a8fb3",green:"#1f9d63",warn:"#e0650b",grid:"#e4ebf0"};
+var FB="Raleway,system-ui,sans-serif",FM="Raleway,ui-monospace,monospace";
+function rr(ctx,x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke()}}
+function wrap(ctx,text,x,y,maxW,lh,maxLines){var words=String(text).split(/\s+/),line="",n=0;
+  for(var i=0;i<words.length;i++){var t=line?line+" "+words[i]:words[i];if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y+n*lh);n++;line=words[i];if(maxLines&&n>=maxLines-1&&i<words.length-1){var rest=words.slice(i).join(" ");while(ctx.measureText(rest+"…").width>maxW&&rest.length)rest=rest.slice(0,-1);ctx.fillText(rest+"…",x,y+n*lh);return n+1}}else line=t}
+  if(line){ctx.fillText(line,x,y+n*lh);n++}return n}
+function header(ctx,kicker,title){
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=C.cyan;ctx.font="600 20px "+FM;ctx.textAlign="left";ctx.textBaseline="alphabetic";ctx.fillText(kicker,28,48);
+  ctx.fillStyle=C.ink;ctx.font="700 34px "+FB;ctx.fillText(title,28,90);
+  ctx.fillStyle=C.muted;ctx.font="400 19px "+FB;ctx.fillText(TOK.PLACE+" · "+TOK.SAT+" · азимут "+TOK.AZ+"° · угол места "+TOK.EL+"°",28,122);
+  drawSq(ctx);
+}
+function card(ctx,lines,y0,left){ /* full-screen text card; left=true: everything flush left at the 70px margin */
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  var y=y0||360;lines.forEach(function(l){ctx.fillStyle=l.c||C.ink;ctx.font=l.f;ctx.textAlign=left?"left":"center";
+    if(l.wrap){ctx.textAlign="left";var n=wrap(ctx,l.t,70,y,W-140,l.lh||34);y+=n*(l.lh||34)+(l.gap||18)}else{ctx.fillText(l.t,left?70:W/2,y);y+=(l.lh||40)+(l.gap||0)}});
+  ctx.textAlign="left"}
+/* point, coordinates and polarisation skew for the opening card */
+function fmtCoord(v,pos,neg){return F4(Math.abs(v))+"° "+(v>=0?pos:neg)}
+function F4(x){return (+x).toFixed(4).replace(".",",")}
+function F1v(x){return (Math.round(x*10)/10).toFixed(1).replace(".",",").replace("-","−")}
+function skewOf(lat,lon,satLon){var D=Math.PI/180,a=6378.137,e2=0.00669437999014,Rs=42164.17,p=lat*D,l=lon*D,sl=satLon*D;
+  var N=a/Math.sqrt(1-e2*Math.sin(p)*Math.sin(p)),O=[N*Math.cos(p)*Math.cos(l),N*Math.cos(p)*Math.sin(l),N*(1-e2)*Math.sin(p)];
+  var d=[Rs*Math.cos(sl)-O[0],Rs*Math.sin(sl)-O[1],-O[2]],r=Math.hypot(d[0],d[1],d[2]),h=[d[0]/r,d[1]/r,d[2]/r];
+  function pr(v){var k=v[0]*h[0]+v[1]*h[1]+v[2]*h[2];return [v[0]-k*h[0],v[1]-k*h[1],v[2]-k*h[2]]}
+  var up=pr([Math.cos(p)*Math.cos(l),Math.cos(p)*Math.sin(l),Math.sin(p)]),pz=pr([0,0,1]);
+  var cr=[up[1]*pz[2]-up[2]*pz[1],up[2]*pz[0]-up[0]*pz[2],up[0]*pz[1]-up[1]*pz[0]];
+  var sk=Math.atan2(cr[0]*h[0]+cr[1]*h[1]+cr[2]*h[2],up[0]*pz[0]+up[1]*pz[1]+up[2]*pz[2])/D;if(sk>90)sk-=180;if(sk<=-90)sk+=180;return sk}
+function valCard(ctx,x,y,w,h,label,val,sub){
+  rr(ctx,x,y,w,h,14,C.card,C.line);ctx.textAlign="left";
+  ctx.fillStyle=C.ink;ctx.font="500 20px "+FB;ctx.fillText(label,x+20,y+36);
+  ctx.font="600 46px "+FB;ctx.fillText(val,x+20,y+86);
+  ctx.font="400 18px "+FB;wrap(ctx,sub,x+20,y+116,w-40,21,3)}
+function introCard(ctx,list){
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  var lh=drawLogo(ctx,W/2,48,300);ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="400 26px "+FB;ctx.fillText(SITE,W/2,48+lh+36);
+  ctx.fillStyle=C.cyan;ctx.font="600 22px "+FB;ctx.fillText("НАВЕДЕНИЕ СПУТНИКОВОЙ АНТЕННЫ",W/2,262);
+  ctx.fillStyle=C.ink;ctx.font="700 50px "+FB;ctx.fillText(TOK.SAT,W/2,322);
+  var coords=fmtCoord(TOK.LAT,"с.ш.","ю.ш.")+", "+fmtCoord(TOK.LON,"в.д.","з.д."),pl=String(TOK.PLACE||"").trim(),named=pl&&!/^[-−\d.,\s°]+$/.test(pl);
+  ctx.font="400 27px "+FB;ctx.fillText("Место установки: "+(named?pl:coords),W/2,378);
+  if(named){ctx.font="400 23px "+FB;ctx.fillText(coords,W/2,414)}
+  var gx=48,gy=448,gap=16,cw=(W-2*gx-gap)/2,ch=172,sk=skewOf(TOK.LAT,TOK.LON,TOK.SATLON);
+  valCard(ctx,gx,gy,cw,ch,"Азимут истинный",TOK.AZ+"°","от географического севера");
+  valCard(ctx,gx+cw+gap,gy,cw,ch,"Азимут по компасу",TOK.MAG+"°","магнитное склонение "+TOK.DECLS);
+  valCard(ctx,gx,gy+ch+gap,cw,ch,"Угол места",TOK.EL+"°","над горизонтом");
+  valCard(ctx,gx+cw+gap,gy+ch+gap,cw,ch,"Поворот конвертора",(sk>0.05?"+":"")+F1v(sk)+"°",Math.abs(sk)<0.5?"конвертор ставится ровно":(sk>0?"по":"против")+" часовой стрелки, если смотреть из-за антенны на спутник");
+  ctx.textAlign="center";ctx.fillStyle=C.ink;
+  var y=gy+2*ch+gap+62;if(list.indexOf("sun")>=0){ctx.font="400 26px "+FB;ctx.fillText("Планируемая дата установки: "+fmtDate(date),W/2,y);y+=56}   /* the date matters only for the sun method */
+  ctx.font="600 24px "+FB;ctx.fillText("Способы наведения в ролике:",W/2,y);
+  ctx.font="400 24px "+FB;y+=36;ctx.fillText(list.map(function(k,i){return METHODS[k].name}).join("  ·  "),W/2,y);
+  ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,y+62);ctx.lineTo(W-70,y+62);ctx.stroke();drawSupport(ctx,y+108);ctx.textAlign="left"}
+function methodCard(ctx,k,i,n){
+  card(ctx,[{t:"СПОСОБ "+(i+1)+" ИЗ "+n,f:"600 24px "+FB,c:C.cyan,lh:72},{t:METHODS[k].name,f:"700 54px "+FB,lh:84},
+    {t:METHODS[k].lead,f:"400 30px "+FB,c:C.muted,wrap:true,lh:42,gap:40}].concat(k==="sun"?[
+    {t:SUNNOTE(),f:"600 27px "+FB,c:C.warn,wrap:true,lh:38}]:[]),k==="sun"?380:480,true);drawSq(ctx)}
+function SUNNOTE(){return "Время совпадения направления на солнце и на спутник рассчитано на "+fmtDate(date)+". Если антенну будут устанавливать в другой день, способ по солнцу может не сработать: время совпадения для другой даты нужно рассчитать заново в сервисе «Помощник установщика антенны — satfinder.da-tele.com» или уточнить у технической поддержки компании «Да-Телеком»."}
+function supportCard(ctx){
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);
+  var lh=drawLogo(ctx,W/2,150,380);ctx.textAlign="center";ctx.fillStyle=C.ink;ctx.font="400 28px "+FB;ctx.fillText(SITE,W/2,150+lh+44);
+  ctx.fillStyle=C.ink;ctx.font="600 32px "+FB;ctx.textAlign="left";
+  ctx.textAlign="center";
+  var lines=["Если у вас сложности с наведением","спутникового комплекта, обратитесь","в нашу службу технической поддержки."];
+  var y=560;lines.forEach(function(s){ctx.fillText(s,W/2,y);y+=46});
+  ctx.strokeStyle=C.line;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(70,y+20);ctx.lineTo(W-70,y+20);ctx.stroke();
+  drawSupport(ctx,y+90);ctx.textAlign="left"}
+function outroCard(ctx,list){
+  card(ctx,[{t:"ВАЖНО",f:"700 26px "+FB,c:C.warn,lh:64}].concat(list.indexOf("sun")>=0?[{t:SUNNOTE(),f:"400 28px "+FB,wrap:true,lh:40,gap:30}]:[]).concat([
+    {t:"Для разных спутников используются разные комплекты антенн: зеркало, кронштейн, конвертор и шкалы на них отличаются. Перед установкой внимательно прочитайте инструкцию к вашему комплекту.",f:"400 30px "+FB,wrap:true,lh:44,gap:30},
+    {t:"Этот ролик даёт только общее представление о базовых принципах наведения антенны на спутник.",f:"400 30px "+FB,c:C.muted,wrap:true,lh:44}]),list.indexOf("sun")>=0?260:420,true)}
+
+/* one frame of a method: header, 3D view with readout, step caption, the 2D view for this step, signal meter */
+function methodFrame(ctx,w,k,i,n,S,prog){
+  var R=w.__spRec;header(ctx,"СПОСОБ "+(i+1)+" ИЗ "+n,METHODS[k].name);
+  /* 3D */
+  var gx=16,gy=142,gw=W-32,gh=GH;rr(ctx,gx,gy,gw,gh,16,C.card,C.line);
+  ctx.save();rr(ctx,gx,gy,gw,gh,16);ctx.clip();var gl=R.gl,sw=gl.width,sh=gl.height,sc=Math.max(gw/sw,gh/sh),dw=sw*sc,dh=sh*sc;
+  try{ctx.drawImage(gl,gx+(gw-dw)/2,gy+(gh-dh)/2,dw,dh)}catch(e){}
+  var hd=R.head();ctx.font="600 15px "+FM;var bw=Math.max(ctx.measureText(hd.label).width,0)+28;ctx.font="700 34px "+FM;bw=Math.max(bw,ctx.measureText(hd.value).width+28);
+  rr(ctx,gx+12,gy+12,bw,78,12,"rgba(255,255,255,.92)",C.line);ctx.fillStyle=C.muted;ctx.font="600 15px "+FM;ctx.fillText(hd.label,gx+26,gy+36);   /* top-left: the satellite and the sun sit in the upper right of the 3D view */
+  ctx.fillStyle=hd.ok?C.green:C.ink;ctx.font="700 34px "+FM;ctx.fillText(hd.value,gx+26,gy+76);
+  if(hd.note){ctx.font="600 17px "+FB;rr(ctx,gx+12,gy+gh-76,gw-24,64,10,"rgba(255,255,255,.92)");ctx.fillStyle=C.green;wrap(ctx,hd.note,gx+24,gy+gh-52,gw-48,21,3)}
+  ctx.restore();
+  /* caption */
+  var cy=574;rr(ctx,16,cy,W-32,202,14,C.card,C.line);ctx.fillStyle=C.cyan;ctx.font="700 22px "+FM;ctx.fillText((S.step+1)+"/5",34,cy+36);
+  ctx.fillStyle=C.ink;ctx.font="700 24px "+FB;ctx.fillText(R.steps[S.step],96,cy+36);
+  ctx.font="400 19px "+FB;ctx.fillStyle=C.ink;wrap(ctx,R.texts[S.step],34,cy+64,W-68,23.5,6);
+  /* 2D view */
+  var vy=788,vh=474;rr(ctx,16,vy,W-32,vh,14,C.card,C.line);
+  var id=R.views[S.step],svg=w.document.getElementById(id),h2=svg&&svg.closest(".sp-view")&&svg.closest(".sp-view").querySelector("h2");
+  ctx.fillStyle=C.muted;ctx.font="600 17px "+FM;ctx.fillText(h2?h2.textContent:"",34,vy+32);
+  var snake=id==="vSnake",avail=vh-(snake?100:50),vb=svg?svg.viewBox.baseVal:{width:320,height:260},s=Math.min((W-60)/vb.width,avail/vb.height),x=(W-vb.width*s)/2,y=vy+44;
+  return drawSvg(ctx,w,id,x,y,s).then(function(){
+    if(snake){var my=vy+vh-40,bx=34,bwid=W-68-200;ctx.fillStyle=C.muted;ctx.font="600 15px "+FM;ctx.fillText("СИГНАЛ МОДЕМА",bx,my-18);
+      for(var b=0;b<16;b++){var on=(b/16<S.lvl)||(b===0&&S.lvl>0.01);rr(ctx,bx+b*(bwid/16),my-6,bwid/16-4,22,3,on?(S.lvl>0.93?C.green:C.cyan):C.grid)}
+      ctx.fillStyle=S.lvl>0.93?C.green:S.lvl>0.01?C.cyan:C.muted;ctx.font="700 22px "+FM;ctx.textAlign="right";
+      ctx.fillText(Math.round(S.lvl*100)+"% · "+(S.lvl>0.93?"максимум":S.lvl>0.3?"есть":S.lvl>0.01?"слабый":"нет"),W-34,my+12);ctx.textAlign="left"}
+    ctx.fillStyle=C.grid;ctx.fillRect(0,H-8,W,8);ctx.fillStyle=C.cyan;ctx.fillRect(0,H-8,W*prog,8)})}
+
+/* ---------- encoder (WebCodecs → MP4); fallback: real-time MediaRecorder ---------- */
+function pickCodec(){var list=["avc1.640028","avc1.4d0028","avc1.42002a","avc1.42001f"];
+  if(!window.VideoEncoder||!window.Mp4Muxer)return Promise.resolve(null);
+  return list.reduce(function(p,c){return p.then(function(found){if(found)return found;
+    return VideoEncoder.isConfigSupported({codec:c,width:OW,height:OH,bitrate:BR,framerate:FPS}).then(function(r){return r.supported?c:null}).catch(function(){return null})})},Promise.resolve(null))}
+function makeSink(cv){return pickCodec().then(function(codec){
+  if(codec){var muxer=new Mp4Muxer.Muxer({target:new Mp4Muxer.ArrayBufferTarget(),video:{codec:"avc",width:OW,height:OH,frameRate:FPS},fastStart:"in-memory"}),err=null;
+    var enc=new VideoEncoder({output:function(ch,meta){muxer.addVideoChunk(ch,meta)},error:function(e){err=e}});
+    enc.configure({codec:codec,width:OW,height:OH,bitrate:BR,framerate:FPS,latencyMode:"quality"});var n=0;
+    return {kind:"mp4",add:function(){if(err)return Promise.reject(err);var f=new VideoFrame(cv,{timestamp:Math.round(n*1e6/FPS),duration:Math.round(1e6/FPS)});enc.encode(f,{keyFrame:n%(FPS*2)===0});f.close();n++;
+        return enc.encodeQueueSize>6?new Promise(function(r){(function w(){if(enc.encodeQueueSize<=2)r();else setTimeout(w,5)})()}):Promise.resolve()},
+      done:function(){return enc.flush().then(function(){muxer.finalize();enc.close();return new Blob([muxer.target.buffer],{type:"video/mp4"})})},cancel:function(){try{enc.close()}catch(e){}}}}
+  /* fallback */
+  var mt=["video/mp4;codecs=avc1","video/mp4","video/webm;codecs=vp9","video/webm"].filter(function(t){return window.MediaRecorder&&MediaRecorder.isTypeSupported(t)})[0];
+  if(!mt)return null;
+  var stream=cv.captureStream(0),track=stream.getVideoTracks()[0],rec=new MediaRecorder(stream,{mimeType:mt,videoBitsPerSecond:BR}),parts=[],t0=performance.now(),n=0;
+  rec.ondataavailable=function(e){if(e.data.size)parts.push(e.data)};rec.start(1000);
+  return {kind:mt.indexOf("mp4")>=0?"mp4":"webm",add:function(){if(track.requestFrame)track.requestFrame();n++;var due=t0+n*1000/FPS,wait=due-performance.now();return new Promise(function(r){setTimeout(r,Math.max(0,wait))})},
+    done:function(){return new Promise(function(r){rec.onstop=function(){r(new Blob(parts,{type:mt.split(";")[0]}))};rec.stop()})},cancel:function(){try{rec.stop()}catch(e){}}}})}
+
+/* quality choice: the page always starts at maximum */
+/* size estimate for each quality: the browser encoder keeps close to the target bitrate (measured: ≈97% of it),
+   so size ≈ bitrate × length; the length depends on the methods ticked */
+function estLen(){var list=Array.prototype.slice.call(document.querySelectorAll(".methods input:checked")).map(function(i){return i.value});
+  return (5+5+6+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:2.5)+(k==="sun"?46:49)*SLOW},0))*1.03}
+function updEst(){var L=estLen();Object.keys(QUAL).forEach(function(k){var mb=QUAL[k].br*0.97*L/8/1e6,el=$("qs-"+k);if(el)el.textContent="≈ "+(mb>=20?Math.round(mb/5)*5:Math.round(mb))+" МБ"});
+  var e=$("eta");if(e){var m=L/60;e.textContent="Ролик длится около "+(Math.round(m*2)/2).toString().replace(".",",")+" мин. Сборка идёт прямо в браузере — не закрывайте и не сворачивайте вкладку. Чем ниже качество, тем меньше файл и быстрее сборка."}}
+document.querySelectorAll(".methods input").forEach(function(i){i.addEventListener("change",function(){updEst();showCtx()})});updEst();
+function qualKey(){var r=document.querySelector('input[name="qual"]:checked');return r&&QUAL[r.value]?r.value:"max"}
+/* ---------- build ---------- */
+var busy=false,cancelled=false;
+$("stop").addEventListener("click",function(){cancelled=true});
+$("go").addEventListener("click",function(){if(busy)return;build().catch(function(e){fail(e)})});
+function fail(e){busy=false;$("go").disabled=false;$("stop").hidden=true;$("progTxt").textContent=cancelled?"Сборка остановлена.":"Не получилось собрать видео: "+(e&&e.message||e);cancelled=false}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+function build(){
+  var list=Array.prototype.slice.call(document.querySelectorAll(".methods input:checked")).map(function(i){return i.value});
+  if(!list.length){alert("Отметьте хотя бы один способ наведения.");return Promise.resolve()}
+  busy=true;cancelled=false;$("go").disabled=true;$("stop").hidden=false;$("progWrap").hidden=false;$("out").hidden=true;$("prevCard").hidden=false;
+  var qk=qualKey(),q=QUAL[qk];OW=q.w;OH=q.h;FPS=q.fps;BR=BRQ||q.br;
+  var cv=document.createElement("canvas");cv.width=W;cv.height=H;var ctx=cv.getContext("2d",{alpha:false}),pv=$("preview").getContext("2d");
+  var oc=cv,octx=null;if(OW!==W){oc=document.createElement("canvas");oc.width=OW;oc.height=OH;octx=oc.getContext("2d",{alpha:false});octx.imageSmoothingQuality="high"}
+  var INTRO=5,MI=2.5,OUT=5,SUPP=6,durs={},total=0,doneSec=0,sink;
+  function setProg(txt){var p=Math.min(1,doneSec/Math.max(1,total));$("prog").style.width=(p*100).toFixed(1)+"%";$("progTxt").textContent=txt+" · "+Math.round(p*100)+"%"}
+  function emit(){pv.drawImage(cv,0,0);if(octx)octx.drawImage(cv,0,0,OW,OH);return sink.add().then(function(){doneSec+=1/FPS;if(cancelled)throw new Error("остановлено")})}
+  function still(drawFn,sec,label){var n=Math.round(sec*FPS),k=0;drawFn(ctx);
+    return (function next(){if(k>=n)return Promise.resolve();k++;if(k%10===0)setProg(label);return emit().then(next)})()}
+  return (document.fonts?document.fonts.ready:Promise.resolve()).then(function(){return Promise.all([imgReady(LOGO),imgReady(LOGOSQ),fontsReady])}).then(function(){return makeSink(oc)}).then(function(s){
+    if(!s)throw new Error("этот браузер не умеет записывать видео. Откройте страницу в Chrome, Edge или Safari.");sink=s;
+    list.forEach(function(k){durs[k]=TEST?TD:(k==="sun"?46:49)*SLOW});   /* estimate; the real length is taken when each page loads */
+    if(TOK)return;return loadPage(METHODS[list[0]].page).then(function(w){TOK=w.__spRec.tok})})
+  .then(function(){showCtx();total=INTRO+OUT+SUPP+(list.indexOf("sun")>=0?3:0)+list.reduce(function(a,k){return a+(k==="sun"?6:MI)+durs[k]},0);
+    return still(function(c){introCard(c,list)},INTRO,"Заставка")})
+  .then(function(){return list.reduce(function(p,k,i){return p.then(function(){
+      return still(function(c){methodCard(c,k,i,list.length)},k==="sun"?6:MI,METHODS[k].name)
+      .then(function(){return loadPage(METHODS[k].page)})
+      .then(function(w){if(!TEST){total+=w.__spRec.dur*SLOW-durs[k];durs[k]=w.__spRec.dur*SLOW}var n=Math.round(durs[k]*FPS),f=0,R=w.__spRec,st=TEST?(TT>=0?TT:R.dur-3):0;
+        var vid=null;
+        return (function next(){if(f>=n)return Promise.resolve();var t=st+f/(FPS*SLOW);if(vid===null){vid=R.views[0];if(R.only)R.only(vid)}var S=R.set(t);if(R.views[S.step]!==vid){vid=R.views[S.step];if(R.only)R.only(vid);S=R.set(t)}   /* only the 2D view shown in the video gets its 3D panel rendered */
+          return methodFrame(ctx,w,k,i,list.length,S,f/n).then(function(){f++;if(f%5===0)setProg(METHODS[k].name+" — кадр "+f+" из "+n);return emit()}).then(next)})()})})},Promise.resolve())})
+  .then(function(){return still(function(c){outroCard(c,list)},OUT+(list.indexOf("sun")>=0?3:0),"Финальная заставка")})
+  .then(function(){return still(supportCard,SUPP,"Контакты техподдержки")})
+  .then(function(){setProg("Сохраняем файл");return sink.done()})
+  .then(function(blob){dropFrame();busy=false;$("go").disabled=false;$("stop").hidden=true;$("prog").style.width="100%";
+    var ext=sink.kind==="mp4"?"mp4":"webm",name=("Наведение_"+TOK.SAT+"_"+TOK.PLACE+(list.indexOf("sun")>=0?"_"+date:"")).replace(/[\\/:*?"<>|\s]+/g,"_")+"."+ext,url=URL.createObjectURL(blob);
+    $("vid").src=url;$("dl").href=url;$("dl").setAttribute("download",name);$("outName").textContent=name;
+    $("outInfo").textContent=(blob.size/1048576).toFixed(1).replace(".",",")+" МБ · "+Math.round(total)+" с · вертикальное видео "+OW+"×"+OH+(ext==="webm"?" · формат WebM (iPhone может не открыть — лучше собирать в Chrome на компьютере)":"");
+    $("progTxt").textContent="Готово.";$("out").hidden=false;
+    var file=null;try{file=new File([blob],name,{type:blob.type})}catch(e){}
+    $("share").hidden=!(file&&navigator.canShare&&navigator.canShare({files:[file]}));
+    $("share").onclick=function(){navigator.share({files:[file],title:"Наведение антенны"}).catch(function(){})};
+    $("out").scrollIntoView({behavior:"smooth",block:"start"})})
+  .catch(function(e){if(sink)sink.cancel();dropFrame();throw e});
+}
+})();
+</script>
+</body>
+</html>
